@@ -67,18 +67,18 @@ namespace IlluminatiPinger
         private static void SendPing(Obj_AI_Base unit)
         {
             var type =
-                (PingCategory) Enum.Parse(typeof(PingCategory), Menu.Item("Type").GetValue<StringList>().SelectedValue);
+                (PingCategory)Enum.Parse(typeof(PingCategory), Menu.Item("Type").GetValue<StringList>().SelectedValue);
             var count = Menu.Item("Points").GetValue<Slider>().Value;
             var point = unit.ServerPosition;
-
-            Game.SendPing(type, point);
+            var constant = Math.PI / 2 - Math.PI / count;
+            Game.SendPing(type, unit);
 
             for (var i = 0; i < count; i++)
             {
                 var v = new Vector2
                 {
-                    X = (float) (point.X + Radius * Math.Cos(i * 2 * Math.PI / count)),
-                    Y = (float) (point.Y + Radius * Math.Sin(i * 2 * Math.PI / count))
+                    X = (float)(point.X + Radius * Math.Cos(i * 2 * Math.PI / count + constant)),
+                    Y = (float)(point.Y + Radius * Math.Sin(i * 2 * Math.PI / count + constant))
                 };
 
                 Game.SendPing(type, v);
