@@ -55,8 +55,13 @@ namespace ARAMShooter
                 return;
             }
 
-            if (Menu.Item("Auto").IsActive() && Throw.Instance.Name.Equals("snowballfollowupcast"))
+            if (Throw.Instance.Name.Equals("snowballfollowupcast"))
             {
+                if (!Menu.Item("Auto").IsActive())
+                {
+                    return;
+                }
+
                 Utility.DelayAction.Add(600, () => Throw.Cast());
                 return;
             }
