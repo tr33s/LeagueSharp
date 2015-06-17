@@ -31,6 +31,7 @@ namespace IlluminatiPinger
                         })));
             Menu.AddItem(new MenuItem("Points", "Number of Points").SetValue(new Slider(3, 2, 5)));
             Menu.AddItem(new MenuItem("Enabled", "Enabled").SetValue(true));
+            Menu.AddItem(new MenuItem("Exploit", "Ping Exploit").SetValue(false));
             Menu.AddItem(new MenuItem("Ping", "Ping").SetValue(new KeyBind('G', KeyBindType.Press)));
             Menu.AddToMainMenu();
 
@@ -67,21 +68,24 @@ namespace IlluminatiPinger
         private static void SendPing(Obj_AI_Base unit)
         {
             var type =
-                (PingCategory)Enum.Parse(typeof(PingCategory), Menu.Item("Type").GetValue<StringList>().SelectedValue);
+                (PingCategory) Enum.Parse(typeof(PingCategory), Menu.Item("Type").GetValue<StringList>().SelectedValue);
+            type = Menu.Item("Exploit").IsActive() ? (PingCategory) 1 : type;
+
             var count = Menu.Item("Points").GetValue<Slider>().Value;
             var point = unit.ServerPosition;
             var constant = Math.PI / 2 - Math.PI / count;
+
             Game.SendPing(type, unit);
 
             for (var i = 0; i < count; i++)
             {
                 var v = new Vector2
                 {
-                    X = (float)(point.X + Radius * Math.Cos(i * 2 * Math.PI / count + constant)),
-                    Y = (float)(point.Y + Radius * Math.Sin(i * 2 * Math.PI / count + constant))
+                    X = (float) (point.X + Radius * Math.Cos(i * 2 * Math.PI / count + constant)),
+                    Y = (float) (point.Y + Radius * Math.Sin(i * 2 * Math.PI / count + constant))
                 };
 
-                Game.SendPing(type, v);
+                Utility.DelayAction.Add(100, () => Game.SendPing(type, v));
             }
 
             LastPing = Utils.TickCount;
