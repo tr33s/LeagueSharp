@@ -38,7 +38,7 @@
     <Reference Include="LeagueSharp">
       <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\LeagueSharp.dll</HintPath>
     </Reference>
-    <Reference Include="LeagueSharp.Common, Version=1.0.0.31, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="LeagueSharp.Common, Version=1.0.0.40, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\LeagueSharp.Common.dll</HintPath>
     </Reference>

@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
@@ -26,13 +25,15 @@ namespace ControlSharp
         public static float MaxD = 0;
         public static uint LastKey;
         public static int MenuCount;
-        public static Dictionary<Orbwalking.OrbwalkingMode, string> KeyDictionary = new Dictionary<Orbwalking.OrbwalkingMode, string>
-        {
-            {Orbwalking.OrbwalkingMode.Combo, "Orbwalk"},
-            {Orbwalking.OrbwalkingMode.Mixed, "Farm"},
-            {Orbwalking.OrbwalkingMode.LaneClear, "LaneClear"},
-            {Orbwalking.OrbwalkingMode.LastHit, "LastHit"}
-        }; 
+
+        public static Dictionary<Orbwalking.OrbwalkingMode, string> KeyDictionary =
+            new Dictionary<Orbwalking.OrbwalkingMode, string>
+            {
+                { Orbwalking.OrbwalkingMode.Combo, "Orbwalk" },
+                { Orbwalking.OrbwalkingMode.Mixed, "Farm" },
+                { Orbwalking.OrbwalkingMode.LaneClear, "LaneClear" },
+                { Orbwalking.OrbwalkingMode.LastHit, "LastHit" }
+            };
 
         private static void Main(string[] args)
         {
@@ -118,24 +119,24 @@ namespace ControlSharp
 
             Controller.Update();
             UpdateStates();
-        //    Console.WriteLine(Controller.LeftStick.Position);
+
             var p = ObjectManager.Player.ServerPosition.To2D() + (Controller.LeftStick.Position / 75);
             var pos = new Vector3(p.X, p.Y, ObjectManager.Player.Position.Z);
 
-            if (ObjectManager.Player.Distance(pos) < 75)
+            if (ObjectManager.Player.Distance(pos) < 100)
             {
                 return;
             }
 
-            //Console.WriteLine("SETORBWALKING POSITION");
             CurrentPosition.Position = pos;
-            OrbWalker.SetOrbwalkingPoint(pos);
+            SetOrbwalkingPosition(pos);
         }
 
         private static void UpdateStates()
         {
             //Push any button to cancel mode
-            if (Controller.LeftShoulder || Controller.RightShoulder || Controller.Back || Controller.Start || Controller.RightStick.Clicked)
+            if (Controller.LeftShoulder || Controller.RightShoulder || Controller.Back || Controller.Start ||
+                Controller.RightStick.Clicked)
             {
                 SetOrbwalkingMode(Orbwalking.OrbwalkingMode.None);
                 return;
@@ -216,17 +217,24 @@ namespace ControlSharp
             }
         }
 
+        private static void SetOrbwalkingPosition(Vector3 position)
+        {
+            foreach (var orbwalker in Orbwalking.Orbwalker.Instances)
+            {
+                orbwalker.SetOrbwalkingPoint(position);
+            }
+        }
+
         private static void SetOrbwalkingMode(Orbwalking.OrbwalkingMode mode)
         {
             CurrentMode = mode;
             Text.text = "MODE: " + CurrentMode;
-            //OrbWalker.ActiveMode = mode;
 
             foreach (var orbwalkMode in KeyDictionary.Keys)
             {
                 var value = KeyDictionary[orbwalkMode];
                 var key = Menu.Item(value).GetValue<KeyBind>().Key;
-                var currentMode = orbwalkMode == mode; 
+                var currentMode = orbwalkMode == mode;
                 Menu.SendMessage(key, currentMode ? WindowsMessages.WM_KEYDOWN : WindowsMessages.WM_KEYUP);
             }
         }
