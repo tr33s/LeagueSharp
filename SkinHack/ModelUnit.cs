@@ -17,11 +17,16 @@ namespace SkinHack
         public ModelUnit(Obj_AI_Hero unit) //: base(unit.Index, (uint)unit.NetworkId)
         {
             Unit = unit;
-            Model = unit.BaseSkinName;
+            Model = CharData.BaseSkinName;
             SkinIndex = unit.BaseSkinId;
             //UpdateAdditionalObjects();
             //Obj_AI_Base.OnCreate += Obj_AI_Base_OnCreate;
             Utility.DelayAction.Add(300, () => Game.OnUpdate += Game_OnUpdate);
+        }
+
+        public CharacterData CharData
+        {
+            get { return Unit.CharData; }
         }
 
         #region UpdateAdditionalObjects
@@ -303,16 +308,16 @@ namespace SkinHack
                 return;
             }
 
-            var model = IgnoredModels.Contains(Unit.BaseSkinName) ? Unit.BaseSkinName : Model;
+            var model = IgnoredModels.Contains(CharData.BaseSkinName) ? CharData.BaseSkinName : Model;
             var skin = SkinIndex;
 
             // update hero
             if (Program.Config.Item("Champions").IsActive() &&
-                (!Unit.BaseSkinName.Equals(model) || !Unit.BaseSkinId.Equals(skin)))
+                (!CharData.BaseSkinName.Equals(model) || !Unit.BaseSkinId.Equals(skin)))
             {
                 Console.WriteLine(
-                    "[CHAMP] {0} {1} => {2}  {3} => {4}", Unit.ChampionName, Unit.BaseSkinName, model, Unit.BaseSkinId,
-                    skin);
+                    "[CHAMP] {0} {1} => {2}  {3} => {4}", Unit.ChampionName, CharData.BaseSkinName, model,
+                    Unit.BaseSkinId, skin);
                 Unit.SetSkin(model, skin, 250);
             }
 
@@ -368,7 +373,8 @@ namespace SkinHack
             SkinIndex = skin;
 
             Console.WriteLine(
-                "[CHAMP] {0} {1} => {2}  {3} => {4}", Unit.ChampionName, Unit.BaseSkinName, model, Unit.BaseSkinId, skin);
+                "[CHAMP] {0} {1} => {2}  {3} => {4}", Unit.ChampionName, CharData.BaseSkinName, model, Unit.BaseSkinId,
+                skin);
 
             Game_OnUpdate(new EventArgs());
         }

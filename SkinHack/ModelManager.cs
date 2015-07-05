@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Web.Script.Serialization;
 using LeagueSharp;
+using LeagueSharp.Common;
 
 namespace SkinHack
 {
@@ -552,11 +553,15 @@ namespace SkinHack
         {
             var versionJson = new WebClient().DownloadString(DataDragonBase + "realms/na.json");
             GameVersion =
-                (String)
-                    ((Dictionary<String, Object>)
-                        new JavaScriptSerializer().Deserialize<Dictionary<String, Object>>(versionJson)["n"])["champion"
+                (string)
+                    ((Dictionary<string, object>)
+                        new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(versionJson)["n"])["champion"
                         ];
-            //GameObject.OnCreate += GameObject_OnCreate;
+
+            if (Game.MapId.Equals(GameMapId.SummonersRift))
+            {
+                GameObject.OnCreate += GameObject_OnCreate;
+            }
             //GameObject.OnDelete += GameObject_OnDelete;
         }
 
@@ -572,11 +577,11 @@ namespace SkinHack
             if (ObjectList.ContainsKey(unit.NetworkId))
             {
                 var obj = ObjectList[unit.NetworkId];
-                if (!unit.BaseSkinName.Equals(obj.Name) || !unit.BaseSkinId.Equals(obj.SkinId))
+                if (!unit.CharData.BaseSkinName.Equals(obj.Name) || !unit.BaseSkinId.Equals(obj.SkinId))
                 {
                     Console.WriteLine(
-                        "[DELETE] {0} {1} => {2}  {3} => {4}", unit.Name, unit.BaseSkinName, obj.Name, unit.BaseSkinId,
-                        obj.SkinId);
+                        "[DELETE] {0} {1} => {2}  {3} => {4}", unit.Name, unit.CharData.BaseSkinName, obj.Name,
+                        unit.BaseSkinId, obj.SkinId);
                     unit.SetSkin(obj.Name, obj.SkinId);
                 }
                 ObjectList.Remove(unit.NetworkId);
@@ -585,14 +590,26 @@ namespace SkinHack
 
         private static void GameObject_OnCreate(GameObject sender, EventArgs args)
         {
+            var unit = sender as Obj_AI_Minion;
+
+            if (unit == null || !unit.IsValid || !unit.Name.Contains("Minion") ||
+                !Program.Config.Item("Minions").IsActive())
+            {
+                return;
+            }
+
+            Utility.DelayAction.Add(100, () => unit.SetSkin(unit.CharData.BaseSkinName, 2));
+
             //   ObjectList.RemoveAll(obj => !obj.IsValid);
-            var unit = sender as Obj_AI_Base;
+            /*var unit = sender as Obj_AI_Base;
 
             if (unit == null || !unit.IsValid)
             {
                 return;
             }
-            ObjectList.Add(unit.NetworkId, new Model(unit.BaseSkinName, unit.BaseSkinId));
+            ObjectList.Add(unit.NetworkId, new Model(unit.CharData.BaseSkinName, unit.BaseSkinId));
+        
+             */
         }
 
         public static bool IsValidModel(this string model)
@@ -613,9 +630,9 @@ namespace SkinHack
                     DataDragonBase + "cdn/" + GameVersion + "/data/en_US/champion/" + model + ".json");
             return
                 (ArrayList)
-                    ((Dictionary<String, Object>)
-                        ((Dictionary<String, Object>)
-                            new JavaScriptSerializer().Deserialize<Dictionary<String, Object>>(champJson)["data"])[model
+                    ((Dictionary<string, object>)
+                        ((Dictionary<string, object>)
+                            new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(champJson)["data"])[model
                             ])["skins"];
         }
 

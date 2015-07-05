@@ -23,6 +23,7 @@ namespace SkinHack
             var settings = Config.AddSubMenu(new Menu("Settings", "Settings"));
             settings.AddItem(new MenuItem("Champions", "Reskin Champions").SetValue(true));
             //settings.AddItem(new MenuItem("Pets", "Reskin Pets").SetValue(true));
+            settings.AddItem(new MenuItem("Minions", "Pool Party Minions").SetValue(false));
 
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>())
             {
@@ -49,7 +50,7 @@ namespace SkinHack
                     if (hero.BaseSkinId.Equals(skinId) || changeSkin.IsActive())
                     {
                         changeSkin.SetValue(true);
-                        modelUnit.SetModel(hero.BaseSkinName, skinId);
+                        modelUnit.SetModel(hero.CharData.BaseSkinName, skinId);
                     }
 
                     var hero1 = hero;
@@ -103,7 +104,7 @@ namespace SkinHack
                 try
                 {
                     var skin = Convert.ToInt32(args.Input.Replace("/skin ", string.Empty));
-                    Player.SetModel(Player.Unit.BaseSkinName, skin);
+                    Player.SetModel(Player.Unit.CharData.BaseSkinName, skin);
                 }
                 catch {}
             }
