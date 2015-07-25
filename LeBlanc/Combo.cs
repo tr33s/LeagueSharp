@@ -1,7 +1,6 @@
 ﻿using System;
 using LeagueSharp;
 using LeagueSharp.Common;
-using LeagueSharp.Common.Orbwalking;
 using SharpDX;
 
 namespace LeBlanc
@@ -173,7 +172,7 @@ namespace LeBlanc
             var canCast = CanCast("W2") && W.IsReady(2);
             var isLowHP = Player.HealthPercent <= Menu.Item("MiscW2HP").GetValue<Slider>().Value;
             var moreEnemiesInRange = WBackPosition.Position.CountEnemiesInRange(600) > Player.CountEnemiesInRange(600);
-            var isFleeing = Program.Orbwalker.ActiveMode == OrbwalkingMode.None;
+            var isFleeing = Program.Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.None;
             var spellDown = Menu.Item("ComboW2Spells").GetValue<bool>() && !Q.IsReady() && !E.IsReady() && !R.IsReady();
             var cast = canCast && (isLowHP || spellDown) && !moreEnemiesInRange && !isFleeing;
             return cast && W.Cast();

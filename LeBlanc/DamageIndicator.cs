@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using LeagueSharp;
-using LeagueSharp.Common.Render;
+using LeagueSharp.Common;
 using SharpDX;
 using Color = System.Drawing.Color;
 
@@ -19,7 +19,9 @@ namespace LeBlanc
         public static Color FillColor = Color.Goldenrod;
         public static bool Fill = true;
         private static DamageToUnitDelegate _damageToUnit;
-        private static readonly Text Text = new Text(0, 0, "", 11, new ColorBGRA(255, 0, 0, 255), "monospace");
+
+        private static readonly Render.Text Text = new Render.Text(
+            0, 0, "", 11, new ColorBGRA(255, 0, 0, 255), "monospace");
 
         public static bool Enabled
         {

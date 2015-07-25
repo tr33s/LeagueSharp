@@ -1,7 +1,6 @@
 ﻿using System;
 using LeagueSharp;
 using LeagueSharp.Common;
-using LeagueSharp.Common.Utility;
 
 namespace LeBlanc
 {
@@ -95,13 +94,13 @@ namespace LeBlanc
                         var pos = Player.GetWaypoints().Count > 1
                             ? Player.GetWaypoints()[1].To3D()
                             : Player.ServerPosition;
-                        DelayAction.Add(200, () => { pet.IssueOrder(GameObjectOrder.MovePet, pos); });
+                        Utility.DelayAction.Add(200, () => { pet.IssueOrder(GameObjectOrder.MovePet, pos); });
                         break;
                     case 1: //toward target
                         pet.IssueOrder(GameObjectOrder.AutoAttackPet, target);
                         break;
                     case 2: //away from player
-                        DelayAction.Add(
+                        Utility.DelayAction.Add(
                             100,
                             () =>
                             {

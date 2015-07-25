@@ -2,7 +2,6 @@
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
-using LeagueSharp.Common.Damage;
 
 namespace LeBlanc
 {
@@ -169,7 +168,7 @@ namespace LeBlanc
                     .FirstOrDefault(
                         obj =>
                             obj.IsValidTarget(600) &&
-                            obj.Health < Player.GetSummonerSpellDamage(obj, SummonerSpell.Ignite));
+                            obj.Health < Player.GetSummonerSpellDamage(obj, Damage.SummonerSpell.Ignite));
 
             return canCast && unit.IsValidTarget(600) && Player.Spellbook.CastSpell(Ignite.Slot, unit);
         }
