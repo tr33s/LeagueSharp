@@ -261,7 +261,7 @@ namespace LeBlanc
                 damage += Player.GetItemDamage(enemy, Damage.DamageItems.LiandrysTorment);
             }
 
-            if (Spells.Ignite.IsReady())
+            if (Spells.Ignite != null && Spells.Ignite.IsReady())
             {
                 damage += Player.GetSummonerSpellDamage(enemy, Damage.SummonerSpell.Ignite);
             }
