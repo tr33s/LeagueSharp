@@ -1,6 +1,7 @@
 ﻿using System;
 using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.Common.Orbwalking;
 using SharpDX;
 
 namespace LeBlanc
@@ -76,7 +77,7 @@ namespace LeBlanc
                 return;
             }
 
-            Program.Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
+            Program.Orbwalker.ActiveMode = OrbwalkingMode.None;
 
             MoveTo();
 

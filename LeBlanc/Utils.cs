@@ -4,6 +4,7 @@ using System.Linq;
 using System.Media;
 using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.Common.Orbwalking;
 using SharpDX;
 using ItemData = LeagueSharp.Common.Data.ItemData;
 
@@ -92,9 +93,9 @@ namespace LeBlanc
             }
         }
 
-        public static bool IsActive(this Orbwalking.OrbwalkingMode mode)
+        public static bool IsActive(this OrbwalkingMode mode)
         {
-            return mode != Orbwalking.OrbwalkingMode.None;
+            return mode != OrbwalkingMode.None;
         }
 
         public static bool HasEBuff(this Obj_AI_Base unit)
@@ -211,10 +212,10 @@ namespace LeBlanc
             menu.AddItem(new MenuItem(name, displayName).SetValue(new Slider(value, min, max)));
         }
 
-        public static Orbwalking.Orbwalker AddOrbwalker(this Menu menu)
+        public static Orbwalker AddOrbwalker(this Menu menu)
         {
             var orbwalk = menu.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
-            return new Orbwalking.Orbwalker(orbwalk);
+            return new Orbwalker(orbwalk);
         }
 
         public static void AddTargetSelector(this Menu menu)

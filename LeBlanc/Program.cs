@@ -2,6 +2,10 @@
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.Common.Damage;
+using LeagueSharp.Common.Interrupter2;
+using LeagueSharp.Common.Orbwalking;
+using LeagueSharp.Common.Utility;
 using LeBlanc.Properties;
 using SharpDX;
 using Color = System.Drawing.Color;
@@ -11,7 +15,7 @@ namespace LeBlanc
     internal class Program
     {
         public static Menu Menu;
-        public static Orbwalking.Orbwalker Orbwalker;
+        public static Orbwalker Orbwalker;
         public static Obj_AI_Hero Player = ObjectManager.Player;
 
         public static Spell Q
@@ -36,7 +40,6 @@ namespace LeBlanc
 
         public static void Main(string[] args)
         {
-            LeagueSharp.Common.Utils.ClearConsole();
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
@@ -105,7 +108,7 @@ namespace LeBlanc
                 "<b><font color =\"#FFFFFF\">LeBlanc the Schemer by </font><font color=\"#0033CC\">Trees</font><font color =\"#FFFFFF\"> loaded!</font></b>");
 
             Drawing.OnDraw += Drawing_OnDraw;
-            Interrupter2.OnInterruptableTarget += Interrupter2_OnInterruptableTarget;
+            OnInterruptableTarget += Interrupter2_OnInterruptableTarget;
             //Interrupter2_OnInterruptableTarget;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
         }
@@ -125,7 +128,7 @@ namespace LeBlanc
 
             E.CastIfHitchanceEquals(unit, HitChance.Medium);
 
-            Utility.DelayAction.Add(
+            DelayAction.Add(
                 (int) E.Delay * 1000 + (Game.Ping * 1000) / 2 + 50, () =>
                 {
                     if (R.IsReady(SpellSlot.E))
@@ -135,18 +138,17 @@ namespace LeBlanc
                 });
         }
 
-        private static void Interrupter2_OnInterruptableTarget(Obj_AI_Hero sender,
-            Interrupter2.InterruptableTargetEventArgs args)
+        private static void Interrupter2_OnInterruptableTarget(Obj_AI_Hero sender, InterruptableTargetEventArgs args)
         {
             if (!Menu.Item("Interrupt").GetValue<bool>() || !sender.IsValidTarget(E.Range) ||
-                args.DangerLevel < Interrupter2.DangerLevel.High || !E.IsReady())
+                args.DangerLevel < DangerLevel.High || !E.IsReady())
             {
                 return;
             }
 
             E.CastIfHitchanceEquals(sender, HitChance.Medium);
 
-            Utility.DelayAction.Add(
+            DelayAction.Add(
                 (int) E.Delay * 1000 + (Game.Ping * 1000) / 2 + 50, () =>
                 {
                     if (R.IsReady(SpellSlot.E))
@@ -248,22 +250,24 @@ namespace LeBlanc
 
             if (Items.FQC.IsReady())
             {
-                damage += Player.GetItemDamage(enemy, Damage.DamageItems.FrostQueenClaim);
+                damage += Player.GetItemDamage(enemy, DamageItems.FrostQueenClaim);
             }
+
 
             if (Items.BOTRK.IsReady())
             {
-                damage += Player.GetItemDamage(enemy, Damage.DamageItems.Botrk);
+                damage += Player.GetItemDamage(enemy, DamageItems.Botrk);
             }
+
 
             if (Items.LT.HasItem())
             {
-                damage += Player.GetItemDamage(enemy, Damage.DamageItems.LiandrysTorment);
+                damage += Player.GetItemDamage(enemy, DamageItems.LiandrysTorment);
             }
 
-            if (Spells.Ignite.IsReady())
+            if (Spells.Ignite != null && Spells.Ignite.IsReady())
             {
-                damage += Player.GetSummonerSpellDamage(enemy, Damage.SummonerSpell.Ignite);
+                damage += Player.GetSummonerSpellDamage(enemy, SummonerSpell.Ignite);
             }
 
             damage += Player.GetAutoAttackDamage(enemy, true);
