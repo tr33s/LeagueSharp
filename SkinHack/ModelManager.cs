@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Web.Script.Serialization;
 using LeagueSharp;
@@ -558,7 +559,7 @@ namespace SkinHack
                         new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(versionJson)["n"])["champion"
                         ];
 
-            if (Game.MapId.Equals(GameMapId.SummonersRift))
+            //if (Game.MapId.Equals(GameMapId.SummonersRift))
             {
                 GameObject.OnCreate += GameObject_OnCreate;
             }
@@ -592,14 +593,33 @@ namespace SkinHack
         {
             var unit = sender as Obj_AI_Minion;
 
-            if (unit == null || !unit.IsValid || !unit.Name.Contains("Minion") ||
-                !Program.Config.Item("Minions").IsActive())
+            if (unit == null || !unit.IsValid)
             {
                 return;
             }
 
-            Utility.DelayAction.Add(100, () => unit.SetSkin(unit.CharData.BaseSkinName, 2));
+            if (Program.Config.Item("Minions").IsActive() && MinionManager.IsMinion(unit))
+            {
+                unit.SetSkin(unit.CharData.BaseSkinName, 2, 100);
+                return;
+            }
 
+            var name = unit.CharData.BaseSkinName.ToLower();
+            if (Program.Config.Item("Ward").IsActive() && name.Contains("ward") || name.Equals("yellowtrinket"))
+            {
+                var index = Convert.ToInt32(Program.Config.Item("WardIndex").GetValue<StringList>().SelectedValue);
+                Utility.DelayAction.Add(
+                    50, () =>
+                    {
+                        if (Program.Config.Item("WardOwn").IsActive() &&
+                            !unit.Buffs.Any(b => b.SourceName.Equals(ObjectManager.Player.ChampionName)))
+                        {
+                            return;
+                        }
+
+                        unit.SetSkin(unit.CharData.BaseSkinName, index);
+                    });
+            }
             //   ObjectList.RemoveAll(obj => !obj.IsValid);
             /*var unit = sender as Obj_AI_Base;
 
@@ -638,8 +658,8 @@ namespace SkinHack
 
         public static void SetSkin(this Obj_AI_Base unit, string model, int index, int delay)
         {
-            unit.SetSkin(model, index);
-            // Utility.DelayAction.Add(delay, () => unit.SetSkin(model, index));
+            //unit.SetSkin(model, index);
+            Utility.DelayAction.Add(delay, () => unit.SetSkin(model, index));
         }
     }
 

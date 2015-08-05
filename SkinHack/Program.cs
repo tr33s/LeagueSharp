@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 
@@ -18,12 +19,14 @@ namespace SkinHack
 
         private static void Game_OnGameLoad(EventArgs args)
         {
+            var skins = Enumerable.Range(0, 44).Select(n => n.ToString()).ToArray();
+
+
             Config = new Menu("SkinHack", "SkinHack", true);
 
-            var settings = Config.AddSubMenu(new Menu("Settings", "Settings"));
-            settings.AddItem(new MenuItem("Champions", "Reskin Champions").SetValue(true));
-            //settings.AddItem(new MenuItem("Pets", "Reskin Pets").SetValue(true));
-            settings.AddItem(new MenuItem("Minions", "Pool Party Minions").SetValue(false));
+
+            var champs = Config.AddSubMenu(new Menu("Champions", "Champions"));
+            champs.AddItem(new MenuItem("Champions", "Reskin Champions").SetValue(true));
 
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>())
             {
@@ -39,7 +42,7 @@ namespace SkinHack
 
                 foreach (Dictionary<string, object> skin in ModelManager.GetSkins(hero.ChampionName))
                 {
-                    Console.WriteLine(skin["name"].ToString());
+                    //Console.WriteLine(skin["name"].ToString());
                     var skinName = skin["name"].ToString().Equals("default")
                         ? hero.ChampionName
                         : skin["name"].ToString();
@@ -61,7 +64,7 @@ namespace SkinHack
                             champMenu.Items.ForEach(
                                 p =>
                                 {
-                                    if (p.GetValue<bool>() && p.Name != skinName)
+                                    if (p.IsActive() && p.Name != skinName)
                                     {
                                         p.SetValue(false);
                                     }
@@ -70,11 +73,37 @@ namespace SkinHack
                         }
                     };
                 }
-                Config.AddSubMenu(champMenu);
+                champs.AddSubMenu(champMenu);
             }
             Config.AddToMainMenu();
 
+            var wardMenu = Config.AddSubMenu(new Menu("Wards", "Wards"));
+            wardMenu.AddItem(new MenuItem("Ward", "Reskin Wards").SetValue(true));
+            wardMenu.AddItem(new MenuItem("WardOwn", "Reskin Only Own Wards").SetValue(true));
+            wardMenu.AddItem(new MenuItem("WardIndex", "Ward Index").SetValue(new StringList(skins, 34))).ValueChanged
+                += Program_ValueChanged;
+
+            var minions = Config.AddSubMenu(new Menu("Minions", "Minions"));
+            //settings.AddItem(new MenuItem("Pets", "Reskin Pets").SetValue(true));
+            minions.AddItem(new MenuItem("Minions", "Pool Party Minions").SetValue(false));
+
             Game.OnInput += Game_OnInput;
+
+        }
+
+        private static void Program_ValueChanged(object sender, OnValueChangeEventArgs e)
+        {
+            foreach (
+                var ward in
+                    ObjectManager.Get<Obj_AI_Base>()
+                        .Where(o => o.CharData.BaseSkinName.Contains("ward"))
+                        .Where(
+                            ward =>
+                                !Config.Item("WardOwn").IsActive() ||
+                                ward.Buffs.Any(b => b.SourceName.Equals(ObjectManager.Player.ChampionName))))
+            {
+                ward.SetSkin(ward.CharData.BaseSkinName, Convert.ToInt32(e.GetNewValue<StringList>().SelectedValue));
+            }
         }
 
         private static void Game_OnInput(GameInputEventArgs args)

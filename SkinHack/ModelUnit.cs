@@ -315,9 +315,9 @@ namespace SkinHack
             if (Program.Config.Item("Champions").IsActive() &&
                 (!CharData.BaseSkinName.Equals(model) || !Unit.BaseSkinId.Equals(skin)))
             {
-                Console.WriteLine(
+                /*Console.WriteLine(
                     "[CHAMP] {0} {1} => {2}  {3} => {4}", Unit.ChampionName, CharData.BaseSkinName, model,
-                    Unit.BaseSkinId, skin);
+                    Unit.BaseSkinId, skin);*/
                 Unit.SetSkin(model, skin, 250);
             }
 
