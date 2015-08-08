@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Media;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -9,11 +8,6 @@ namespace jesuisFiora
 {
     internal static class Extensions
     {
-        public static int GetVitalCount(this Obj_AI_Base unit)
-        {
-            return unit.Buffs.Count(buff => buff.Name.Equals("FIORAVITAL"));
-        }
-
         public static bool IsActive(this Orbwalking.OrbwalkingMode mode)
         {
             return mode != Orbwalking.OrbwalkingMode.None;

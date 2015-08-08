@@ -62,7 +62,7 @@ namespace jesuisFiora
             Q.SetSkillshot(.25f, 0, 500, false, SkillshotType.SkillshotLine);
 
             W = new Spell(SpellSlot.W, 750);
-            W.SetSkillshot(0.5f, 95, 500, false, SkillshotType.SkillshotLine);
+            W.SetSkillshot(0.5f, 95, 3000, false, SkillshotType.SkillshotLine);
 
             E = new Spell(SpellSlot.E);
 
@@ -189,7 +189,7 @@ namespace jesuisFiora
                 {
                     if (Menu.Item("RComboSelected").IsActive())
                     {
-                        var unit = Hud.SelectedUnit as Obj_AI_Hero;
+                        var unit = TargetSelector.GetSelectedTarget();
                         if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) && CastR(target))
                         {
                             return;
