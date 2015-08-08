@@ -142,19 +142,19 @@ namespace jesuisFiora
 
             AutoUltMode();
 
-            var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Physical);
             var mode = Orbwalker.ActiveMode;
             var combo = mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
 
-            if (target == null || !target.IsValidTarget(W.Range))
-            {
-                return;
-            }
 
             if (combo)
             {
                 var comboMode = mode.Equals(Orbwalking.OrbwalkingMode.Combo) ? "Combo" : "Harass";
+                var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Physical);
 
+                if (target == null || !target.IsValidTarget(W.Range))
+                {
+                    return;
+                }
 
                 var qCombo = Menu.Item("Q" + comboMode).IsActive();
                 var wCombo = Menu.Item("W" + comboMode).IsActive();
@@ -190,8 +190,7 @@ namespace jesuisFiora
                     if (Menu.Item("RComboSelected").IsActive())
                     {
                         var unit = Hud.SelectedUnit as Obj_AI_Hero;
-                        if (unit != null && unit.IsValid && unit.IsEnemy &&
-                            unit.ChampionName.Equals(target.ChampionName) && CastR(target))
+                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) && CastR(target))
                         {
                             return;
                         }
@@ -201,26 +200,28 @@ namespace jesuisFiora
                     CastR(target);
                 }
             }
-
-            if (mode.Equals(Orbwalking.OrbwalkingMode.LastHit) && Menu.Item("QLastHit").IsActive() &&
-                Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
+            else
             {
-                var killableMinion =
-                    MinionManager.GetMinions(Q.Range)
-                        .FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
-                if (killableMinion != null)
+                if (mode.Equals(Orbwalking.OrbwalkingMode.LastHit) && Menu.Item("QLastHit").IsActive() &&
+                    Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
                 {
-                    Q.Cast(killableMinion);
+                    var killableMinion =
+                        MinionManager.GetMinions(Q.Range)
+                            .FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
+                    if (killableMinion != null)
+                    {
+                        Q.Cast(killableMinion);
+                    }
                 }
-            }
 
-            if (mode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && Menu.Item("QLaneClear").IsActive() &&
-                Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
-            {
-                var minion = MinionManager.GetMinions(Q.Range).OrderBy(obj => obj.Distance(Player)).FirstOrDefault();
-                if (minion != null)
+                if (mode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && Menu.Item("QLaneClear").IsActive() &&
+                    Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
                 {
-                    Q.Cast(minion);
+                    var minion = MinionManager.GetMinions(Q.Range).OrderBy(obj => obj.Distance(Player)).FirstOrDefault();
+                    if (minion != null)
+                    {
+                        Q.Cast(minion);
+                    }
                 }
             }
         }
@@ -325,7 +326,7 @@ namespace jesuisFiora
                     .Where(obj => obj.IsValid && obj.IsValidTarget(R.Range))
                     .Any(
                         enemy =>
-                            enemy.GetVitalCount() >= Menu.Item("RKillVital").GetValue<Slider>().Value &&
+                            CountPassive(enemy) >= Menu.Item("RKillVital").GetValue<Slider>().Value &&
                             Player.GetDamageSpell(enemy, SpellSlot.R).CalculatedDamage >= enemy.Health &&
                             R.Cast(enemy).IsCasted())) {}
         }
