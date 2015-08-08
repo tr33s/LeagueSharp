@@ -112,11 +112,12 @@ namespace jesuisFiora
             rMisc.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
             rMisc.AddBool("PermaShow", "PermaShow");
 
-            if (rMisc.Item("PermaShow").IsActive()) {
-            rMisc.Item("RKill").Permashow(true, null, Color.DeepPink);
-        }
+            if (rMisc.Item("PermaShow").IsActive())
+            {
+                rMisc.Item("RKill").Permashow(true, null, Color.DeepPink);
+            }
 
-        //miscMenu.AddBool("OrbwalkPassive", "Orbwalk to Passive Position");
+            //miscMenu.AddBool("OrbwalkPassive", "Orbwalk to Passive Position");
             miscMenu.AddBool("Sounds", "Sounds");
 
             var drawMenu = Menu.AddMenu("Drawing", "Drawing");
@@ -339,7 +340,8 @@ namespace jesuisFiora
                             enemy.IsValidTarget() &&
                             Player.GetSpellDamage(enemy, SpellSlot.Q) + Player.GetSpellDamage(enemy, SpellSlot.W) +
                             (E.IsReady() ? 4 * Player.GetAutoAttackDamage(enemy) : 2 * Player.GetAutoAttackDamage(enemy)) +
-                            GetPassiveDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health))
+                            GetPassiveDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health &&
+                            enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
             {
                 if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range))
                 {
