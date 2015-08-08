@@ -397,7 +397,7 @@ namespace jesuisFiora
                 return new Vector3();
             }
 
-            var pos = Prediction.GetPrediction(target, Q.Range).UnitPosition.To2D();
+            var pos = Prediction.GetPrediction(target, Q.Delay).UnitPosition.To2D();
 
             if (passive.Name.Contains("NE"))
             {
