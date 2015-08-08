@@ -16,42 +16,27 @@ namespace jesuisFiora
         public static Spell Q, W, E, R;
         public static Menu Menu;
 
-        private static readonly List<string> FioraPassive = new List<string>
-        {
-            "Fiora_Base_Passive_NE.troy",
-            "Fiora_Base_Passive_SE.troy",
-            "Fiora_Base_Passive_NW.troy",
-            "Fiora_Base_Passive_SW.troy",
-            "Fiora_Base_Passive_NE_Timeout.troy",
-            "Fiora_Base_Passive_SE_Timeout.troy",
-            "Fiora_Base_Passive_NW_Timeout.troy",
-            "Fiora_Base_Passive_SW_Timeout.troy"
-        };
-
-        public static readonly List<string> FioraUltPassive = new List<string>
-        {
-            "Fiora_Base_R_Mark.troy",
-            "Fiora_Base_R.troy"
-        };
-
-        public static List<GameObject> FioraUltPassiveObjects
+        public static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
         {
             get
             {
                 return
-                    ObjectManager.Get<GameObject>()
-                        .Where(obj => obj.IsValid && FioraUltPassive.Contains(obj.Name))
+                    ObjectManager.Get<Obj_GeneralParticleEmitter>()
+                        .Where(
+                            obj =>
+                                obj.IsValid && obj.Name.Contains("Fiora_Base_R_Mark") ||
+                                (obj.Name.Contains("Fiora_Base_R") && obj.Name.Contains("Timeout")))
                         .ToList();
             }
         }
 
-        public static List<GameObject> FioraPassiveObjects
+        public static List<Obj_GeneralParticleEmitter> FioraPassiveObjects
         {
             get
             {
                 return
-                    ObjectManager.Get<GameObject>()
-                        .Where(obj => obj.IsValid && FioraPassive.Contains(obj.Name))
+                    ObjectManager.Get<Obj_GeneralParticleEmitter>()
+                        .Where(obj => obj.IsValid && obj.Name.Contains("Fiora_Base_Passive"))
                         .ToList();
             }
         }
@@ -166,13 +151,14 @@ namespace jesuisFiora
                 return;
             }
 
-
             if (combo)
             {
                 var comboMode = mode.Equals(Orbwalking.OrbwalkingMode.Combo) ? "Combo" : "Harass";
+
+
                 var qCombo = Menu.Item("Q" + comboMode).IsActive();
                 var wCombo = Menu.Item("W" + comboMode).IsActive();
-                var rCombo = Menu.Item("R" + comboMode).IsActive();
+                var rCombo = comboMode.Equals("Combo") && Menu.Item("R" + comboMode).IsActive();
 
                 if (comboMode.Equals("Harass") && Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
                 {
@@ -199,11 +185,13 @@ namespace jesuisFiora
                     return;
                 }
 
-                if (mode.Equals(Orbwalking.OrbwalkingMode.Combo) && rCombo)
+                if (rCombo)
                 {
                     if (Menu.Item("RComboSelected").IsActive())
                     {
-                        if (Hud.SelectedUnit.Equals(target) && CastR(target))
+                        var unit = Hud.SelectedUnit as Obj_AI_Hero;
+                        if (unit != null && unit.IsValid && unit.IsEnemy &&
+                            unit.ChampionName.Equals(target.ChampionName) && CastR(target))
                         {
                             return;
                         }
@@ -217,18 +205,24 @@ namespace jesuisFiora
             if (mode.Equals(Orbwalking.OrbwalkingMode.LastHit) && Menu.Item("QLastHit").IsActive() &&
                 Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
             {
-                foreach (var obj in
-                    ObjectManager.Get<Obj_AI_Minion>()
-                        .Where(
-                            minion =>
-                                minion.IsValidTarget(Q.Range) && MinionManager.IsMinion(minion) &&
-                                minion.Health < Player.GetSpellDamage(minion, SpellSlot.Q)))
+                var killableMinion =
+                    MinionManager.GetMinions(Q.Range)
+                        .FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
+                if (killableMinion != null)
                 {
-                    Q.Cast(obj);
+                    Q.Cast(killableMinion);
                 }
             }
 
-            if (Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.LaneClear) {}
+            if (mode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && Menu.Item("QLaneClear").IsActive() &&
+                Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
+            {
+                var minion = MinionManager.GetMinions(Q.Range).OrderBy(obj => obj.Distance(Player)).FirstOrDefault();
+                if (minion != null)
+                {
+                    Q.Cast(minion);
+                }
+            }
         }
 
         private static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
@@ -251,7 +245,7 @@ namespace jesuisFiora
             };
 
             if (sender.IsEnemy && args.Target != null && args.Target.IsMe && Menu.Item("WSpells").IsActive() &&
-                W.IsReady() && blockableTypes.Contains(args.SData.TargettingType))
+                W.IsReady() && blockableTypes.Contains(args.SData.TargettingType) && !Orbwalking.IsAutoAttack(args.SData.Name))
             {
                 W.Cast(sender);
             }
@@ -282,7 +276,7 @@ namespace jesuisFiora
 
             if (Menu.Item("WDraw").IsActive())
             {
-                Render.Circle.DrawCircle(Player.Position, W.Range, Color.DeepPink);
+                Render.Circle.DrawCircle(Player.Position, W.Range, Color.DeepPink, 3);
             }
 
             if (Menu.Item("RDraw").IsActive())
@@ -332,10 +326,7 @@ namespace jesuisFiora
                         enemy =>
                             enemy.GetVitalCount() >= Menu.Item("RKillVital").GetValue<Slider>().Value &&
                             Player.GetDamageSpell(enemy, SpellSlot.R).CalculatedDamage >= enemy.Health &&
-                            R.Cast(enemy).IsCasted()))
-            {
-                return;
-            }
+                            R.Cast(enemy).IsCasted())) {}
         }
 
         public static bool CastQ(Obj_AI_Base target)
@@ -351,6 +342,7 @@ namespace jesuisFiora
             }
 
             var pos = GetPassivePosition(target);
+
             return pos.Equals(Vector3.Zero) ? Q.Cast(target).IsCasted() : Q.Cast(pos);
         }
 
@@ -388,15 +380,16 @@ namespace jesuisFiora
 
         public static Vector3 GetPassivePosition(Obj_AI_Base target)
         {
-            var ultPassive =
-                FioraUltPassiveObjects.OrderBy(obj => obj.Position.Distance(target.ServerPosition)).FirstOrDefault();
+            var passive =
+                FioraUltPassiveObjects.OrderBy(obj => obj.Position.Distance(target.ServerPosition))
+                    .FirstOrDefault(obj => obj.IsValid && obj.IsVisible);
+            var d = 320;
 
-            if (ultPassive != null)
+            if (passive == null)
             {
-                return ultPassive.Position;
+                passive = FioraPassiveObjects.FirstOrDefault(obj => obj.Position.Distance(target.ServerPosition) < 50);
+                d = 200;
             }
-
-            var passive = FioraPassiveObjects.FirstOrDefault(obj => obj.Position.Distance(target.ServerPosition) < 50);
 
             if (passive == null)
             {
@@ -407,22 +400,22 @@ namespace jesuisFiora
 
             if (passive.Name.Contains("NE"))
             {
-                pos.Y += 200;
+                pos.Y += d;
             }
 
             if (passive.Name.Contains("SE"))
             {
-                pos.X -= 200;
+                pos.X -= d;
             }
 
             if (passive.Name.Contains("NW"))
             {
-                pos.X += 200;
+                pos.X += d;
             }
 
             if (passive.Name.Contains("SW"))
             {
-                pos.Y -= 200;
+                pos.Y -= d;
             }
 
             return pos.To3D();
