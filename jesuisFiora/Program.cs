@@ -442,19 +442,16 @@ namespace jesuisFiora
         public static double GetPassiveDamage(Obj_AI_Base target)
         {
             var count = CountPassive(target);
-            if (count == 0)
-            {
-                return 0;
-            }
-            return GetPassiveDamage(target, count);
+            return count == 0 ? 0 : GetPassiveDamage(target, count);
         }
 
         public static double GetPassiveDamage(Obj_AI_Base target, int passiveCount)
         {
-            var bonus = (.027f + .001f * Player.Level) * Player.FlatPhysicalDamageMod / 100f;
-            bonus = Math.Min(Math.Max(.028f, bonus), .45f);
-
-            return passiveCount * (.03f + bonus) * target.MaxHealth;
+            return passiveCount *
+                   (.03f +
+                    (Math.Min(
+                        Math.Max(.028f, (.027 + .001f * Player.Level * Player.FlatPhysicalDamageMod / 100f)), .45f))) *
+                   target.MaxHealth;
         }
 
         public static int CountPassive(Obj_AI_Base target)
