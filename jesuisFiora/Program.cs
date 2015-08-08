@@ -208,7 +208,10 @@ namespace jesuisFiora
                         return;
                     }
 
-                    CastR(target);
+                    if (CastR(target))
+                    {
+                        Hud.SelectedUnit = target;
+                    }
                 }
             }
             else
@@ -330,7 +333,7 @@ namespace jesuisFiora
             if (!Menu.Item("RKill").IsActive() || !R.IsReady() || Player.CountEnemiesInRange(R.Range) == 0)
 
             {
-                return;
+                return;c
             }
 
             foreach (var obj in
@@ -343,9 +346,9 @@ namespace jesuisFiora
                             GetPassiveDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health &&
                             enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
             {
-                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range))
+                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range) && CastR(obj))
                 {
-                    CastR(obj);
+                    Hud.SelectedUnit = obj;
                 }
 
                 var pos = obj.HPBarPosition;
