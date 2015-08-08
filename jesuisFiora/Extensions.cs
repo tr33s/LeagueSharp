@@ -1,4 +1,7 @@
-﻿using System.Linq;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Media;
 using LeagueSharp;
 using LeagueSharp.Common;
 
@@ -93,6 +96,28 @@ namespace jesuisFiora
             bool defaultValue = false)
         {
             menu.AddItem(new MenuItem(name, displayName).SetValue(new KeyBind(key, type, defaultValue)));
+        }
+    }
+
+    internal class SoundObject
+    {
+        public static float LastPlayed;
+        private static SoundPlayer _sound;
+
+        public SoundObject(Stream sound)
+        {
+            LastPlayed = 0;
+            _sound = new SoundPlayer(sound);
+        }
+
+        public void Play()
+        {
+            if (Environment.TickCount - LastPlayed < 1500)
+            {
+                return;
+            }
+            _sound.Play();
+            LastPlayed = Environment.TickCount;
         }
     }
 }
