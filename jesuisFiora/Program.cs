@@ -5,7 +5,6 @@ using jesuisFiora.Properties;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
-using Color = System.Drawing.Color;
 using ItemData = LeagueSharp.Common.Data.ItemData;
 
 namespace jesuisFiora
@@ -101,15 +100,23 @@ namespace jesuisFiora
             var miscMenu = Menu.AddMenu("Misc", "Misc");
 
             var qMisc = miscMenu.AddMenu("Q", "Q");
+            qMisc.AddKeyBind("QFlee", "Q Flee", 'T');
             qMisc.AddBool("QGapClose", "Q Flee on Gapclose");
 
             var wMisc = miscMenu.AddMenu("W", "W");
+            wMisc.AddBool("WTurret", "W Target Under Enemy Turret");
             wMisc.AddBool("WSpells", "W Incoming Spells");
 
-            var rMisc = miscMenu.AddMenu("R", "R (SOON)");
-            rMisc.AddBool("RKill", "Duelist Mode (SOON)");
+            var rMisc = miscMenu.AddMenu("R", "R");
+            rMisc.AddKeyBind("RKill", "Duelist Mode", 'H', KeyBindType.Toggle, true);
             rMisc.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
+            rMisc.AddBool("PermaShow", "PermaShow");
 
+            if (rMisc.Item("PermaShow").IsActive()) {
+            rMisc.Item("RKill").Permashow(true, null, Color.DeepPink);
+        }
+
+        //miscMenu.AddBool("OrbwalkPassive", "Orbwalk to Passive Position");
             miscMenu.AddBool("Sounds", "Sounds");
 
             var drawMenu = Menu.AddMenu("Drawing", "Drawing");
@@ -140,6 +147,7 @@ namespace jesuisFiora
                 return;
             }
 
+            Flee();
             AutoUltMode();
 
             var mode = Orbwalker.ActiveMode;
@@ -155,6 +163,8 @@ namespace jesuisFiora
                 {
                     return;
                 }
+
+                //OrbwalkToPassive(target);
 
                 var qCombo = Menu.Item("Q" + comboMode).IsActive();
                 var wCombo = Menu.Item("W" + comboMode).IsActive();
@@ -273,17 +283,17 @@ namespace jesuisFiora
 
             if (Menu.Item("QDraw").IsActive())
             {
-                Render.Circle.DrawCircle(Player.Position, Q.Range, Color.Purple, 7);
+                Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.Purple, 7);
             }
 
             if (Menu.Item("WDraw").IsActive())
             {
-                Render.Circle.DrawCircle(Player.Position, W.Range, Color.DeepPink, 3);
+                Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.DeepPink, 3);
             }
 
             if (Menu.Item("RDraw").IsActive())
             {
-                Render.Circle.DrawCircle(Player.Position, R.Range, Color.White, 7);
+                Render.Circle.DrawCircle(Player.Position, R.Range, System.Drawing.Color.White, 7);
             }
         }
 
@@ -317,18 +327,28 @@ namespace jesuisFiora
         public static void AutoUltMode()
         {
             if (!Menu.Item("RKill").IsActive() || !R.IsReady() || Player.CountEnemiesInRange(R.Range) == 0)
+
             {
                 return;
             }
 
-            if (
+            foreach (var obj in
                 ObjectManager.Get<Obj_AI_Hero>()
-                    .Where(obj => obj.IsValid && obj.IsValidTarget(R.Range))
-                    .Any(
+                    .Where(
                         enemy =>
-                            CountPassive(enemy) >= Menu.Item("RKillVital").GetValue<Slider>().Value &&
-                            Player.GetDamageSpell(enemy, SpellSlot.R).CalculatedDamage >= enemy.Health &&
-                            R.Cast(enemy).IsCasted())) {}
+                            enemy.IsValidTarget() &&
+                            Player.GetSpellDamage(enemy, SpellSlot.Q) + Player.GetSpellDamage(enemy, SpellSlot.W) +
+                            (E.IsReady() ? 4 * Player.GetAutoAttackDamage(enemy) : 2 * Player.GetAutoAttackDamage(enemy)) +
+                            GetPassiveDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health))
+            {
+                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range))
+                {
+                    CastR(obj);
+                }
+
+                var pos = obj.HPBarPosition;
+                Drawing.DrawText(pos.X, pos.Y - 30, System.Drawing.Color.DeepPink, "Killable!");
+            }
         }
 
         public static bool CastQ(Obj_AI_Base target)
@@ -350,7 +370,13 @@ namespace jesuisFiora
 
         public static bool CastW(Obj_AI_Base target)
         {
-            return W.IsReady() && target.IsValidTarget(W.Range) && W.Cast(target).IsCasted();
+            if (!W.IsReady() || !target.IsValidTarget(W.Range) ||
+                (Menu.Item("WTurret").IsActive() && target.UnderTurret(true)))
+            {
+                return false;
+            }
+
+            return W.Cast(target).IsCasted();
         }
 
         public static bool CastR(Obj_AI_Base target)
@@ -372,6 +398,57 @@ namespace jesuisFiora
             }
 
             return false;
+        }
+
+        public static void Flee()
+        {
+            if (Menu.Item("QFlee").IsActive() && Q.IsReady())
+            {
+                Q.Cast(Player.ServerPosition.Extend(Game.CursorPos, Q.Range + 10));
+            }
+        }
+
+        public static void OrbwalkToPassive(Obj_AI_Hero target)
+        {
+            if (!Menu.Item("OrbwalkPassive").IsActive() || CountPassive(target) == 0)
+            {
+                return;
+            }
+
+            var passive =
+                FioraUltPassiveObjects.OrderBy(obj => obj.Position.Distance(target.ServerPosition))
+                    .FirstOrDefault(obj => obj.IsValid && obj.IsVisible);
+
+            if (passive != null)
+            {
+                Orbwalker.SetOrbwalkingPoint(passive.Position);
+                return;
+            }
+
+            passive = FioraPassiveObjects.FirstOrDefault(obj => obj.Position.Distance(target.ServerPosition) < 50);
+
+            if (passive != null)
+            {
+                Orbwalker.SetOrbwalkingPoint(passive.Position);
+            }
+        }
+
+        public static double GetPassiveDamage(Obj_AI_Base target)
+        {
+            var count = CountPassive(target);
+            if (count == 0)
+            {
+                return 0;
+            }
+            return GetPassiveDamage(target, count);
+        }
+
+        public static double GetPassiveDamage(Obj_AI_Base target, int passiveCount)
+        {
+            var bonus = (.027f + .001f * Player.Level) * Player.FlatPhysicalDamageMod / 100f;
+            bonus = Math.Min(Math.Max(.028f, bonus), .45f);
+
+            return passiveCount * (.03f + bonus) * target.MaxHealth;
         }
 
         public static int CountPassive(Obj_AI_Base target)
