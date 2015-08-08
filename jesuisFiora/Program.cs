@@ -186,6 +186,11 @@ namespace jesuisFiora
                     return;
                 }
 
+                if (Player.IsDashing())
+                {
+                    return;
+                }
+
                 if (Menu.Item("Items" + comboMode).IsActive() && CastItems())
                 {
                     return;
