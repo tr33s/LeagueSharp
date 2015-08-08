@@ -245,7 +245,8 @@ namespace jesuisFiora
             };
 
             if (sender.IsEnemy && args.Target != null && args.Target.IsMe && Menu.Item("WSpells").IsActive() &&
-                W.IsReady() && blockableTypes.Contains(args.SData.TargettingType) && !Orbwalking.IsAutoAttack(args.SData.Name))
+                W.IsReady() && blockableTypes.Contains(args.SData.TargettingType) &&
+                !Orbwalking.IsAutoAttack(args.SData.Name))
             {
                 W.Cast(sender);
             }
