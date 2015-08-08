@@ -250,7 +250,7 @@ namespace jesuisFiora
                 SpellDataTargetType.Unit
             };
 
-            if (sender.IsEnemy && args.Target != null && args.Target.IsMe && Menu.Item("WSpell").IsActive() &&
+            if (sender.IsEnemy && args.Target != null && args.Target.IsMe && Menu.Item("WSpells").IsActive() &&
                 W.IsReady() && blockableTypes.Contains(args.SData.TargettingType))
             {
                 W.Cast(sender);
