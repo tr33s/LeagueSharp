@@ -68,7 +68,6 @@ namespace jesuisFiora
             R = new Spell(SpellSlot.R, 500);
             R.SetTargetted(.066f, 500);
 
-
             Menu = new Menu("jesuisFiora", "jesuisFiora", true);
 
             Orbwalker = Menu.AddOrbwalker();
@@ -124,6 +123,12 @@ namespace jesuisFiora
             drawMenu.AddBool("QDraw", "Draw Q");
             drawMenu.AddBool("WDraw", "Draw W");
             drawMenu.AddBool("RDraw", "Draw R");
+            drawMenu.AddBool("DuelistDraw", "Duelist Killable Drawing");
+
+            var dmg = drawMenu.AddMenu("DamageIndicator", "Damage Indicator");
+            dmg.AddBool("DamageIndicator", "Draw Damage Indicator");
+            dmg.AddCircle("HPColor", "Predicted Health Color", System.Drawing.Color.White);
+            dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.DeepPink);
 
             Menu.AddToMainMenu();
 
@@ -132,6 +137,8 @@ namespace jesuisFiora
                 var sound = new SoundObject(Resources.OnLoad);
                 sound.Play();
             }
+
+            DamageIndicator.DamageToUnit = GetComboDamage;
 
             Game.OnUpdate += Game_OnGameUpdate;
             Orbwalking.AfterAttack += AfterAttack;
@@ -346,9 +353,7 @@ namespace jesuisFiora
                     .Where(
                         enemy =>
                             enemy.IsValidTarget() &&
-                            Player.GetSpellDamage(enemy, SpellSlot.Q) + Player.GetSpellDamage(enemy, SpellSlot.W) +
-                            (E.IsReady() ? 4 * Player.GetAutoAttackDamage(enemy) : 2 * Player.GetAutoAttackDamage(enemy)) +
-                            GetPassiveDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health &&
+                            GetComboDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health &&
                             enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
             {
                 if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range) &&
@@ -357,8 +362,11 @@ namespace jesuisFiora
                     Hud.SelectedUnit = obj;
                 }
 
-                var pos = obj.HPBarPosition;
-                Drawing.DrawText(pos.X, pos.Y - 30, System.Drawing.Color.DeepPink, "Killable!");
+                if (Menu.Item("DuelistDraw").IsActive())
+                {
+                    var pos = obj.HPBarPosition;
+                    Drawing.DrawText(pos.X, pos.Y - 30, System.Drawing.Color.DeepPink, "Killable!");
+                }
             }
         }
 
@@ -397,18 +405,15 @@ namespace jesuisFiora
 
         public static bool CastItems()
         {
-            if (ItemData.Tiamat_Melee_Only.GetItem().IsReady() && ItemData.Tiamat_Melee_Only.GetItem().Cast())
+            var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
+
+            if (tiamat != null && tiamat.IsReady() && tiamat.Cast())
             {
                 return true;
             }
 
-            if (ItemData.Ravenous_Hydra_Melee_Only.GetItem().IsReady() &&
-                ItemData.Ravenous_Hydra_Melee_Only.GetItem().Cast())
-            {
-                return true;
-            }
-
-            return false;
+            var hydra = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
+            return hydra != null && hydra.IsReady() && hydra.Cast();
         }
 
         public static void Flee()
@@ -506,6 +511,61 @@ namespace jesuisFiora
             }
 
             return pos.To3D();
+        }
+
+        public static float GetComboDamage(Obj_AI_Hero unit)
+        {
+            return GetComboDamage(unit, 0);
+        }
+
+        public static float GetComboDamage(Obj_AI_Hero unit, int maxStacks)
+        {
+            var d = 2 * Player.GetAutoAttackDamage(unit);
+
+            var hydra = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
+            if (hydra != null && hydra.IsReady())
+            {
+                d += Player.GetItemDamage(unit, Damage.DamageItems.Hydra);
+            }
+
+            var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
+            if (tiamat != null && tiamat.IsReady())
+            {
+                d += Player.GetItemDamage(unit, Damage.DamageItems.Tiamat);
+            }
+
+            if (Q.IsReady())
+            {
+                d += Player.GetSpellDamage(unit, SpellSlot.Q);
+            }
+
+            if (W.IsReady())
+            {
+                d += Player.GetSpellDamage(unit, SpellSlot.W);
+            }
+
+            if (E.IsReady())
+            {
+                d += 2 * Player.GetAutoAttackDamage(unit);
+            }
+
+            if (maxStacks == 0)
+            {
+                if (R.IsReady())
+                {
+                    d += GetPassiveDamage(unit, 4);
+                }
+                else
+                {
+                    d += GetPassiveDamage(unit);
+                }
+            }
+            else
+            {
+                d += GetPassiveDamage(unit, maxStacks);
+            }
+
+            return (float) d;
         }
     }
 }

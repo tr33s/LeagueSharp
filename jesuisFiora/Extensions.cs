@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Media;
 using LeagueSharp;
@@ -75,6 +76,16 @@ namespace jesuisFiora
             {
                 i.SetValue(value);
             }
+        }
+
+        public static void AddCircle(this Menu menu,
+            string name,
+            string displayName,
+            Color color,
+            float radius = 0,
+            bool enabled = true)
+        {
+            menu.AddItem(new MenuItem(name, displayName).SetValue(new Circle(enabled, color, radius)));
         }
 
         public static Menu AddMenu(this Menu menu, string name, string displayName)
