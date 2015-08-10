@@ -53,6 +53,7 @@ namespace jesuisFiora
             List.Add("Morgana", q);
             List.Add("Nami", q);
             List.Add("Nautilus", q);
+            List.Add("Malzahar", r);
             List.Add("Pantehon", w);
             List.Add("Poppy", e);
             List.Add("Rammus", e);
