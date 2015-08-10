@@ -59,6 +59,7 @@ namespace jesuisFiora
             List.Add("Teemo", q);
             List.Add("Thresh", q);
             List.Add("Tristana", r);
+            List.Add("Vayne", e);
             List.Add("VelKoz", e);
             List.Add("Vi", r);
             List.Add("Zyra", e);
