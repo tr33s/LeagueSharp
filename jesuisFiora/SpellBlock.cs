@@ -49,19 +49,34 @@ namespace jesuisFiora
             List.Add("Lux", q);
             List.Add("Malphite", r);
             List.Add("Maokai", w);
+            List.Add("MonkeyKing", r);
             List.Add("Morgana", q);
             List.Add("Nami", q);
             List.Add("Nautilus", q);
+            List.Add("Pantehon", w);
+            List.Add("Poppy", e);
+            List.Add("Rammus", e);
             List.Add("Rengar", e);
+            List.Add("Riven", w);
             List.Add("Ryze", w);
             List.Add("Shen", e);
             List.Add("Singed", e);
+            List.Add("Skarner", r);
+            List.Add("Sona", r);
+            List.Add("Syndra", e);
+            List.Add("TahmKench", w);
             List.Add("Teemo", q);
             List.Add("Thresh", q);
             List.Add("Tristana", r);
+            List.Add("Urgot", r);
             List.Add("Vayne", e);
             List.Add("VelKoz", e);
+            List.Add("Varus", r);
             List.Add("Vi", r);
+            List.Add("Warwick", r);
+            List.Add("Xerath", e);
+            List.Add("XinZhao", r);
+            List.Add("Zed", r);
             List.Add("Zyra", e);
         }
 
