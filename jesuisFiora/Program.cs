@@ -165,7 +165,7 @@ namespace jesuisFiora
             if (combo)
             {
                 var comboMode = mode.GetModeString();
-                var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Physical);
+                var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
 
                 if (target == null || !target.IsValidTarget(W.Range))
                 {
