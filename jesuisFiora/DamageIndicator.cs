@@ -99,8 +99,6 @@ namespace jesuisFiora
                         Drawing.DrawLine(pos1 + i, yPos, pos1 + i, yPos + Height, 1, FillColor);
                     }
                 }
-
-
             }
         }
     }

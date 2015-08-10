@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Media;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -14,6 +15,12 @@ namespace jesuisFiora
             return mode != Orbwalking.OrbwalkingMode.None;
         }
 
+        public static SpellSlot GetSpellSlot(this Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        {
+            var instance = sender.Spellbook.Spells.FirstOrDefault(spell => spell.Name.Equals(args.SData.Name));
+            return instance == null ? SpellSlot.Unknown : instance.Slot;
+        }
+
         public static SpellDataInst[] GetMainSpells(this Spellbook spellbook)
         {
             return new[]
@@ -21,6 +28,22 @@ namespace jesuisFiora
                 spellbook.GetSpell(SpellSlot.Q), spellbook.GetSpell(SpellSlot.W), spellbook.GetSpell(SpellSlot.E),
                 spellbook.GetSpell(SpellSlot.R)
             };
+        }
+
+        public static bool IsSkillShot(this SpellDataTargetType type)
+        {
+            return type.Equals(SpellDataTargetType.Location) || type.Equals(SpellDataTargetType.Location2) ||
+                   type.Equals(SpellDataTargetType.LocationVector);
+        }
+
+        public static bool IsTargeted(this SpellDataTargetType type)
+        {
+            return type.Equals(SpellDataTargetType.Unit) || type.Equals(SpellDataTargetType.SelfAndUnit);
+        }
+
+        public static string GetModeString(this Orbwalking.OrbwalkingMode mode)
+        {
+            return mode.Equals(Orbwalking.OrbwalkingMode.Mixed) ? "Harass" : mode.ToString();
         }
 
         public static HitChance GetHitChance(this MenuItem item)

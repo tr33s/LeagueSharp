@@ -164,7 +164,7 @@ namespace jesuisFiora
 
             if (combo)
             {
-                var comboMode = mode.Equals(Orbwalking.OrbwalkingMode.Combo) ? "Combo" : "Harass";
+                var comboMode = mode.GetModeString();
                 var target = TargetSelector.GetTarget(R.Range, TargetSelector.DamageType.Physical);
 
                 if (target == null || !target.IsValidTarget(W.Range))
@@ -265,17 +265,30 @@ namespace jesuisFiora
                 return;
             }
 
-            var blockableTypes = new List<SpellDataTargetType>
-            {
-                SpellDataTargetType.SelfAndUnit,
-                SpellDataTargetType.Unit
-            };
+            var autoW = Menu.Item("WSpells").IsActive() && W.IsReady();
+            var blockableSpell = sender is Obj_AI_Hero && sender.IsEnemy && SpellBlock.Contains(sender, args);
+            var type = args.SData.TargettingType;
 
-            if (sender.IsEnemy && args.Target != null && args.Target.IsMe && Menu.Item("WSpells").IsActive() &&
-                W.IsReady() && blockableTypes.Contains(args.SData.TargettingType) &&
-                !Orbwalking.IsAutoAttack(args.SData.Name))
+            if (!autoW || !blockableSpell)
             {
-                W.Cast(sender);
+                return;
+            }
+
+            if (type.IsSkillShot())
+            {
+                var rectangle = new Geometry.Polygon.Line(args.Start, args.End);
+                if (rectangle.Points.Any(point => point.Distance(Player.ServerPosition.To2D()) < 50))
+                {
+                    CastWOverride(sender);
+                }
+            }
+            else if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
+            {
+                CastWOverride(sender);
+            }
+            else if (args.End.Distance(Player.ServerPosition) < 100)
+            {
+                CastWOverride(sender);
             }
         }
 
@@ -327,7 +340,7 @@ namespace jesuisFiora
                 return;
             }
 
-            var comboMode = mode.ToString().Equals("Mixed") ? "Harass" : mode.ToString();
+            var comboMode = mode.GetModeString();
 
             if (Menu.Item("E" + comboMode).IsActive() && E.IsReady())
             {
@@ -396,6 +409,18 @@ namespace jesuisFiora
             }
 
             return W.Cast(target).IsCasted();
+        }
+
+        public static void CastWOverride(Obj_AI_Base target)
+        {
+            if (Player.Distance(target) > W.Range)
+            {
+                Player.Spellbook.CastSpell(SpellSlot.W, target.ServerPosition);
+            }
+            else
+            {
+                W.Cast(target);
+            }
         }
 
         public static bool CastR(Obj_AI_Base target)
