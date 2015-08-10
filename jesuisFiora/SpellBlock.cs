@@ -13,7 +13,7 @@ namespace jesuisFiora
             const SpellSlot w = SpellSlot.W;
             const SpellSlot e = SpellSlot.E;
             const SpellSlot r = SpellSlot.R;
-
+            const SpellSlot N48 = (SpellSlot) 48;
             List.Add("Aatrox", q);
             List.Add("Ahri", e);
             List.Add("Alistar", w);
@@ -32,7 +32,6 @@ namespace jesuisFiora
             List.Add("Fiddlesticks", q);
             List.Add("Fiora", w);
             List.Add("Fizz", r);
-            List.Add("Galio", r);
             List.Add("Garen", r);
             List.Add("MegaGnar", r);
             List.Add("Graves", r);
@@ -44,7 +43,7 @@ namespace jesuisFiora
             List.Add("Jax", e);
             List.Add("LeeSin", r);
             List.Add("Leona", r);
-            List.Add("Lissandra", r);
+            List.Add("Lissandra", N48);
             List.Add("Lulu", w);
             List.Add("Lux", q);
             List.Add("Malphite", r);
@@ -85,8 +84,9 @@ namespace jesuisFiora
         {
             var name = unit.CharData.BaseSkinName;
             var slot = unit.GetSpellSlot(args);
-            //Game.PrintChat("{0} {1}", name, slot);
-            return List.ContainsKey(name) && List[name].Equals(slot);
+            var active = Program.Menu.Item(name).IsActive();
+            //Game.PrintChat("{0} {1} {2}", name, slot, active);
+            return List.ContainsKey(name) && List[name].Equals(slot) && active;
         }
     }
 }

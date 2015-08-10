@@ -103,8 +103,19 @@ namespace jesuisFiora
             qMisc.AddBool("QGapClose", "Q Flee on Gapclose");
 
             var wMisc = miscMenu.AddMenu("W", "W");
+            var wSpells = wMisc.AddMenu("BlockSpells", "Block Spells");
+            wSpells.AddBool("WSpells", "W Incoming Spells");
+
+            foreach (var s in
+                ObjectManager.Get<Obj_AI_Hero>()
+                    .Where(hero => hero.IsValid && hero.IsEnemy)
+                    .Select(enemy => enemy.ChampionName.Equals("Gnar") ? "MegaGnar" : enemy.ChampionName)
+                    .Where(s => SpellBlock.List.ContainsKey(s)))
+            {
+                wSpells.AddBool(s, "Block " + s + " " + SpellBlock.List[s]);
+            }
+
             wMisc.AddBool("WTurret", "W Target Under Enemy Turret");
-            wMisc.AddBool("WSpells", "W Incoming Spells");
 
             var rMisc = miscMenu.AddMenu("R", "R");
             rMisc.AddKeyBind("RKill", "Duelist Mode", 'H', KeyBindType.Toggle, true);
@@ -198,10 +209,10 @@ namespace jesuisFiora
                     return;
                 }
 
-                if (Menu.Item("Items" + comboMode).IsActive() && CastItems())
+                /*if (Menu.Item("Items" + comboMode).IsActive() && CastItems())
                 {
                     return;
-                }
+                }*/
 
                 if (wCombo && CastW(target))
                 {
@@ -349,7 +360,8 @@ namespace jesuisFiora
 
             if (Menu.Item("Items" + comboMode).IsActive())
             {
-                Utility.DelayAction.Add((int) (E.Delay * 1000f + Game.Ping / 2f + 20), () => CastItems());
+                Utility.DelayAction.Add(
+                    (int) (E.Delay * 1000f + Game.Ping / 2f + 20), () => CastItems(TargetSelector.GetSelectedTarget()));
             }
         }
 
@@ -428,10 +440,15 @@ namespace jesuisFiora
             return R.IsReady() && target.IsValidTarget(R.Range) && R.Cast(target).IsCasted();
         }
 
-        public static bool CastItems()
+        public static bool CastItems(Obj_AI_Base target)
         {
-            var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
+            var botrk = ItemData.Blade_of_the_Ruined_King.GetItem();
+            if (botrk != null && botrk.IsReady() && target.IsValidTarget(botrk.Range))
+            {
+                botrk.Cast(target);
+            }
 
+            var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
             if (tiamat != null && tiamat.IsReady() && tiamat.Cast())
             {
                 return true;
