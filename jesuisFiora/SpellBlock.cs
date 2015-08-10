@@ -48,7 +48,7 @@ namespace jesuisFiora
             List.Add("Lulu", w);
             List.Add("Lux", q);
             List.Add("Malphite", r);
-            List.Add("Maoaki", w);
+            List.Add("Maokai", w);
             List.Add("Morgana", q);
             List.Add("Nami", q);
             List.Add("Nautilus", q);
