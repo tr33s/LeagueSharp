@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Media;
 using LeagueSharp;
 using LeagueSharp.Common;
+using SharpDX;
+using Color = System.Drawing.Color;
 
 namespace jesuisFiora
 {
@@ -124,6 +125,11 @@ namespace jesuisFiora
             bool defaultValue = false)
         {
             menu.AddItem(new MenuItem(name, displayName).SetValue(new KeyBind(key, type, defaultValue)));
+        }
+
+        public static ColorBGRA ToBGRA(this Color color)
+        {
+            return new ColorBGRA(color.R, color.G, color.B, color.A);
         }
     }
 

@@ -137,7 +137,7 @@ namespace jesuisFiora
             drawMenu.AddBool("DuelistDraw", "Duelist Killable Drawing");
 
             var dmg = drawMenu.AddMenu("DamageIndicator", "Damage Indicator");
-            dmg.AddBool("DamageIndicator", "Draw Damage Indicator");
+            dmg.AddBool("DmgEnabled", "Draw Damage Indicator");
             dmg.AddCircle("HPColor", "Predicted Health Color", System.Drawing.Color.White);
             dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.DeepPink);
 
