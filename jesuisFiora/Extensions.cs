@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Media;
@@ -11,6 +12,11 @@ namespace jesuisFiora
 {
     internal static class Extensions
     {
+        public static string ToHexString(this Color c)
+        {
+            return string.Format("#{0:X2}{1:X2}{2:X2}", c.R, c.G, c.B);
+        }
+
         public static bool IsActive(this Orbwalking.OrbwalkingMode mode)
         {
             return mode != Orbwalking.OrbwalkingMode.None;
@@ -110,6 +116,11 @@ namespace jesuisFiora
             bool enabled = true)
         {
             menu.AddItem(new MenuItem(name, displayName).SetValue(new Circle(enabled, color, radius)));
+        }
+
+        public static void AddInfo(this Menu menu, string name, string text, SharpDX.Color fontColor)
+        {
+            menu.AddItem(new MenuItem(name, text).SetFontStyle(FontStyle.Regular, fontColor));
         }
 
         public static Menu AddMenu(this Menu menu, string name, string displayName)

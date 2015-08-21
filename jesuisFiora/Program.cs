@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using jesuisFiora.Properties;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using Color = SharpDX.Color;
 using ItemData = LeagueSharp.Common.Data.ItemData;
 
 namespace jesuisFiora
@@ -69,84 +71,93 @@ namespace jesuisFiora
             R.SetTargetted(.066f, 500);
 
             Menu = new Menu("jesuisFiora", "jesuisFiora", true);
-
+            Menu.SetFontStyle(FontStyle.Regular, Color.HotPink);
             Orbwalker = Menu.AddOrbwalker();
 
             Menu.AddTargetSelector();
 
-            var comboMenu = Menu.AddMenu("Combo", "Combo");
-            comboMenu.AddBool("QCombo", "Use Q");
-            comboMenu.AddBool("WCombo", "Use W");
-            comboMenu.AddBool("ECombo", "Use E");
-            comboMenu.AddBool("RCombo", "Use R");
-            comboMenu.AddBool("RComboSelected", "Use R Selected Only");
-            comboMenu.AddBool("ItemsCombo", "Use Items");
+            var spells = Menu.AddMenu("Spells", "Spells");
 
-            var harassMenu = Menu.AddMenu("Harass", "Harass");
-            harassMenu.AddBool("QHarass", "Use Q");
-            harassMenu.AddBool("WHarass", "Use W");
-            harassMenu.AddBool("EHarass", "Use E");
-            harassMenu.AddBool("ItemsHarass", "Use Items");
-            harassMenu.AddSlider("ManaHarass", "Min Mana Percent", 40);
+            var qMenu = spells.AddMenu("Q", "Q");
+            var qFarm = qMenu.AddMenu("Farm", "Farm Settings");
+            qFarm.AddBool("QLastHit", "Q Last Hit (Only Killable)");
+            qFarm.AddBool("QLaneClear", "Q LaneClear (All)");
+            qFarm.AddSlider("QFarmMana", "Q Min Mana Percent", 40);
 
-            var farmMenu = Menu.AddMenu("Farm", "Farm");
-            farmMenu.AddBool("QLastHit", "Q Last Hit (Only Killable)");
-            farmMenu.AddBool("QLaneClear", "Q LaneClear (All)");
-            farmMenu.AddSlider("QFarmMana", "Q Min Mana Percent", 40);
-            farmMenu.AddBool("ELaneClear", "Use E LaneClear");
-            farmMenu.AddBool("ItemsLaneClear", "Use Items");
+            //     qMenu.AddInfo("QSpacer", "", Color.Black);
+            qMenu.AddBool("QCombo", "Use in Combo");
+            qMenu.AddBool("QHarass", "Use in Harass");
+            qMenu.AddInfo("QFleeInfo", "Flee:", Color.DeepPink);
+            qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
+            qMenu.AddInfo("FleeInfo", "Flees towards cursor position.", Color.DeepPink);
+            qMenu.AddBool("QGapClose", "Q Flee on Gapclose");
+            qMenu.AddInfo("FleeInfo2", "Flees away from gapcloser.", Color.DeepPink);
 
-            var miscMenu = Menu.AddMenu("Misc", "Misc");
+            var wMenu = spells.AddMenu("W", "W");
+            var wSpells = wMenu.AddMenu("BlockSpells", "Blocked Spells");
+            wMenu.AddBool("WSpells", "W Incoming Spells");
+            wMenu.AddBool("WTurret", "Block W Under Enemy Turret");
+            SpellBlock.Initiate(wSpells);
 
-            var qMisc = miscMenu.AddMenu("Q", "Q");
-            qMisc.AddKeyBind("QFlee", "Q Flee", 'T');
-            qMisc.AddBool("QGapClose", "Q Flee on Gapclose");
+            var eMenu = spells.AddMenu("E", "E");
+            eMenu.AddBool("ECombo", "Use in Combo");
+            eMenu.AddBool("EHarass", "Use in Harass");
+            eMenu.AddBool("ELaneClear", "Use in LaneClear");
 
-            var wMisc = miscMenu.AddMenu("W", "W");
-            var wSpells = wMisc.AddMenu("BlockSpells", "Block Spells");
-            wSpells.AddBool("WSpells", "W Incoming Spells");
 
-            foreach (var s in
-                ObjectManager.Get<Obj_AI_Hero>()
-                    .Where(hero => hero.IsValid && hero.IsEnemy)
-                    .Select(enemy => enemy.ChampionName.Equals("Gnar") ? "MegaGnar" : enemy.ChampionName)
-                    .Where(s => SpellBlock.List.ContainsKey(s)))
+            var rMenu = spells.AddMenu("R", "R");
+            rMenu.AddBool("RCombo", "Use R");
+            rMenu.AddList("RMode", "Cast Mode", new[] { "Duelist", "Combo" });
+            rMenu.AddKeyBind("RToggle", "Toggle Mode", 'L');
+
+            rMenu.Item("RToggle").ValueChanged += (sender, eventArgs) =>
             {
-                wSpells.AddBool(s, "Block " + s + " " + SpellBlock.List[s]);
-            }
+                if (!eventArgs.GetNewValue<KeyBind>().Active)
+                {
+                    return;
+                }
+                var mode = Menu.Item("RMode");
+                var index = mode.GetValue<StringList>().SelectedIndex == 0 ? 1 : 0;
+                mode.SetValue(new StringList(new[] { "Duelist", "Combo" }, index));
+            };
 
-            wMisc.AddBool("WTurret", "W Target Under Enemy Turret");
+            rMenu.AddInfo("RModeInfo", "Duelist Mode: Only use R when target is killable.", Color.HotPink);
+            rMenu.AddInfo("RModeInfo2", "Combo Mode: Use R in normal combo", Color.HotPink);
+            rMenu.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
+            rMenu.AddInfo("RVitalInfo", "Note: This is only for damage calculation in Duelist Mode.", Color.DeepPink);
+            rMenu.AddBool("RComboSelected", "Use R Selected Only");
 
-            var rMisc = miscMenu.AddMenu("R", "R");
-            rMisc.AddKeyBind("RKill", "Duelist Mode", 'H', KeyBindType.Toggle, true);
-            rMisc.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
-            rMisc.AddBool("PermaShow", "PermaShow");
+            var items = spells.AddMenu("Items", "Items");
+            items.AddBool("ItemsCombo", "Use in Combo");
+            items.AddBool("ItemsHarass", "Use in Harass");
+            items.AddBool("ItemsLaneClear", "Use in LaneClear");
 
-            if (rMisc.Item("PermaShow").IsActive())
-            {
-                rMisc.Item("RKill").Permashow(true, null, Color.DeepPink);
-            }
-
-            //miscMenu.AddBool("OrbwalkPassive", "Orbwalk to Passive Position");
-            miscMenu.AddBool("Sounds", "Sounds");
+            spells.AddSlider("ManaHarass", "Harass Min Mana Percent", 40);
 
             var drawMenu = Menu.AddMenu("Drawing", "Drawing");
             drawMenu.AddBool("QDraw", "Draw Q");
             drawMenu.AddBool("WDraw", "Draw W");
             drawMenu.AddBool("RDraw", "Draw R");
-            drawMenu.AddBool("DuelistDraw", "Duelist Killable Drawing");
+            drawMenu.AddBool("RPermashow", "Permashow R Mode");
+            drawMenu.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
+
+            if (drawMenu.Item("RPermashow").IsActive())
+            {
+                rMenu.Item("RMode").Permashow(true, null, Color.HotPink);
+            }
 
             var dmg = drawMenu.AddMenu("DamageIndicator", "Damage Indicator");
             dmg.AddBool("DmgEnabled", "Draw Damage Indicator");
             dmg.AddCircle("HPColor", "Predicted Health Color", System.Drawing.Color.White);
-            dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.DeepPink);
+            dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.HotPink);
 
+            Menu.AddBool("Sounds", "Sounds");
+            Menu.AddInfo("Info", "By Trees and lorah!", Color.HotPink);
             Menu.AddToMainMenu();
 
-            if (miscMenu.Item("Sounds").GetValue<bool>())
+            if (Menu.Item("Sounds").IsActive())
             {
-                var sound = new SoundObject(Resources.OnLoad);
-                sound.Play();
+                new SoundObject(Resources.OnLoad).Play();
             }
 
             DamageIndicator.DamageToUnit = GetComboDamage;
@@ -156,7 +167,8 @@ namespace jesuisFiora
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Drawing.OnDraw += Drawing_OnDraw;
-            Game.PrintChat("jesuisFiora Loaded!");
+            Game.PrintChat(
+                "<font color=\"{0}\">jesuisFiora Loaded!</font>", System.Drawing.Color.DeepPink.ToHexString());
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
@@ -167,7 +179,7 @@ namespace jesuisFiora
             }
 
             Flee();
-            AutoUltMode();
+            DuelistMode();
 
             var mode = Orbwalker.ActiveMode;
             var combo = mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
@@ -183,18 +195,11 @@ namespace jesuisFiora
                     return;
                 }
 
-                //OrbwalkToPassive(target);
-
                 var qCombo = Menu.Item("Q" + comboMode).IsActive();
-                var wCombo = Menu.Item("W" + comboMode).IsActive();
-                var rCombo = comboMode.Equals("Combo") && Menu.Item("R" + comboMode).IsActive();
+                var rCombo = comboMode.Equals("Combo") && Menu.Item("R" + comboMode).IsActive() &&
+                             Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(1);
 
                 if (comboMode.Equals("Harass") && Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
-                {
-                    return;
-                }
-
-                if (wCombo && !target.IsValidTarget(Q.Range) && CastW(target))
                 {
                     return;
                 }
@@ -205,16 +210,6 @@ namespace jesuisFiora
                 }
 
                 if (Player.IsDashing())
-                {
-                    return;
-                }
-
-                /*if (Menu.Item("Items" + comboMode).IsActive() && CastItems())
-                {
-                    return;
-                }*/
-
-                if (wCombo && CastW(target))
                 {
                     return;
                 }
@@ -290,16 +285,21 @@ namespace jesuisFiora
                 var rectangle = new Geometry.Polygon.Line(args.Start, args.End);
                 if (rectangle.Points.Any(point => point.Distance(Player.ServerPosition.To2D()) < 50))
                 {
-                    CastWOverride(sender);
+                    CastW(sender);
                 }
             }
             else if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
             {
-                CastWOverride(sender);
+                if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
+                {
+                    return;
+                }
+
+                CastW(sender);
             }
             else if (args.End.Distance(Player.ServerPosition) < 100)
             {
-                CastWOverride(sender);
+                CastW(sender);
             }
         }
 
@@ -307,7 +307,6 @@ namespace jesuisFiora
         {
             if (Menu.Item("QGapClose").IsActive() && Q.IsReady() && gapcloser.End.Distance(Player.ServerPosition) < 100)
             {
-                //maybe cast w too
                 Q.Cast(
                     gapcloser.End.Extend(
                         Player.ServerPosition, gapcloser.End.Distance(Player.ServerPosition) + Q.Range + 20));
@@ -365,9 +364,10 @@ namespace jesuisFiora
             }
         }
 
-        public static void AutoUltMode()
+        public static void DuelistMode()
         {
-            if (!Menu.Item("RKill").IsActive() || !R.IsReady() || Player.CountEnemiesInRange(R.Range) == 0)
+            if (!Menu.Item("RCombo").IsActive() || !Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(0) ||
+                !R.IsReady() || Player.CountEnemiesInRange(R.Range) == 0)
 
             {
                 return;
@@ -381,10 +381,22 @@ namespace jesuisFiora
                             GetComboDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health &&
                             enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
             {
-                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range) &&
-                    CastR(obj))
+                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range))
                 {
-                    Hud.SelectedUnit = obj;
+                    if (Menu.Item("RComboSelected").IsActive())
+                    {
+                        var unit = TargetSelector.GetSelectedTarget();
+                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) && CastR(obj))
+                        {
+                            return;
+                        }
+                        return;
+                    }
+
+                    if (CastR(obj))
+                    {
+                        Hud.SelectedUnit = obj;
+                    }
                 }
 
                 if (Menu.Item("DuelistDraw").IsActive())
@@ -412,22 +424,11 @@ namespace jesuisFiora
             return pos.Equals(Vector3.Zero) ? Q.Cast(target).IsCasted() : Q.Cast(pos);
         }
 
-        public static bool CastW(Obj_AI_Base target)
-        {
-            if (!W.IsReady() || !target.IsValidTarget(W.Range) ||
-                (Menu.Item("WTurret").IsActive() && target.UnderTurret(true)))
-            {
-                return false;
-            }
-
-            return W.Cast(target).IsCasted();
-        }
-
-        public static void CastWOverride(Obj_AI_Base target)
+        public static void CastW(Obj_AI_Base target)
         {
             if (Player.Distance(target) > W.Range)
             {
-                Player.Spellbook.CastSpell(SpellSlot.W, target.ServerPosition);
+                W.Cast(target.ServerPosition);
             }
             else
             {
@@ -463,31 +464,6 @@ namespace jesuisFiora
             if (Menu.Item("QFlee").IsActive() && Q.IsReady())
             {
                 Q.Cast(Player.ServerPosition.Extend(Game.CursorPos, Q.Range + 10));
-            }
-        }
-
-        public static void OrbwalkToPassive(Obj_AI_Hero target)
-        {
-            if (!Menu.Item("OrbwalkPassive").IsActive() || CountPassive(target) == 0)
-            {
-                return;
-            }
-
-            var passive =
-                FioraUltPassiveObjects.OrderBy(obj => obj.Position.Distance(target.ServerPosition))
-                    .FirstOrDefault(obj => obj.IsValid && obj.IsVisible);
-
-            if (passive != null)
-            {
-                Orbwalker.SetOrbwalkingPoint(passive.Position);
-                return;
-            }
-
-            passive = FioraPassiveObjects.FirstOrDefault(obj => obj.Position.Distance(target.ServerPosition) < 50);
-
-            if (passive != null)
-            {
-                Orbwalker.SetOrbwalkingPoint(passive.Position);
             }
         }
 
