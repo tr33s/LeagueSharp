@@ -320,7 +320,7 @@ namespace jesuisFiora
             {
                 CastW(sender);
             }
-            else
+            else if(args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
             {
                 CastW(sender);
             }
