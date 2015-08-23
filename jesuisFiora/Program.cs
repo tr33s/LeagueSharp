@@ -79,12 +79,6 @@ namespace jesuisFiora
             var spells = Menu.AddMenu("Spells", "Spells");
 
             var qMenu = spells.AddMenu("Q", "Q");
-            var qFarm = qMenu.AddMenu("Farm", "Farm Settings");
-            qFarm.AddBool("QLastHit", "Q Last Hit (Only Killable)");
-            qFarm.AddBool("QLaneClear", "Q LaneClear (All)");
-            qFarm.AddSlider("QFarmMana", "Q Min Mana Percent", 40);
-
-            //     qMenu.AddInfo("QSpacer", "", Color.Black);
             qMenu.AddBool("QCombo", "Use in Combo");
             qMenu.AddBool("QHarass", "Use in Harass");
             qMenu.AddInfo("QFleeInfo", "Flee:", Color.DeepPink);
@@ -104,7 +98,6 @@ namespace jesuisFiora
             var eMenu = spells.AddMenu("E", "E");
             eMenu.AddBool("ECombo", "Use in Combo");
             eMenu.AddBool("EHarass", "Use in Harass");
-            eMenu.AddBool("ELaneClear", "Use in LaneClear");
 
 
             var rMenu = spells.AddMenu("R", "R");
@@ -132,11 +125,23 @@ namespace jesuisFiora
             var items = spells.AddMenu("Items", "Items");
             items.AddBool("ItemsCombo", "Use in Combo");
             items.AddBool("ItemsHarass", "Use in Harass");
-            items.AddBool("ItemsLaneClear", "Use in LaneClear");
 
             spells.AddSlider("ManaHarass", "Harass Min Mana Percent", 40);
 
             var farm = Menu.AddMenu("Farm", "Farm");
+
+            var qFarm = farm.AddMenu("Farm", "Q");
+            qFarm.AddBool("QLastHit", "Q Last Hit (Only Killable)");
+            qFarm.AddBool("QLaneClear", "Q LaneClear (All)");
+            qFarm.AddSlider("QFarmMana", "Q Min Mana Percent", 40);
+
+            var eFarm = farm.AddMenu("E", "E");
+            eFarm.AddBool("ELaneClear", "Use in LaneClear");
+
+            farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
+            farm.AddKeyBind("FarmEnabled", "Farm Enabled in LC & LH", 'J', KeyBindType.Toggle, true);
+            farm.AddInfo("FarmInfo", "LC = LaneClear , LH = LastHit", Color.DeepPink);
+
 
             var drawMenu = Menu.AddMenu("Drawing", "Drawing");
             drawMenu.AddBool("QDraw", "Draw Q");
@@ -244,7 +249,7 @@ namespace jesuisFiora
                     }
                 }
             }
-            else
+            else if (Menu.Item("FarmEnabled").IsActive())
             {
                 if (mode.Equals(Orbwalking.OrbwalkingMode.LastHit) && Menu.Item("QLastHit").IsActive() &&
                     Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
@@ -368,6 +373,11 @@ namespace jesuisFiora
             }
 
             var comboMode = mode.GetModeString();
+
+            if (comboMode.Equals("LaneClear") && !Menu.Item("FarmEnabled").IsActive())
+            {
+                return;
+            }
 
             if (Menu.Item("E" + comboMode).IsActive() && E.IsReady())
             {
