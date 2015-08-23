@@ -7,7 +7,7 @@ namespace jesuisFiora
 {
     internal static class SpellBlock
     {
-        public static Dictionary<string, SpellSlot> List = new Dictionary<string, SpellSlot>();
+        public static List<SpellBlockObject> BlockedSpells = new List<SpellBlockObject>();
 
         static SpellBlock()
         {
@@ -17,92 +17,152 @@ namespace jesuisFiora
             const SpellSlot r = SpellSlot.R;
             const SpellSlot N48 = (SpellSlot) 48;
 
-            List.Add("Annie", q);
-            List.Add("Alistar", w);
-            List.Add("Chogath", r);
-            List.Add("Darius", r);
-            List.Add("Fiddlesticks", q);
-            List.Add("Gangplank", q);
-            List.Add("Garen", r);
-            List.Add("Irelia", e);
-            List.Add("Jayce", e);
-            List.Add("LeBlanc", r);
-            List.Add("LeeSin", r);
-            List.Add("Lissandra", N48);
-            List.Add("Lulu", w);
-            List.Add("Maokai", w);
-            List.Add("Mordekaiser", r);
-            List.Add("Nasus", w);
-            List.Add("Nunu", e);
-            List.Add("Malzahar", r);
-            List.Add("Pantheon", w);
-            List.Add("Poppy", e);
-            List.Add("Quinn", e);
-            List.Add("Rammus", e);
-            List.Add("Ryze", w);
-            List.Add("Singed", e);
-            List.Add("Skarner", r);
-            List.Add("Syndra", r);
-            List.Add("Swain", e);
-            List.Add("TahmKench", w);
-            List.Add("Talon", e);
-            List.Add("Taric", e);
-            List.Add("Teemo", q);
-            List.Add("Tristana", r);
-            List.Add("Urgot", r);
-            List.Add("Vayne", e);
-            List.Add("Veigar", r);
-            List.Add("Vi", r);
-            List.Add("Volibear", w);
-            List.Add("Warwick", r);
-            List.Add("XinZhao", r);
-            List.Add("Zed", r);
+            Add("Anivia", e);
+            Add("Annie", q);
+            Add("Alistar", w);
+            Add("Azir", r);
+            Add("Blitzcrank", e, "PowerFistAttack");
+            Add("Brand", r);
+            Add("Chogath", r);
+            Add("Darius", r);
+            Add("Fiddlesticks", q);
+            Add("Gangplank", q);
+            Add("Garen", q, "GarenQAttack");
+            Add("Garen", r);
+            Add("Hecarim", e, "hecarimrampattack");
+            Add("Irelia", e);
+            Add("Jayce", e);
+            Add("LeBlanc", r);
+            Add("LeeSin", r);
+            Add("Leona", q, "LeonaShieldOfDaybreakAttack");
+            Add("Lissandra", N48);
+            Add("Lulu", w);
+            Add("Maokai", w);
+            Add("MonkeyKing", q, "MonkeyKingQAttack");
+            Add("Mordekaiser", r);
+            Add("Nasus", q, "NasusQAttack");
+            Add("Nasus", w);
+            Add("Nunu", e);
+            Add("Malzahar", r);
+            Add("Pantheon", w);
+            Add("Poppy", q, "PoppyDevastatingBlow", true);
+            Add("Poppy", e);
+            Add("Quinn", e);
+            Add("Rammus", e);
+            Add("Renekton", w, "RenektonExecute");
+            Add("Renekton", w, "RenektonSuperExecute");
+            Add("Ryze", w);
+            Add("Singed", e);
+            Add("Skarner", r);
+            Add("Syndra", r);
+            Add("Swain", e);
+            Add("TahmKench", w);
+            Add("Talon", e);
+            Add("Taric", e);
+            Add("Teemo", q);
+            Add("Tristana", r);
+            Add("Trundle", q, "TrundleQ");
+            Add("Trundle", r);
+            Add("TwistedFate", w, "goldcardpreattack");
+            Add("Udyr", e, "UdyrBearAttack");
+            Add("Urgot", r);
+            Add("Vayne", e);
+            Add("Veigar", r);
+            Add("Vi", r);
+            Add("Volibear", q, "VolibearQAttack");
+            Add("Volibear", w);
+            Add("XinZhao", q, "XenZhaoThrust3");
+            Add("XinZhao", r);
+            Add("Zed", r);
         }
 
-        public static void Initiate(Menu menu)
+        public static void Initialize(Menu menu)
         {
-            foreach (var s in
-                ObjectManager.Get<Obj_AI_Hero>()
-                    .Where(hero => hero.IsValid && hero.IsEnemy && List.ContainsKey(hero.ChampionName)))
+            foreach (var unit in
+                ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsValid && hero.IsEnemy))
             {
-                menu.AddBool(s.ChampionName, "Block " + s + " " + List[s.ChampionName]);
+                var unit1 = unit;
+                foreach (var spell in BlockedSpells.Where(o => o.Name.Equals(unit1.ChampionName)))
+                {
+                    var name = unit.ChampionName.Equals("MonkeyKing") ? "Wukong" : unit.ChampionName;
+                    var slot = spell.Slot.Equals(48) ? SpellSlot.R : spell.Slot;
+
+                    if (spell.IsAutoAttack)
+                    {
+                        menu.AddBool(unit.ChampionName + "AA", "Block " + name + " " + slot + " AA");
+                    }
+                    else
+                    {
+                        menu.AddBool(unit.ChampionName, "Block " + name + " " + slot);
+                    }
+                }
             }
         }
 
-        public static bool Contains(Obj_AI_Base unit, GameObjectProcessSpellCastEventArgs args)
+        public static void Add(string name, SpellSlot slot)
         {
-            var name = unit.CharData.BaseSkinName;
+            BlockedSpells.Add(new SpellBlockObject(name, slot));
+        }
+
+        public static void Add(string name, SpellSlot slot, string autoAttack, bool isBuff = false)
+        {
+            BlockedSpells.Add(new SpellBlockObject(name, slot, autoAttack, isBuff));
+        }
+
+        public static bool Contains(Obj_AI_Hero unit, GameObjectProcessSpellCastEventArgs args)
+        {
+            var name = unit.ChampionName;
             var slot = unit.GetSpellSlot(args);
 
-            if (!List.ContainsKey(name) || !Program.Menu.Item(name).IsActive())
+            foreach (var spell in BlockedSpells.Where(o => o.Name.Equals(name)))
             {
-                return false;
+                if (!spell.IsAutoAttack || !args.SData.IsAutoAttack())
+                {
+                    return Program.Menu.Item(name) != null && Program.Menu.Item(name).IsActive() &&
+                           spell.Slot.Equals(slot);
+                }
+
+                return Program.Menu.Item(name + "AA") != null && Program.Menu.Item(name + "AA").IsActive() &&
+                       (spell.IsBuff && unit.HasBuff(spell.AutoAttackBuff)) ||
+                       (spell.AutoAttackName.Equals(args.SData.Name));
             }
 
-            var correctSlot = List[name].Equals(slot);
+            return false;
+        }
+    }
 
-            if (args.SData.IsAutoAttack())
+    public class SpellBlockObject
+    {
+        public string AutoAttackBuff;
+        public string AutoAttackName;
+        public bool IsAutoAttack;
+        public string Name;
+        public SpellSlot Slot;
+
+        public SpellBlockObject(string name, SpellSlot slot)
+        {
+            Name = name;
+            Slot = slot;
+        }
+
+        public SpellBlockObject(string name, SpellSlot slot, string autoAttack, bool isBuff = false)
+        {
+            Name = name;
+            Slot = slot;
+            IsAutoAttack = true;
+
+            if (isBuff)
             {
-                if (name.Equals("Blitzcrank")) {}
+                AutoAttackBuff = autoAttack;
+                return;
             }
 
-            if (name.Equals("Jayce"))
-            {
-                correctSlot = correctSlot && unit.CharData.BaseSkinName.Equals("JayceHammerForm");
-            }
+            AutoAttackName = autoAttack;
+        }
 
-            if (name.Equals("LeBlanc"))
-            {
-                correctSlot = args.SData.Name.Equals("LeblancChaosOrbM");
-            }
-
-            if (name.Equals("Lissandra"))
-            {
-                //correctSlot = spellslot 48
-            }
-
-            //Game.PrintChat("{0} {1} {2}", name, slot, active);
-            return correctSlot;
+        public bool IsBuff
+        {
+            get { return !string.IsNullOrWhiteSpace(AutoAttackBuff); }
         }
     }
 }
