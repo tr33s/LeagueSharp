@@ -100,7 +100,6 @@ namespace jesuisFiora
             eMenu.AddBool("ECombo", "Use in Combo");
             eMenu.AddBool("EHarass", "Use in Harass");
 
-
             var rMenu = spells.AddMenu("R", "R");
             rMenu.AddBool("RCombo", "Use R");
             rMenu.AddList("RMode", "Cast Mode", new[] { "Duelist", "Combo" });
@@ -139,30 +138,42 @@ namespace jesuisFiora
             var eFarm = farm.AddMenu("E", "E");
             eFarm.AddBool("ELaneClear", "Use in LaneClear");
 
-            farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
             farm.AddKeyBind("FarmEnabled", "Farm Enabled in LC & LH", 'J', KeyBindType.Toggle, true);
             farm.AddInfo("FarmInfo", " --> LC = LaneClear , LH = LastHit", LorahColor);
+            farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
 
 
-            var drawMenu = Menu.AddMenu("Drawing", "Drawing");
-            drawMenu.AddBool("QDraw", "Draw Q");
-            drawMenu.AddBool("WDraw", "Draw W");
-            drawMenu.AddBool("RDraw", "Draw R");
-            drawMenu.AddBool("RPermashow", "Permashow R Mode");
-            drawMenu.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
+            var draw = Menu.AddMenu("Drawing", "Drawing");
+            draw.AddBool("QDraw", "Draw Q");
+            draw.AddBool("WDraw", "Draw W");
+            draw.AddBool("RDraw", "Draw R");
+            draw.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
+            draw.AddBool("FarmPermashow", "Permashow Farm Enabled");
+            draw.AddBool("RPermashow", "Permashow R Mode");
 
-            if (drawMenu.Item("RPermashow").IsActive())
+            if (draw.Item("RPermashow").IsActive())
             {
                 rMenu.Item("RMode").Permashow(true, null, LorahColor);
             }
 
-            drawMenu.Item("RPermashow").ValueChanged +=
+            draw.Item("RPermashow").ValueChanged +=
                 (sender, eventArgs) =>
                 {
                     rMenu.Item("RMode").Permashow(eventArgs.GetNewValue<bool>(), null, LorahColor);
                 };
 
-            var dmg = drawMenu.AddMenu("DamageIndicator", "Damage Indicator");
+            if (draw.Item("FarmPermashow").IsActive())
+            {
+                farm.Item("FarmEnabled").Permashow(true, null, LorahColor);
+            }
+
+            draw.Item("FarmPermashow").ValueChanged +=
+                (sender, eventArgs) =>
+                {
+                    farm.Item("FarmEnabled").Permashow(eventArgs.GetNewValue<bool>(), null, LorahColor);
+                };
+
+            var dmg = draw.AddMenu("DamageIndicator", "Damage Indicator");
             dmg.AddBool("DmgEnabled", "Draw Damage Indicator");
             dmg.AddCircle("HPColor", "Predicted Health Color", System.Drawing.Color.White);
             dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.HotPink);
@@ -290,11 +301,17 @@ namespace jesuisFiora
             }
 
             var autoW = Menu.Item("WSpells").IsActive() && W.IsReady();
+
+            if (!autoW)
+            {
+                return;
+            }
+
             var unit = sender as Obj_AI_Hero;
             var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
             var type = args.SData.TargettingType;
 
-            if (!autoW || !blockableSpell)
+            if (!blockableSpell)
             {
                 return;
             }
@@ -302,7 +319,8 @@ namespace jesuisFiora
             if (type.IsSkillShot())
             {
                 var rectangle = new Geometry.Polygon.Line(args.Start, args.End);
-                if (rectangle.Points.Any(point => point.Distance(Player.ServerPosition.To2D()) < 75))
+                if (unit.Distance(Player) < W.Range ||
+                    rectangle.Points.Any(point => point.Distance(Player.ServerPosition.To2D()) < 75))
                 {
                     CastW(sender);
                 }
@@ -316,13 +334,30 @@ namespace jesuisFiora
 
                 CastW(sender);
             }
-            else if (type.Equals(SpellDataTargetType.LocationAoe) && args.End.Distance(Player.ServerPosition) < 50)
+            else if ((type.Equals(SpellDataTargetType.LocationAoe)) &&
+                     args.End.Distance(Player.ServerPosition) < args.SData.CastRadius)
             {
                 CastW(sender);
             }
-            else if(args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
+            else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
             {
                 CastW(sender);
+            }
+            else if (type.Equals(SpellDataTargetType.SelfAoe) &&
+                     unit.Distance(Player.ServerPosition) < args.SData.CastRange + args.SData.CastRadius / 2)
+            {
+                CastW(sender);
+            }
+            else if (type.Equals(SpellDataTargetType.Self))
+            {
+                if ((unit.ChampionName.Equals("Kalista") && Player.Distance(unit) < 350))
+                {
+                    CastW(sender);
+                }
+                if (unit.ChampionName.Equals("Zed") && Player.Distance(unit) < 300)
+                {
+                    Utility.DelayAction.Add(200, () => CastW(sender));
+                }
             }
         }
 
@@ -401,12 +436,12 @@ namespace jesuisFiora
                 return;
             }
 
+            var vitalCalc = Menu.Item("RKillVital").GetValue<Slider>().Value;
             foreach (var obj in
                 ObjectManager.Get<Obj_AI_Hero>()
                     .Where(
                         enemy =>
-                            enemy.IsValidTarget() &&
-                            GetComboDamage(enemy, Menu.Item("RKillVital").GetValue<Slider>().Value) >= enemy.Health &&
+                            enemy.IsValidTarget() && GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
                             enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
             {
                 if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range))
@@ -476,7 +511,7 @@ namespace jesuisFiora
                     .FirstOrDefault(o => o.IsValidTarget(W.Range) && o.Health < W.GetDamage(o));
             if (unit != null)
             {
-                CastW(unit);
+                W.Cast(unit);
             }
         }
 
