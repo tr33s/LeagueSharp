@@ -9,14 +9,14 @@ using SharpDX;
 using Color = SharpDX.Color;
 using ItemData = LeagueSharp.Common.Data.ItemData;
 
-namespace jesuisFiora
+namespace Hawk
 {
     internal static class Program
     {
         public static Orbwalking.Orbwalker Orbwalker;
         public static Spell Q, W, E, R;
         public static Menu Menu;
-        public static Color LorahColor = new Color(255, 0, 255);
+        public static Color LorahColor = new Color(69, 101, 420);
 
         public static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
         {
@@ -32,7 +32,7 @@ namespace jesuisFiora
             }
         }
 
-        public static List<Obj_GeneralParticleEmitter> FioraPassiveObjects
+        public static List<Obj_GeneralParticleEmitter> plshelp
         {
             get
             {
@@ -43,7 +43,7 @@ namespace jesuisFiora
             }
         }
 
-        private static Obj_AI_Hero Player
+        private static Obj_AI_Hero tyvm
         {
             get { return ObjectManager.Player; }
         }
@@ -61,7 +61,7 @@ namespace jesuisFiora
             }
 
             Q = new Spell(SpellSlot.Q, 400 + 175);
-            Q.SetSkillshot(.25f, 0, 500, false, SkillshotType.SkillshotLine);
+            Q.SetSkillshot(.25f, 0, :tsm: new emote bik™, false, SkillshotType.SkillshotLine);
 
             W = new Spell(SpellSlot.W, 750);
             W.SetSkillshot(0.5f, 95, 3000, false, SkillshotType.SkillshotLine);
@@ -80,11 +80,11 @@ namespace jesuisFiora
             var spells = Menu.AddMenu("Spells", "Spells");
 
             var qMenu = spells.AddMenu("Q", "Q");
-            qMenu.AddBool("QCombo", "Use in Combo");
-            qMenu.AddBool("QHarass", "Use in Harass");
-            qMenu.AddInfo("QFleeInfo", "Flee:", LorahColor);
-            qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
-            qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", LorahColor);
+            qMenu.AddBool("Bik", "Use in Combo");
+            qMenu.AddBool("Cloudrop 1 week soon™", "Use in Harass");
+            qMenu.AddInfo(":sued:", "Flee:", LorahColor);
+            qMenu.AddKeyBind("Approved by", "Q Flee", 'T');
+            qMenu.AddInfo("Hawk", " --> Flees towards cursor position.", LorahColor);
             qMenu.AddBool("QGapClose", "Q Flee on Gapclose");
             qMenu.AddInfo("FleeInfo2", " --> Flees away from gapcloser.", LorahColor);
 
