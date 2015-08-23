@@ -16,6 +16,7 @@ namespace jesuisFiora
         public static Orbwalking.Orbwalker Orbwalker;
         public static Spell Q, W, E, R;
         public static Menu Menu;
+        public static Color LorahColor = new Color(255, 0, 255);
 
         public static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
         {
@@ -71,7 +72,7 @@ namespace jesuisFiora
             R.SetTargetted(.066f, 500);
 
             Menu = new Menu("jesuisFiora", "jesuisFiora", true);
-            Menu.SetFontStyle(FontStyle.Regular, Color.HotPink);
+            Menu.SetFontStyle(FontStyle.Regular, LorahColor);
             Orbwalker = Menu.AddOrbwalker();
 
             Menu.AddTargetSelector();
@@ -81,11 +82,11 @@ namespace jesuisFiora
             var qMenu = spells.AddMenu("Q", "Q");
             qMenu.AddBool("QCombo", "Use in Combo");
             qMenu.AddBool("QHarass", "Use in Harass");
-            qMenu.AddInfo("QFleeInfo", "Flee:", Color.DeepPink);
+            qMenu.AddInfo("QFleeInfo", "Flee:", LorahColor);
             qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
-            qMenu.AddInfo("FleeInfo", "Flees towards cursor position.", Color.DeepPink);
+            qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", LorahColor);
             qMenu.AddBool("QGapClose", "Q Flee on Gapclose");
-            qMenu.AddInfo("FleeInfo2", "Flees away from gapcloser.", Color.DeepPink);
+            qMenu.AddInfo("FleeInfo2", " --> Flees away from gapcloser.", LorahColor);
 
             var wMenu = spells.AddMenu("W", "W");
             var wSpells = wMenu.AddMenu("BlockSpells", "Blocked Spells");
@@ -116,10 +117,10 @@ namespace jesuisFiora
                 mode.SetValue(new StringList(new[] { "Duelist", "Combo" }, index));
             };
 
-            rMenu.AddInfo("RModeInfo", "Duelist Mode: Only use R when target is killable.", Color.HotPink);
-            rMenu.AddInfo("RModeInfo2", "Combo Mode: Use R in normal combo", Color.HotPink);
+            rMenu.AddInfo("RModeInfo", " --> Duelist Mode: Only use R when target is killable.", LorahColor);
+            rMenu.AddInfo("RModeInfo2", " --> Combo Mode: Use R in normal combo", LorahColor);
             rMenu.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
-            rMenu.AddInfo("RVitalInfo", "Note: This is only for damage calculation in Duelist Mode.", Color.DeepPink);
+            rMenu.AddInfo("RVitalInfo", " --> Note: This is only for damage calculation in Duelist Mode.", LorahColor);
             rMenu.AddBool("RComboSelected", "Use R Selected Only");
 
             var items = spells.AddMenu("Items", "Items");
@@ -140,7 +141,7 @@ namespace jesuisFiora
 
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
             farm.AddKeyBind("FarmEnabled", "Farm Enabled in LC & LH", 'J', KeyBindType.Toggle, true);
-            farm.AddInfo("FarmInfo", "LC = LaneClear , LH = LastHit", Color.DeepPink);
+            farm.AddInfo("FarmInfo", " --> LC = LaneClear , LH = LastHit", LorahColor);
 
 
             var drawMenu = Menu.AddMenu("Drawing", "Drawing");
@@ -152,13 +153,13 @@ namespace jesuisFiora
 
             if (drawMenu.Item("RPermashow").IsActive())
             {
-                rMenu.Item("RMode").Permashow(true, null, Color.HotPink);
+                rMenu.Item("RMode").Permashow(true, null, LorahColor);
             }
 
             drawMenu.Item("RPermashow").ValueChanged +=
                 (sender, eventArgs) =>
                 {
-                    rMenu.Item("RMode").Permashow(eventArgs.GetNewValue<bool>(), null, Color.HotPink);
+                    rMenu.Item("RMode").Permashow(eventArgs.GetNewValue<bool>(), null, LorahColor);
                 };
 
             var dmg = drawMenu.AddMenu("DamageIndicator", "Damage Indicator");
@@ -168,7 +169,7 @@ namespace jesuisFiora
             dmg.AddBool("Killable", "Killable Text");
 
             Menu.AddBool("Sounds", "Sounds");
-            Menu.AddInfo("Info", "By Trees and lorah!", Color.HotPink);
+            Menu.AddInfo("Info", "By Trees and lorah!", LorahColor);
             Menu.AddToMainMenu();
 
             if (Menu.Item("Sounds").IsActive())
