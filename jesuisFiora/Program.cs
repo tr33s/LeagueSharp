@@ -85,8 +85,7 @@ namespace jesuisFiora
             qMenu.AddInfo("QFleeInfo", "Flee:", LorahColor);
             qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
             qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", LorahColor);
-            qMenu.AddBool("QGapClose", "Q Flee on Gapclose");
-            qMenu.AddInfo("FleeInfo2", " --> Flees away from gapcloser.", LorahColor);
+            qMenu.AddBool("QKillsteal", "Use for Killsteal");
 
             var wMenu = spells.AddMenu("W", "W");
             var wSpells = wMenu.AddMenu("BlockSpells", "Blocked Spells");
@@ -193,7 +192,6 @@ namespace jesuisFiora
             Game.OnUpdate += Game_OnGameUpdate;
             Orbwalking.AfterAttack += AfterAttack;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
-            AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Drawing.OnDraw += Drawing_OnDraw;
             Game.PrintChat(
                 "<font color=\"{0}\">jesuisFiora Loaded!</font>", System.Drawing.Color.DeepPink.ToHexString());
@@ -316,16 +314,7 @@ namespace jesuisFiora
                 return;
             }
 
-            if (type.IsSkillShot())
-            {
-                var rectangle = new Geometry.Polygon.Line(args.Start, args.End);
-                if (unit.Distance(Player) < W.Range ||
-                    rectangle.Points.Any(point => point.Distance(Player.ServerPosition.To2D()) < 75))
-                {
-                    CastW(sender);
-                }
-            }
-            else if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
+            if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
             {
                 if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
                 {
@@ -358,16 +347,6 @@ namespace jesuisFiora
                 {
                     Utility.DelayAction.Add(200, () => CastW(sender));
                 }
-            }
-        }
-
-        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
-        {
-            if (Menu.Item("QGapClose").IsActive() && Q.IsReady() && gapcloser.End.Distance(Player.ServerPosition) < 100)
-            {
-                Q.Cast(
-                    gapcloser.End.Extend(
-                        Player.ServerPosition, gapcloser.End.Distance(Player.ServerPosition) + Q.Range + 20));
             }
         }
 
@@ -499,6 +478,25 @@ namespace jesuisFiora
             }
         }
 
+        public static void KillstealQ()
+        {
+            if (!Menu.Item("QKillsteal").IsActive())
+            {
+                return;
+            }
+
+            var unit =
+                ObjectManager.Get<Obj_AI_Hero>()
+                    .FirstOrDefault(
+                        o =>
+                            o.IsValidTarget(Q.Range) &&
+                            o.Health < Q.GetDamage(o) + (CountPassive(o) > 0 ? GetPassiveDamage(o) : 0));
+            if (unit != null)
+            {
+                CastQ(unit);
+            }
+        }
+
         public static void KillstealW()
         {
             if (!Menu.Item("WKillsteal").IsActive())
@@ -554,7 +552,14 @@ namespace jesuisFiora
 
         public static void Flee()
         {
-            if (Menu.Item("QFlee").IsActive() && Q.IsReady())
+            if (!Menu.Item("QFlee").IsActive())
+            {
+                return;
+            }
+
+            Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
+
+            if (Q.IsReady())
             {
                 Q.Cast(Player.ServerPosition.Extend(Game.CursorPos, Q.Range + 10));
             }
