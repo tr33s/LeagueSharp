@@ -7,8 +7,6 @@ namespace jesuisFiora
 {
     internal static class SpellBlock
     {
-        public static List<string> Buff = new List<string>();
-
         static SpellBlock()
         {
             const SpellSlot q = SpellSlot.Q;
@@ -89,7 +87,7 @@ namespace jesuisFiora
             new BlockedSpell("XinZhao", r).Add();
             //new BlockedSpell("Yorick", q) { AutoAttackName = "OmenOfWar" }.Add();
             new BlockedSpell("Yorick", e).Add();
-            new BlockedSpell("Zac", r).Add();
+            //new BlockedSpell("Zac", r).Add();
             new BlockedSpell("Zed", r).Add();
         }
 
