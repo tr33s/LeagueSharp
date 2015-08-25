@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -20,6 +21,7 @@ namespace jesuisFiora
             new BlockedSpell("Annie", q).Add();
             new BlockedSpell("Alistar", w).Add();
             new BlockedSpell("Azir", r).Add();
+            new BlockedSpell("Bard", r).Add();
             new BlockedSpell("Blitzcrank", e) { AutoAttackName = "PowerFistAttack" }.Add();
             new BlockedSpell("Brand", r).Add();
             // new BlockedSpell("Braum", q) { AutoAttackName = "ConcussiveBlows" }.Add(); //
@@ -45,7 +47,7 @@ namespace jesuisFiora
             new BlockedSpell("Maokai", w).Add();
             new BlockedSpell("MissFortune", q).Add();
             new BlockedSpell("MonkeyKing", q) { AutoAttackName = "MonkeyKingQAttack" }.Add();
-            //  new BlockedSpell("Mordekaiser", q) { AutoAttackName = "MaceOfSpades3" }.Add();
+            new BlockedSpell("Mordekaiser", q) { AutoAttackName = "mordekaiserqattack2" }.Add();
             new BlockedSpell("Mordekaiser", r).Add();
             new BlockedSpell("Nasus", q) { AutoAttackName = "NasusQAttack" }.Add();
             new BlockedSpell("Nasus", w).Add();
@@ -60,6 +62,7 @@ namespace jesuisFiora
             new BlockedSpell("Rammus", e).Add();
             new BlockedSpell("Renekton", w) { AutoAttackName = "RenektonExecute" }.Add();
             new BlockedSpell("Renekton", w) { AutoAttackName = "RenektonSuperExecute" }.Add();
+            new BlockedSpell("Rengar", q) { AutoAttackName = "RengarBasicAttack" }.Add();
             new BlockedSpell("Riven", q) { AutoAttackBuff = "riventricleavesoundtwo" }.Add();
             new BlockedSpell("Ryze", w).Add();
             new BlockedSpell("Shaco", q).Add();
@@ -119,6 +122,7 @@ namespace jesuisFiora
         {
             var name = unit.ChampionName;
             var slot = unit.GetSpellSlot(args);
+            //Console.WriteLine(slot);
 
             if (args.SData.Name.Equals("KalistaRAllyDash") && Program.Menu.Item("Oathsworn").IsActive())
             {
@@ -137,9 +141,10 @@ namespace jesuisFiora
                            spell.Slot.Equals(slot);
                 }
 
-                // Console.WriteLine(args.SData.Name);
-                return Program.Menu.Item(name + "AA") != null && Program.Menu.Item(name + "AA").IsActive() &&
-                       (spell.AutoAttackName.Equals(args.SData.Name));
+                var condition = unit.ChampionName.Equals("Rengar")
+                    ? unit.Mana.Equals(5)
+                    : spell.AutoAttackName.Equals(args.SData.Name);
+                return Program.Menu.Item(name + "AA") != null && Program.Menu.Item(name + "AA").IsActive() && condition;
             }
 
             return false;

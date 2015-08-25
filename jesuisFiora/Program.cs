@@ -321,6 +321,8 @@ namespace jesuisFiora
             var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
             var type = args.SData.TargettingType;
 
+            //Console.WriteLine(type);
+
             if (!blockableSpell)
             {
                 return;
@@ -335,10 +337,10 @@ namespace jesuisFiora
 
                 CastW(sender);
             }
-            else if ((type.Equals(SpellDataTargetType.LocationAoe)) &&
-                     args.End.Distance(Player.ServerPosition) < args.SData.CastRadius)
+            else if (unit.ChampionName.Equals("Bard") && type.Equals(SpellDataTargetType.Location) &&
+                     args.End.Distance(Player.ServerPosition) < 300)
             {
-                CastW(sender);
+                Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(sender));
             }
             else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
             {
