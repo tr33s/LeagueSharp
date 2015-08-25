@@ -216,7 +216,7 @@ namespace jesuisFiora
             if (combo)
             {
                 var comboMode = mode.GetModeString();
-                var target = UltTarget != null && UltTarget.Target.IsValidTarget(Q.Ran)
+                var target = UltTarget != null && UltTarget.Target.IsValidTarget(Q.Range)
                     ? UltTarget.Target
                     : TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
 
