@@ -17,6 +17,7 @@ namespace jesuisFiora
         public static Spell Q, W, E, R;
         public static Menu Menu;
         public static Color LorahColor = new Color(255, 0, 255);
+        public static UltTarget UltTarget;
 
         public static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
         {
@@ -215,7 +216,9 @@ namespace jesuisFiora
             if (combo)
             {
                 var comboMode = mode.GetModeString();
-                var target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+                var target = UltTarget != null && UltTarget.Target.IsValidTarget(Q.Ran)
+                    ? UltTarget.Target
+                    : TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
 
                 if (target == null || !target.IsValidTarget(W.Range))
                 {
@@ -292,9 +295,18 @@ namespace jesuisFiora
                 return;
             }
 
-            if (sender.IsMe && args.SData.Name.Equals("FioraE"))
+            if (sender.IsMe)
             {
-                Orbwalking.ResetAutoAttackTimer();
+                var slot = Player.GetSpellSlot(args.SData.Name);
+
+                if (slot.Equals(SpellSlot.E))
+                {
+                    Orbwalking.ResetAutoAttackTimer();
+                }
+                else if (slot.Equals(SpellSlot.R) && args.Target != null)
+                {
+                    UltTarget = new UltTarget(args.Target);
+                }
                 return;
             }
 
@@ -677,6 +689,29 @@ namespace jesuisFiora
             }
 
             return (float) d;
+        }
+    }
+
+    public class UltTarget
+    {
+        public int CastTime;
+        public int EndTime;
+        public Obj_AI_Hero Target;
+
+        public UltTarget(GameObject obj)
+        {
+            Target = obj as Obj_AI_Hero;
+            CastTime = Environment.TickCount;
+            EndTime = CastTime + 8000;
+            Game.OnUpdate += Game_OnUpdate;
+        }
+
+        private void Game_OnUpdate(EventArgs args)
+        {
+            if (Target == null || Target.IsDead || Environment.TickCount - EndTime > 0)
+            {
+                Program.UltTarget = null;
+            }
         }
     }
 }
