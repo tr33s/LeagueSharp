@@ -171,7 +171,6 @@ namespace Babehri
             }
 
             Flee();
-            HandlePassive();
 
             var activeMode = Orbwalker.ActiveMode;
             var mode = activeMode.GetModeString();
@@ -239,6 +238,8 @@ namespace Babehri
 
         private static void Drawing_OnDraw(EventArgs args)
         {
+            HandlePassive();
+
             foreach (var circle in
                 new[] { "Q", "W", "E", "R" }.Select(spell => Menu.Item("Draw" + spell).GetValue<Circle>())
                     .Where(circle => circle.Active))
