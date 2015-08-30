@@ -9,29 +9,27 @@ namespace Babehri
 {
     internal class Program
     {
-        public static MissileClient AhriQ;
-        public static Vector3 StartPosition;
-        public static Vector3 EndPosition;
+        public static MissileClient AhriQMissile;
+        public static Obj_GeneralParticleEmitter AhriQParticle;
         public static AttackableUnit LastAutoTarget;
         public static Menu Menu;
         public static Orbwalking.Orbwalker Orbwalker;
-        public static string Mode;
-        public static Geometry.Polygon.Line Line;
-        public static float StartTime;
-        public static List<Vector2Time> Path;
         public static Render.Text PassiveText = new Render.Text("", 0, 0, 24, Color.White, "Tahoma");
 
         public static GameObject QObject
         {
             get
             {
-                return AhriQ ??
-                       ObjectManager.Get<GameObject>()
-                           .FirstOrDefault(
-                               obj =>
-                                   obj.IsValid &&
-                                   (obj.Name.Contains("Ahri_Base_Orb") || obj.Name.Contains("Ahri_Orb") ||
-                                    obj.Name.Contains("Ahri_Passive")));
+                if (AhriQMissile != null && AhriQMissile.IsValid)
+                {
+                    return AhriQMissile;
+                }
+
+                if (AhriQParticle != null && AhriQParticle.IsValid)
+                {
+                    return AhriQParticle;
+                }
+                return null;
             }
         }
 
@@ -130,6 +128,11 @@ namespace Babehri
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             GameObject.OnCreate += GameObject_OnCreate;
             GameObject.OnDelete += GameObject_OnDelete;
+
+            if (QObject != null)
+            {
+                Console.WriteLine(QObject.NetworkId.ToString("X4"));
+            }
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
@@ -216,6 +219,14 @@ namespace Babehri
 
         private static void GameObject_OnCreate(GameObject sender, EventArgs args)
         {
+            var particle = sender as Obj_GeneralParticleEmitter;
+            if (particle != null && particle.IsValid &&
+                (particle.Name.Contains("Ahri_Orb") || particle.Name.Contains("Ahri_Passive")))
+            {
+                AhriQParticle = particle;
+                return;
+            }
+
             var missile = sender as MissileClient;
             if (missile == null || !missile.IsValid || !missile.SpellCaster.IsMe)
             {
@@ -224,15 +235,20 @@ namespace Babehri
 
             if (missile.SData.Name.Equals("AhriOrbReturn") || missile.SData.Name.Equals("AhriOrbMissile"))
             {
-                AhriQ = missile;
+                AhriQMissile = missile;
             }
         }
 
         private static void GameObject_OnDelete(GameObject sender, EventArgs args)
         {
-            if (AhriQ != null && sender.NetworkId.Equals(AhriQ.NetworkId))
+            if (AhriQMissile != null && sender.NetworkId.Equals(AhriQMissile.NetworkId))
             {
-                AhriQ = null;
+                AhriQMissile = null;
+            }
+
+            if (AhriQParticle != null && sender.NetworkId.Equals(AhriQParticle.NetworkId))
+            {
+                AhriQParticle = null;
             }
         }
 
@@ -277,20 +293,19 @@ namespace Babehri
 
             if (QObject != null)
             {
+                var objects = ObjectManager.Get<AttackableUnit>().Where(obj => obj.IsValidTarget(range));
+                var attackableUnits = objects as AttackableUnit[] ?? objects.ToArray();
+
                 var firstPriority =
-                    ObjectManager.Get<Obj_AI_Hero>()
-                        .Where(h => h.IsValidTarget(range))
-                        .MinOrDefault(h => h.Distance(QObject.Position));
+                    attackableUnits.Where(obj => obj is Obj_AI_Hero)
+                        .MinOrDefault(h => h.Position.Distance(QObject.Position));
 
                 if (firstPriority != null && firstPriority.IsValidTarget(range))
                 {
                     list.Add(firstPriority);
                 }
 
-                var thirdPriority =
-                    ObjectManager.Get<Obj_AI_Base>()
-                        .Where(h => h.IsValid && h.IsEnemy && h.IsValidTarget(range))
-                        .MinOrDefault(h => h.Distance(QObject.Position));
+                var thirdPriority = attackableUnits.MinOrDefault(h => h.Position.Distance(QObject.Position));
 
                 if (thirdPriority != null && thirdPriority.IsValidTarget(range))
                 {
@@ -320,17 +335,17 @@ namespace Babehri
 
         public static void HandlePassive()
         {
-            var position = Drawing.WorldToScreen(QObject.Position);
-
-            PassiveText.Visible = true;
-            PassiveText.X = (int) position.X + 10;
-            PassiveText.Y = (int) position.Y + 20;
-
             if (QObject == null || QObject.Position.Equals(Vector3.Zero))
             {
                 PassiveText.Visible = false;
                 return;
             }
+
+            var position = Drawing.WorldToScreen(QObject.Position);
+
+            PassiveText.Visible = true;
+            PassiveText.X = (int) position.X + 10;
+            PassiveText.Y = (int) position.Y + 20;
 
             PassiveText.Color = Menu.Item("DrawPassive").GetValue<Circle>().Color.ToBGRA();
 
