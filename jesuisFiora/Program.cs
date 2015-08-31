@@ -542,7 +542,6 @@ namespace jesuisFiora
         public static bool CastItems(Obj_AI_Base target)
         {
             var youmuus = ItemData.Youmuus_Ghostblade.GetItem();
-
             if (youmuus != null && youmuus.IsReady() && youmuus.Cast())
             {
                 return true;
