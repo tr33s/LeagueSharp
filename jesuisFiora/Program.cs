@@ -120,7 +120,7 @@ namespace jesuisFiora
             rMenu.AddInfo("RModeInfo2", " --> Combo Mode: Use R in normal combo", LorahColor);
             rMenu.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
             rMenu.AddInfo("RVitalInfo", " --> Note: This is only for damage calculation in Duelist Mode.", LorahColor);
-            rMenu.AddBool("RComboSelected", "Use R Selected Only");
+            rMenu.AddBool("RComboSelected", "Use R Selected on Selected Unit Only");
 
             var items = spells.AddMenu("Items", "Items");
             items.AddBool("ItemsCombo", "Use in Combo");
@@ -138,15 +138,14 @@ namespace jesuisFiora
             var eFarm = farm.AddMenu("E", "E");
             eFarm.AddBool("ELaneClear", "Use in LaneClear");
 
-            farm.AddKeyBind("FarmEnabled", "Farm Enabled in LC & LH", 'J', KeyBindType.Toggle, true);
-            farm.AddInfo("FarmInfo", " --> LC = LaneClear , LH = LastHit", LorahColor);
+            farm.AddKeyBind("FarmEnabled", "Farm Enabled", 'J', KeyBindType.Toggle, true);
+            farm.AddInfo("FarmInfo", " --> Enabled in LaneClear and LastHit", LorahColor);
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
 
-
             var draw = Menu.AddMenu("Drawing", "Drawing");
-            draw.AddBool("QDraw", "Draw Q");
-            draw.AddBool("WDraw", "Draw W");
-            draw.AddBool("RDraw", "Draw R");
+            draw.AddCircle("QDraw", "Draw Q", System.Drawing.Color.Purple, Q.Range);
+            draw.AddCircle("WDraw", "Draw W", System.Drawing.Color.DeepPink, W.Range);
+            draw.AddCircle("RDraw", "Draw R", System.Drawing.Color.White, R.Range);
             draw.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
             draw.AddBool("FarmPermashow", "Permashow Farm Enabled");
             draw.AddBool("RPermashow", "Permashow R Mode");
@@ -207,6 +206,7 @@ namespace jesuisFiora
 
             Flee();
             DuelistMode();
+            KillstealQ();
             KillstealW();
 
             var mode = Orbwalker.ActiveMode;
@@ -318,50 +318,60 @@ namespace jesuisFiora
             }
 
             var unit = sender as Obj_AI_Hero;
-            var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
             var type = args.SData.TargettingType;
 
-            //Console.WriteLine(type);
-
-            if (!blockableSpell)
-            {
-                return;
-            }
-
-            if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
-            {
-                if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
+            // Console.WriteLine(type);
+            Utility.DelayAction.Add(
+                50, () =>
                 {
-                    return;
-                }
+                    var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
+                    if (!blockableSpell)
+                    {
+                        return;
+                    }
 
-                CastW(sender);
-            }
-            else if (unit.ChampionName.Equals("Bard") && type.Equals(SpellDataTargetType.Location) &&
-                     args.End.Distance(Player.ServerPosition) < 300)
-            {
-                Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(sender));
-            }
-            else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
-            {
-                CastW(sender);
-            }
-            else if (type.Equals(SpellDataTargetType.SelfAoe) &&
-                     unit.Distance(Player.ServerPosition) < args.SData.CastRange + args.SData.CastRadius / 2)
-            {
-                CastW(sender);
-            }
-            else if (type.Equals(SpellDataTargetType.Self))
-            {
-                if ((unit.ChampionName.Equals("Kalista") && Player.Distance(unit) < 350))
-                {
-                    CastW(sender);
-                }
-                if (unit.ChampionName.Equals("Zed") && Player.Distance(unit) < 300)
-                {
-                    Utility.DelayAction.Add(200, () => CastW(sender));
-                }
-            }
+                    if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
+                    {
+                        if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
+                        {
+                            return;
+                        }
+
+                        CastW(sender);
+                    }
+                    else if (unit.ChampionName.Equals("Riven") && unit.Distance(Player) < 400)
+                    {
+                        CastW(sender);
+                    }
+                    else if (unit.ChampionName.Equals("Bard") && type.Equals(SpellDataTargetType.Location) &&
+                             args.End.Distance(Player.ServerPosition) < 300)
+                    {
+                        Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(sender));
+                    }
+                    else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
+                    {
+                        CastW(sender);
+                    }
+                    else if (type.Equals(SpellDataTargetType.SelfAoe) &&
+                             unit.Distance(Player.ServerPosition) < args.SData.CastRange + args.SData.CastRadius / 2)
+                    {
+                        CastW(sender);
+                    }
+                    else if (type.Equals(SpellDataTargetType.Self))
+                    {
+                        // this probably isn't needed
+                        if ((unit.ChampionName.Equals("Kalista") && Player.Distance(unit) < 350))
+                        {
+                            CastW(sender);
+                        }
+
+                        // need to look into this
+                        if (unit.ChampionName.Equals("Zed") && Player.Distance(unit) < 300)
+                        {
+                            Utility.DelayAction.Add(200, () => CastW(sender));
+                        }
+                    }
+                });
         }
 
         private static void Drawing_OnDraw(EventArgs args)
@@ -371,25 +381,18 @@ namespace jesuisFiora
                 return;
             }
 
-            if (Menu.Item("QDraw").IsActive())
+            foreach (var circle in
+                new[] { "Q", "W", "R" }.Select(spell => Menu.Item(spell + "Draw").GetValue<Circle>())
+                    .Where(circle => circle.Active))
             {
-                Render.Circle.DrawCircle(Player.Position, Q.Range, System.Drawing.Color.Purple, 7);
-            }
-
-            if (Menu.Item("WDraw").IsActive())
-            {
-                Render.Circle.DrawCircle(Player.Position, W.Range, System.Drawing.Color.DeepPink, 3);
-            }
-
-            if (Menu.Item("RDraw").IsActive())
-            {
-                Render.Circle.DrawCircle(Player.Position, R.Range, System.Drawing.Color.White, 7);
+                Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
             }
         }
 
         private static void AfterAttack(AttackableUnit unit, AttackableUnit target)
         {
-            if (!unit.IsMe)
+            var targ = target as Obj_AI_Base;
+            if (!unit.IsMe || targ == null)
             {
                 return;
             }
@@ -408,15 +411,16 @@ namespace jesuisFiora
                 return;
             }
 
-            if (Menu.Item("E" + comboMode).IsActive() && E.IsReady())
+            var delay = 0;
+
+            if (Menu.Item("E" + comboMode).IsActive() && E.IsReady() && E.Cast())
             {
-                E.Cast();
+                delay = (int) (E.Delay * 1000f + Game.Ping / 2f + 20);
             }
 
             if (Menu.Item("Items" + comboMode).IsActive())
             {
-                Utility.DelayAction.Add(
-                    (int) (E.Delay * 1000f + Game.Ping / 2f + 20), () => CastItems(TargetSelector.GetSelectedTarget()));
+                Utility.DelayAction.Add(delay, () => CastItems(targ));
             }
         }
 
@@ -520,7 +524,10 @@ namespace jesuisFiora
 
             var unit =
                 ObjectManager.Get<Obj_AI_Hero>()
-                    .FirstOrDefault(o => o.IsValidTarget(W.Range) && o.Health < W.GetDamage(o));
+                    .FirstOrDefault(
+                        o =>
+                            o.IsValidTarget(W.Range) && o.Health < W.GetDamage(o) &&
+                            !o.IsValidTarget(Orbwalking.GetRealAutoAttackRange(Player)));
             if (unit != null)
             {
                 W.Cast(unit);
@@ -534,6 +541,13 @@ namespace jesuisFiora
 
         public static bool CastItems(Obj_AI_Base target)
         {
+            var youmuus = ItemData.Youmuus_Ghostblade.GetItem();
+
+            if (youmuus != null && youmuus.IsReady() && youmuus.Cast())
+            {
+                return true;
+            }
+
             var botrk = ItemData.Blade_of_the_Ruined_King.GetItem();
             if (botrk != null && botrk.IsReady() && target.IsValidTarget(botrk.Range))
             {
