@@ -138,7 +138,7 @@ namespace jesuisFiora
             var eFarm = farm.AddMenu("E", "E");
             eFarm.AddBool("ELaneClear", "Use in LaneClear");
 
-            farm.AddKeyBind("FarmEnabled", "Farm Enabled in LC & LH", 'J', KeyBindType.Toggle, true);
+            farm.AddKeyBind("FarmEnabled", "Farm Enabled (LC/LH)", 'J', KeyBindType.Toggle, true);
             farm.AddInfo("FarmInfo", " --> LC = LaneClear , LH = LastHit", LorahColor);
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
 
