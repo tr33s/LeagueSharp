@@ -19,6 +19,16 @@ namespace jesuisFiora
         public static Color LorahColor = new Color(255, 0, 255);
         public static UltTarget UltTarget;
 
+        public static List<Obj_AI_Base> QLaneMinions
+        {
+            get { return MinionManager.GetMinions(Q.Range); }
+        }
+
+        public static List<Obj_AI_Base> QJungleMinions
+        {
+            get { return MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral); }
+        }
+
         public static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
         {
             get
@@ -133,6 +143,7 @@ namespace jesuisFiora
             var qFarm = farm.AddMenu("Farm", "Q");
             qFarm.AddBool("QLastHit", "Q Last Hit (Only Killable)");
             qFarm.AddBool("QLaneClear", "Q LaneClear (All)");
+            qFarm.AddBool("QFarmAA", "Only Q out of AA Range", false);
             qFarm.AddSlider("QFarmMana", "Q Min Mana Percent", 40);
 
             var eFarm = farm.AddMenu("E", "E");
@@ -206,6 +217,7 @@ namespace jesuisFiora
 
             Flee();
             DuelistMode();
+            Farm();
             KillstealQ();
             KillstealW();
 
@@ -259,30 +271,6 @@ namespace jesuisFiora
                     if (CastR(target))
                     {
                         Hud.SelectedUnit = target;
-                    }
-                }
-            }
-            else if (Menu.Item("FarmEnabled").IsActive())
-            {
-                if (mode.Equals(Orbwalking.OrbwalkingMode.LastHit) && Menu.Item("QLastHit").IsActive() &&
-                    Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
-                {
-                    var killableMinion =
-                        MinionManager.GetMinions(Q.Range)
-                            .FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
-                    if (killableMinion != null)
-                    {
-                        Q.Cast(killableMinion);
-                    }
-                }
-
-                if (mode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && Menu.Item("QLaneClear").IsActive() &&
-                    Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value)
-                {
-                    var minion = MinionManager.GetMinions(Q.Range).OrderBy(obj => obj.Distance(Player)).FirstOrDefault();
-                    if (minion != null)
-                    {
-                        Q.Cast(minion);
                     }
                 }
             }
@@ -465,6 +453,56 @@ namespace jesuisFiora
                     Drawing.DrawText(pos.X, pos.Y - 30, System.Drawing.Color.DeepPink, "Killable!");
                 }
             }
+        }
+
+        public static void Farm()
+        {
+            var mode = Orbwalker.ActiveMode;
+            if (!Menu.Item("FarmEnabled").IsActive() ||
+                !mode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && !mode.Equals(Orbwalking.OrbwalkingMode.LastHit))
+            {
+                return;
+            }
+
+            var active = Q.IsReady() && Menu.Item("Q" + mode.GetModeString()).IsActive() &&
+                         Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value;
+
+            if (!active)
+            {
+                return;
+            }
+
+            var laneMinions = QLaneMinions;
+            var jungleMinions = QJungleMinions;
+
+            var jungleKillable =
+                jungleMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
+            if (jungleKillable != null && Q.Cast(jungleKillable).IsCasted())
+            {
+                return;
+            }
+
+            var jungle = jungleMinions.MinOrDefault(obj => obj.Health);
+            if (jungle != null && Q.Cast(jungle).IsCasted())
+            {
+                return;
+            }
+
+            var killable = laneMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
+
+            if (Menu.Item("QFarmAA").IsActive() && killable != null &&
+                killable.IsValidTarget(Orbwalking.GetRealAutoAttackRange(Player)) && !Player.UnderTurret(false))
+            {
+                return;
+            }
+
+            if (killable != null && Q.Cast(killable).IsCasted())
+            {
+                return;
+            }
+
+            var lane = laneMinions.MinOrDefault(obj => obj.Health);
+            if (lane != null && Q.Cast(lane).IsCasted()) {}
         }
 
         public static bool CastQ(Obj_AI_Base target)
