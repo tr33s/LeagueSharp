@@ -18,6 +18,7 @@ namespace jesuisFiora
         public static Menu Menu;
         public static Color LorahColor = new Color(255, 0, 255);
         public static UltTarget UltTarget;
+        public static Spell Ignite;
 
         public static List<Obj_AI_Base> QLaneMinions
         {
@@ -196,6 +197,14 @@ namespace jesuisFiora
             if (Menu.Item("Sounds").IsActive())
             {
                 new SoundObject(Resources.OnLoad).Play();
+            }
+
+            var ignite = ObjectManager.Player.Spellbook.GetSpell(ObjectManager.Player.GetSpellSlot("summonerdot"));
+
+            if (ignite.Slot != SpellSlot.Unknown)
+            {
+                Ignite = new Spell(ignite.Slot, 600);
+                //Ignite.SetTargetted();
             }
 
             DamageIndicator.DamageToUnit = GetComboDamage;
@@ -709,10 +718,29 @@ namespace jesuisFiora
                 d += Player.GetItemDamage(unit, Damage.DamageItems.Hydra);
             }
 
+            const ItemId titanic = (ItemId) 3748;
+            var slot = Player.InventoryItems.FirstOrDefault(i => i.Id.Equals(titanic));
+
+            if (slot != null)
+            {
+                d += Player.GetItemDamage(unit, Damage.DamageItems.Hydra);
+            }
+
             var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
             if (tiamat != null && tiamat.IsReady())
             {
                 d += Player.GetItemDamage(unit, Damage.DamageItems.Tiamat);
+            }
+
+            var botrk = ItemData.Blade_of_the_Ruined_King.GetItem();
+            if (botrk != null && botrk.IsReady())
+            {
+                d += Player.GetItemDamage(unit, Damage.DamageItems.Botrk);
+            }
+
+            if (Ignite != null && Ignite.IsReady())
+            {
+                d += Player.GetSummonerSpellDamage(unit, Damage.SummonerSpell.Ignite);
             }
 
             if (Q.IsReady())
