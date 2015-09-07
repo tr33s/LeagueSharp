@@ -378,7 +378,9 @@ namespace jesuisFiora
                 //Console.WriteLine("RETURN");
                 return;
             }
-            Console.WriteLine(type);
+            
+            //Console.WriteLine(type);
+
             if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
             {
                 if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
