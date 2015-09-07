@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -139,7 +138,7 @@ namespace jesuisFiora
             {
                 if (spell.IsAutoAttack)
                 {
-                    Console.WriteLine(args.SData.Name);
+                    //Console.WriteLine(args.SData.Name);
                     if (!args.SData.IsAutoAttack())
                     {
                         continue;
@@ -155,7 +154,7 @@ namespace jesuisFiora
                     condition = condition && Program.Menu.Item(name + "AA") != null &&
                                 Program.Menu.Item(name + "AA").IsActive();
 
-                    Console.WriteLine("CC: " + condition);
+                    // Console.WriteLine("CC: " + condition);
                     if (condition)
                     {
                         return true;

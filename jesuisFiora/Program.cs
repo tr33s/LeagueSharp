@@ -378,7 +378,7 @@ namespace jesuisFiora
                 //Console.WriteLine("RETURN");
                 return;
             }
-            
+
             //Console.WriteLine(type);
 
             if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
