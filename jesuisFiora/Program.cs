@@ -325,15 +325,14 @@ namespace jesuisFiora
                 if (Menu.Item("RComboSelected").IsActive())
                 {
                     var unit = TargetSelector.GetSelectedTarget();
-                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) &&
-                        Player.IsFacing(target) && CastR(target))
+                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) && CastR(target))
                     {
                         return;
                     }
                     return;
                 }
 
-                if (Player.IsFacing(target) && CastR(target))
+                if (CastR(target))
                 {
                     Hud.SelectedUnit = target;
                 }
@@ -520,7 +519,7 @@ namespace jesuisFiora
                     if (Menu.Item("RComboSelected").IsActive())
                     {
                         var unit = TargetSelector.GetSelectedTarget();
-                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) && Player.IsFacing(obj) &&
+                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) &&
                             CastR(obj))
                         {
                             return;
@@ -528,7 +527,7 @@ namespace jesuisFiora
                         return;
                     }
 
-                    if (Player.IsFacing(obj) && CastR(obj))
+                    if (CastR(obj))
                     {
                         Hud.SelectedUnit = obj;
                     }
@@ -643,6 +642,11 @@ namespace jesuisFiora
         public static void KillstealW()
         {
             if (!Menu.Item("WKillsteal").IsActive())
+            {
+                return;
+            }
+
+            if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
             {
                 return;
             }
