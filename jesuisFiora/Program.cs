@@ -55,6 +55,11 @@ namespace jesuisFiora
             }
         }
 
+        public static float FioraAutoAttackRange
+        {
+            get { return Orbwalking.GetRealAutoAttackRange(Player); }
+        }
+
         private static Obj_AI_Hero Player
         {
             get { return ObjectManager.Player; }
@@ -72,7 +77,7 @@ namespace jesuisFiora
                 return;
             }
 
-            Q = new Spell(SpellSlot.Q, 400 + 175);
+            Q = new Spell(SpellSlot.Q, 400 + 350);
             Q.SetSkillshot(.25f, 0, 500, false, SkillshotType.SkillshotLine);
 
             W = new Spell(SpellSlot.W, 750);
@@ -85,8 +90,8 @@ namespace jesuisFiora
 
             Menu = new Menu("jesuisFiora", "jesuisFiora", true);
             Menu.SetFontStyle(FontStyle.Regular, LorahColor);
-            Orbwalker = Menu.AddOrbwalker();
 
+            Orbwalker = Menu.AddOrbwalker();
             Menu.AddTargetSelector();
 
             var spells = Menu.AddMenu("Spells", "Spells");
@@ -94,6 +99,10 @@ namespace jesuisFiora
             var qMenu = spells.AddMenu("Q", "Q");
             qMenu.AddBool("QCombo", "Use in Combo");
             qMenu.AddBool("QHarass", "Use in Harass");
+            qMenu.AddSlider("QRange", "Decrease Q Max Range", 10, 0, 150);
+            Q.Range = 750 - qMenu.Item("QRange").GetValue<Slider>().Value;
+            qMenu.Item("QRange").ValueChanged +=
+                (sender, eventArgs) => { Q.Range = 750 - eventArgs.GetNewValue<Slider>().Value; };
             qMenu.AddInfo("QFleeInfo", "Flee:", LorahColor);
             qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
             qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", LorahColor);
@@ -101,17 +110,25 @@ namespace jesuisFiora
 
             var wMenu = spells.AddMenu("W", "W");
             var wSpells = wMenu.AddMenu("BlockSpells", "Blocked Spells");
-            wMenu.AddBool("WSpells", "W Incoming Spells");
+            wMenu.AddKeyBind("WSpells", "W Spellblock", 'U', KeyBindType.Toggle, true);
             wMenu.AddBool("WKillsteal", "Use for Killsteal");
             wMenu.AddBool("WTurret", "Block W Under Enemy Turret");
 
             SpellBlock.Initialize(wSpells);
+            Dispeller.Initialize(wSpells);
 
             var eMenu = spells.AddMenu("E", "E");
             eMenu.AddBool("ECombo", "Use in Combo");
             eMenu.AddBool("EHarass", "Use in Harass");
 
             var rMenu = spells.AddMenu("R", "R");
+
+            var duelistMenu = rMenu.AddMenu("Duelist Champion", "Duelist Mode Champions");
+            foreach (var enemy in HeroManager.Enemies)
+            {
+                duelistMenu.AddBool("Duelist" + enemy.ChampionName, "Use on " + enemy.ChampionName);
+            }
+
             rMenu.AddBool("RCombo", "Use R");
             rMenu.AddList("RMode", "Cast Mode", new[] { "Duelist", "Combo" });
             rMenu.AddKeyBind("RToggle", "Toggle Mode", 'L');
@@ -137,6 +154,7 @@ namespace jesuisFiora
             items.AddBool("ItemsCombo", "Use in Combo");
             items.AddBool("ItemsHarass", "Use in Harass");
 
+            spells.AddBool("Ignite", "Auto Ignite");
             spells.AddSlider("ManaHarass", "Harass Min Mana Percent", 40);
 
             var farm = Menu.AddMenu("Farm", "Farm");
@@ -159,8 +177,20 @@ namespace jesuisFiora
             draw.AddCircle("WDraw", "Draw W", System.Drawing.Color.DeepPink, W.Range);
             draw.AddCircle("RDraw", "Draw R", System.Drawing.Color.White, R.Range);
             draw.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
-            draw.AddBool("FarmPermashow", "Permashow Farm Enabled");
+            draw.AddBool("WPermashow", "Permashow W Spellblock");
             draw.AddBool("RPermashow", "Permashow R Mode");
+            draw.AddBool("FarmPermashow", "Permashow Farm Enabled");
+
+            if (draw.Item("WPermashow").IsActive())
+            {
+                wMenu.Item("WSpells").Permashow(true, null, LorahColor);
+            }
+
+            draw.Item("WPermashow").ValueChanged +=
+                (sender, eventArgs) =>
+                {
+                    wMenu.Item("WSpells").Permashow(eventArgs.GetNewValue<bool>(), null, LorahColor);
+                };
 
             if (draw.Item("RPermashow").IsActive())
             {
@@ -191,7 +221,7 @@ namespace jesuisFiora
             dmg.AddBool("Killable", "Killable Text");
 
             Menu.AddBool("Sounds", "Sounds");
-            Menu.AddInfo("Info", "By Trees and lorah!", LorahColor);
+            Menu.AddInfo("Info", "By Trees!", LorahColor);
             Menu.AddToMainMenu();
 
             if (Menu.Item("Sounds").IsActive())
@@ -210,6 +240,7 @@ namespace jesuisFiora
             DamageIndicator.DamageToUnit = GetComboDamage;
 
             Game.OnUpdate += Game_OnGameUpdate;
+            Orbwalking.BeforeAttack += BeforeAttack;
             Orbwalking.AfterAttack += AfterAttack;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Hero_OnProcessSpellCast;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -229,58 +260,82 @@ namespace jesuisFiora
             Farm();
             KillstealQ();
             KillstealW();
+            AutoIgnite();
 
             var mode = Orbwalker.ActiveMode;
             var combo = mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
 
 
-            if (combo)
+            if (!combo)
             {
-                var comboMode = mode.GetModeString();
-                var target = UltTarget != null && UltTarget.Target.IsValidTarget(Q.Range)
-                    ? UltTarget.Target
-                    : TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+                return;
+            }
 
-                if (target == null || !target.IsValidTarget(W.Range))
+            var comboMode = mode.GetModeString();
+            var target = UltTarget != null && UltTarget.Target.IsValidTarget(Q.Range)
+                ? UltTarget.Target
+                : TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+
+            if (target == null || !target.IsValidTarget(W.Range))
+            {
+                return;
+            }
+
+            var qCombo = Menu.Item("Q" + comboMode).IsActive();
+            var rCombo = comboMode.Equals("Combo") && Menu.Item("R" + comboMode).IsActive() &&
+                         Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(1);
+
+            if (comboMode.Equals("Harass") && Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
+            {
+                return;
+            }
+
+            if (Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
+            {
+                return;
+            }
+
+            if (qCombo)
+            {
+                if (target.IsValidTarget(FioraAutoAttackRange) && !Orbwalking.IsAutoAttack(Player.LastCastedSpellName()))
                 {
                     return;
                 }
 
-                var qCombo = Menu.Item("Q" + comboMode).IsActive();
-                var rCombo = comboMode.Equals("Combo") && Menu.Item("R" + comboMode).IsActive() &&
-                             Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(1);
-
-                if (comboMode.Equals("Harass") && Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
+                var path = target.GetWaypoints();
+                if (path.Count == 1)
                 {
+                    CastQ(target);
                     return;
                 }
 
-                if (qCombo && CastQ(target))
+                var d = target.Distance(path[1]);
+                var d2 = Player.Distance(path[1]);
+                var t = d / target.MoveSpeed;
+                var dT = Q.Delay + Game.Ping / 2000f - t;
+                if ((dT > .2f || (d2 < 690 && dT > -1)) && CastQ(target))
                 {
+                    //  Console.WriteLine("{0} {1}", dT, d2);
                     return;
                 }
+            }
 
-                if (Player.IsDashing())
+            if (rCombo)
+            {
+                if (Menu.Item("RComboSelected").IsActive())
                 {
-                    return;
-                }
-
-                if (rCombo)
-                {
-                    if (Menu.Item("RComboSelected").IsActive())
+                    var unit = TargetSelector.GetSelectedTarget();
+                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) &&
+                        Player.IsFacing(target) && CastR(target))
                     {
-                        var unit = TargetSelector.GetSelectedTarget();
-                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) && CastR(target))
-                        {
-                            return;
-                        }
                         return;
                     }
+                    return;
+                }
 
-                    if (CastR(target))
-                    {
-                        Hud.SelectedUnit = target;
-                    }
+                if (Player.IsFacing(target) && CastR(target))
+                {
+                    Hud.SelectedUnit = target;
                 }
             }
         }
@@ -317,58 +372,54 @@ namespace jesuisFiora
             var unit = sender as Obj_AI_Hero;
             var type = args.SData.TargettingType;
 
-            // Console.WriteLine(type);
-            Utility.DelayAction.Add(
-                50, () =>
+            var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
+            if (!blockableSpell)
+            {
+                //Console.WriteLine("RETURN");
+                return;
+            }
+            Console.WriteLine(type);
+            if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
+            {
+                if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
                 {
-                    var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
-                    if (!blockableSpell)
-                    {
-                        return;
-                    }
+                    return;
+                }
 
-                    if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
-                    {
-                        if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
-                        {
-                            return;
-                        }
+                CastW(sender);
+            }
+            else if (unit.ChampionName.Equals("Riven") && unit.Distance(Player) < 400)
+            {
+                CastW(sender);
+            }
+            else if (unit.ChampionName.Equals("Bard") && type.Equals(SpellDataTargetType.Location) &&
+                     args.End.Distance(Player.ServerPosition) < 300)
+            {
+                Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(sender));
+            }
+            else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
+            {
+                CastW(sender);
+            }
+            else if (type.Equals(SpellDataTargetType.SelfAoe) &&
+                     unit.Distance(Player.ServerPosition) < args.SData.CastRange + args.SData.CastRadius / 2)
+            {
+                CastW(sender);
+            }
+            else if (type.Equals(SpellDataTargetType.Self))
+            {
+                // this probably isn't needed
+                if ((unit.ChampionName.Equals("Kalista") && Player.Distance(unit) < 350))
+                {
+                    CastW(sender);
+                }
 
-                        CastW(sender);
-                    }
-                    else if (unit.ChampionName.Equals("Riven") && unit.Distance(Player) < 400)
-                    {
-                        CastW(sender);
-                    }
-                    else if (unit.ChampionName.Equals("Bard") && type.Equals(SpellDataTargetType.Location) &&
-                             args.End.Distance(Player.ServerPosition) < 300)
-                    {
-                        Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(sender));
-                    }
-                    else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
-                    {
-                        CastW(sender);
-                    }
-                    else if (type.Equals(SpellDataTargetType.SelfAoe) &&
-                             unit.Distance(Player.ServerPosition) < args.SData.CastRange + args.SData.CastRadius / 2)
-                    {
-                        CastW(sender);
-                    }
-                    else if (type.Equals(SpellDataTargetType.Self))
-                    {
-                        // this probably isn't needed
-                        if ((unit.ChampionName.Equals("Kalista") && Player.Distance(unit) < 350))
-                        {
-                            CastW(sender);
-                        }
-
-                        // need to look into this
-                        if (unit.ChampionName.Equals("Zed") && Player.Distance(unit) < 300)
-                        {
-                            Utility.DelayAction.Add(200, () => CastW(sender));
-                        }
-                    }
-                });
+                // need to look into this
+                if (unit.ChampionName.Equals("Zed") && Player.Distance(unit) < 300)
+                {
+                    Utility.DelayAction.Add(200, () => CastW(sender));
+                }
+            }
         }
 
         private static void Drawing_OnDraw(EventArgs args)
@@ -383,6 +434,31 @@ namespace jesuisFiora
                     .Where(circle => circle.Active))
             {
                 Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
+            }
+        }
+
+        private static void BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
+        {
+            var targ = args.Target as Obj_AI_Base;
+            if (!args.Unit.IsMe || targ == null)
+            {
+                return;
+            }
+
+            if (!Orbwalker.ActiveMode.IsComboMode())
+            {
+                return;
+            }
+
+            var mode = Orbwalker.ActiveMode.GetModeString();
+            if (!Menu.Item("E" + mode).IsActive() || !E.IsReady())
+            {
+                return;
+            }
+
+            if (!targ.IsFacing(Player) && targ.Distance(Player) >= FioraAutoAttackRange - 10)
+            {
+                E.Cast();
             }
         }
 
@@ -408,16 +484,14 @@ namespace jesuisFiora
                 return;
             }
 
-            var delay = 0;
-
             if (Menu.Item("E" + comboMode).IsActive() && E.IsReady() && E.Cast())
             {
-                delay = (int) (E.Delay * 1000f + Game.Ping / 2f + 20);
+                return;
             }
 
             if (Menu.Item("Items" + comboMode).IsActive())
             {
-                Utility.DelayAction.Add(delay, () => CastItems(targ));
+                CastItems(targ);
             }
         }
 
@@ -438,19 +512,21 @@ namespace jesuisFiora
                             enemy.IsValidTarget() && GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
                             enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
             {
-                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range))
+                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range) &&
+                    Menu.Item("Duelist" + obj.ChampionName).IsActive())
                 {
                     if (Menu.Item("RComboSelected").IsActive())
                     {
                         var unit = TargetSelector.GetSelectedTarget();
-                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) && CastR(obj))
+                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) && Player.IsFacing(obj) &&
+                            CastR(obj))
                         {
                             return;
                         }
                         return;
                     }
 
-                    if (CastR(obj))
+                    if (Player.IsFacing(obj) && CastR(obj))
                     {
                         Hud.SelectedUnit = obj;
                     }
@@ -499,8 +575,8 @@ namespace jesuisFiora
 
             var killable = laneMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
 
-            if (Menu.Item("QFarmAA").IsActive() && killable != null &&
-                killable.IsValidTarget(Orbwalking.GetRealAutoAttackRange(Player)) && !Player.UnderTurret(false))
+            if (Menu.Item("QFarmAA").IsActive() && killable != null && killable.IsValidTarget(FioraAutoAttackRange) &&
+                !Player.UnderTurret(false))
             {
                 return;
             }
@@ -574,7 +650,7 @@ namespace jesuisFiora
                     .FirstOrDefault(
                         o =>
                             o.IsValidTarget(W.Range) && o.Health < W.GetDamage(o) &&
-                            !o.IsValidTarget(Orbwalking.GetRealAutoAttackRange(Player)));
+                            !o.IsValidTarget(FioraAutoAttackRange));
             if (unit != null)
             {
                 W.Cast(unit);
@@ -588,6 +664,11 @@ namespace jesuisFiora
 
         public static bool CastItems(Obj_AI_Base target)
         {
+            if (Player.IsDashing() || Player.IsWindingUp)
+            {
+                return false;
+            }
+
             var youmuus = ItemData.Youmuus_Ghostblade.GetItem();
             if (youmuus != null && youmuus.IsReady() && youmuus.Cast())
             {
@@ -600,14 +681,18 @@ namespace jesuisFiora
                 botrk.Cast(target);
             }
 
+            var units = MinionManager.GetMinions(385, MinionTypes.All, MinionTeam.NotAlly).Count;
+            var heroes = Player.GetEnemiesInRange(385).Count;
+            var count = units + heroes;
+
             var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
-            if (tiamat != null && tiamat.IsReady() && tiamat.Cast())
+            if (tiamat != null && tiamat.IsReady() && count >= 1 && tiamat.Cast())
             {
                 return true;
             }
 
             var hydra = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
-            if (hydra != null && hydra.IsReady() && hydra.Cast())
+            if (hydra != null && hydra.IsReady() && count >= 1 && hydra.Cast())
             {
                 return true;
             }
@@ -621,7 +706,25 @@ namespace jesuisFiora
             }
 
             var spell = Player.Spellbook.GetSpell(slot.SpellSlot);
-            return spell.IsReady() && Player.Spellbook.CastSpell(spell.Slot);
+            return spell.IsReady() && count >= 1 && Player.Spellbook.CastSpell(spell.Slot);
+        }
+
+        public static void AutoIgnite()
+        {
+            if (!Menu.Item("Ignite").IsActive() || Ignite == null || !Ignite.IsReady())
+            {
+                return;
+            }
+
+            var target =
+                HeroManager.Enemies.FirstOrDefault(
+                    h =>
+                        h.IsValidTarget(Ignite.Range) &&
+                        h.Health < Player.GetSummonerSpellDamage(h, Damage.SummonerSpell.Ignite));
+            if (target != null)
+            {
+                Ignite.Cast(target);
+            }
         }
 
         public static void Flee()
@@ -632,6 +735,11 @@ namespace jesuisFiora
             }
 
             Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
+
+            if (!Player.IsDashing() && Player.GetWaypoints().Last().Distance(Game.CursorPos) > 100)
+            {
+                Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+            }
 
             if (Q.IsReady())
             {
@@ -721,7 +829,7 @@ namespace jesuisFiora
             const ItemId titanic = (ItemId) 3748;
             var slot = Player.InventoryItems.FirstOrDefault(i => i.Id.Equals(titanic));
 
-            if (slot != null)
+            if (slot != null && Player.Spellbook.GetSpell(slot.SpellSlot).IsReady())
             {
                 d += Player.GetItemDamage(unit, Damage.DamageItems.Hydra);
             }
@@ -730,6 +838,12 @@ namespace jesuisFiora
             if (tiamat != null && tiamat.IsReady())
             {
                 d += Player.GetItemDamage(unit, Damage.DamageItems.Tiamat);
+            }
+
+            var cutlass = ItemData.Bilgewater_Cutlass.GetItem();
+            if (cutlass != null && cutlass.IsReady())
+            {
+                d += Player.GetItemDamage(unit, Damage.DamageItems.Bilgewater);
             }
 
             var botrk = ItemData.Blade_of_the_Ruined_King.GetItem();
