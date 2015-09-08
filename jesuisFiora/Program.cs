@@ -20,17 +20,22 @@ namespace jesuisFiora
         public static UltTarget UltTarget;
         public static Spell Ignite;
 
-        public static List<Obj_AI_Base> QLaneMinions
+        private static List<Obj_AI_Hero> Enemies
+        {
+            get { return HeroManager.Enemies; }
+        }
+
+        private static List<Obj_AI_Base> QLaneMinions
         {
             get { return MinionManager.GetMinions(Q.Range); }
         }
 
-        public static List<Obj_AI_Base> QJungleMinions
+        private static List<Obj_AI_Base> QJungleMinions
         {
             get { return MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral); }
         }
 
-        public static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
+        private static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
         {
             get
             {
@@ -44,7 +49,7 @@ namespace jesuisFiora
             }
         }
 
-        public static List<Obj_GeneralParticleEmitter> FioraPassiveObjects
+        private static List<Obj_GeneralParticleEmitter> FioraPassiveObjects
         {
             get
             {
@@ -55,7 +60,7 @@ namespace jesuisFiora
             }
         }
 
-        public static float FioraAutoAttackRange
+        private static float FioraAutoAttackRange
         {
             get { return Orbwalking.GetRealAutoAttackRange(Player); }
         }
@@ -124,7 +129,7 @@ namespace jesuisFiora
             var rMenu = spells.AddMenu("R", "R");
 
             var duelistMenu = rMenu.AddMenu("Duelist Champion", "Duelist Mode Champions");
-            foreach (var enemy in HeroManager.Enemies)
+            foreach (var enemy in Enemies)
             {
                 duelistMenu.AddBool("Duelist" + enemy.ChampionName, "Use on " + enemy.ChampionName);
             }
@@ -230,7 +235,6 @@ namespace jesuisFiora
             }
 
             var ignite = ObjectManager.Player.Spellbook.GetSpell(ObjectManager.Player.GetSpellSlot("summonerdot"));
-
             if (ignite.Slot != SpellSlot.Unknown)
             {
                 Ignite = new Spell(ignite.Slot, 600);
@@ -620,8 +624,7 @@ namespace jesuisFiora
             }
 
             var unit =
-                ObjectManager.Get<Obj_AI_Hero>()
-                    .FirstOrDefault(o => o.IsValidTarget(Q.Range) && o.Health < Q.GetDamage(o) + GetPassiveDamage(o));
+                Enemies.FirstOrDefault(o => o.IsValidTarget(Q.Range) && o.Health < Q.GetDamage(o) + GetPassiveDamage(o));
             if (unit != null)
             {
                 CastQ(unit);
@@ -641,11 +644,8 @@ namespace jesuisFiora
             }
 
             var unit =
-                ObjectManager.Get<Obj_AI_Hero>()
-                    .FirstOrDefault(
-                        o =>
-                            o.IsValidTarget(W.Range) && o.Health < W.GetDamage(o) &&
-                            !o.IsValidTarget(FioraAutoAttackRange));
+                Enemies.FirstOrDefault(
+                    o => o.IsValidTarget(W.Range) && o.Health < W.GetDamage(o) && !o.IsValidTarget(FioraAutoAttackRange));
             if (unit != null)
             {
                 W.Cast(unit);
