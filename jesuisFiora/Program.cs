@@ -303,7 +303,7 @@ namespace jesuisFiora
                 }
 
                 var path = target.GetWaypoints();
-                if (path.Count == 1)
+                if (path.Count == 1 || Player.Distance(target) < 600)
                 {
                     CastQ(target);
                     return;
@@ -498,8 +498,9 @@ namespace jesuisFiora
 
         public static void DuelistMode()
         {
-            if (!Menu.Item("RCombo").IsActive() || !Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(0) ||
-                !R.IsReady() || Player.CountEnemiesInRange(R.Range) == 0)
+            if (!Menu.Item("RCombo").IsActive() || !Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) ||
+                !Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(0) || !R.IsReady() ||
+                Player.CountEnemiesInRange(R.Range) == 0)
 
             {
                 return;
@@ -507,31 +508,27 @@ namespace jesuisFiora
 
             var vitalCalc = Menu.Item("RKillVital").GetValue<Slider>().Value;
             foreach (var obj in
-                ObjectManager.Get<Obj_AI_Hero>()
-                    .Where(
-                        enemy =>
-                            enemy.IsValidTarget() && GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
-                            enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
+                HeroManager.Enemies.Where(
+                    enemy =>
+                        Menu.Item("Duelist" + enemy.ChampionName).IsActive() && enemy.IsValidTarget(R.Range) &&
+                        GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
+                        enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
             {
-                if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) && obj.IsValidTarget(R.Range) &&
-                    Menu.Item("Duelist" + obj.ChampionName).IsActive())
+                if (Menu.Item("RComboSelected").IsActive())
                 {
-                    if (Menu.Item("RComboSelected").IsActive())
+                    var unit = TargetSelector.GetSelectedTarget();
+                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) && CastR(obj))
                     {
-                        var unit = TargetSelector.GetSelectedTarget();
-                        if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) &&
-                            CastR(obj))
-                        {
-                            return;
-                        }
                         return;
                     }
-
-                    if (CastR(obj))
-                    {
-                        Hud.SelectedUnit = obj;
-                    }
+                    return;
                 }
+
+                if (CastR(obj))
+                {
+                    Hud.SelectedUnit = obj;
+                }
+
 
                 if (Menu.Item("DuelistDraw").IsActive())
                 {
@@ -600,7 +597,9 @@ namespace jesuisFiora
 
             if (CountPassive(target) == 0)
             {
-                return Q.Cast(target).IsCasted();
+                var predicted = Prediction.GetPrediction(target, Q.Delay);
+                return predicted.Hitchance > HitChance.Medium && Q.IsInRange(predicted.UnitPosition) &&
+                       Q.Cast(predicted.UnitPosition);
             }
 
             var pos = GetPassivePosition(target);
@@ -608,16 +607,9 @@ namespace jesuisFiora
             return pos.Equals(Vector3.Zero) ? Q.Cast(target).IsCasted() : Q.Cast(pos);
         }
 
-        public static void CastW(Obj_AI_Base target)
+        public static bool CastW(Obj_AI_Base target)
         {
-            if (!target.IsValidTarget(W.Range))
-            {
-                W.Cast(target.ServerPosition);
-            }
-            else
-            {
-                W.Cast(target);
-            }
+            return target.IsValidTarget(W.Range) ? W.Cast(target).IsCasted() : W.Cast(target.ServerPosition);
         }
 
         public static void KillstealQ()
@@ -629,10 +621,7 @@ namespace jesuisFiora
 
             var unit =
                 ObjectManager.Get<Obj_AI_Hero>()
-                    .FirstOrDefault(
-                        o =>
-                            o.IsValidTarget(Q.Range) &&
-                            o.Health < Q.GetDamage(o) + (CountPassive(o) > 0 ? GetPassiveDamage(o) : 0));
+                    .FirstOrDefault(o => o.IsValidTarget(Q.Range) && o.Health < Q.GetDamage(o) + GetPassiveDamage(o));
             if (unit != null)
             {
                 CastQ(unit);
