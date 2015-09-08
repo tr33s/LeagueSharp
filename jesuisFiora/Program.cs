@@ -307,7 +307,7 @@ namespace jesuisFiora
                 }
 
                 var path = target.GetWaypoints();
-                if (path.Count == 1 || Player.Distance(target) < 600)
+                if (path.Count == 1 || Player.Distance(target) < 700)
                 {
                     CastQ(target);
                     return;
