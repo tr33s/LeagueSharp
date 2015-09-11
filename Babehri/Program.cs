@@ -466,7 +466,8 @@ namespace Babehri
 
             if (Spells.Q.IsReady() && Menu.Item("FarmQ").IsActive())
             {
-                if (Menu.Item("FarmQLH").IsActive() && ShouldWaitForMinionKill())
+                if ((Menu.Item("FarmQLH").IsActive() && Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.LastHit)) ||
+                    ShouldWaitForMinionKill())
                 {
                     return;
                 }
