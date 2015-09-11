@@ -20,12 +20,12 @@ namespace Babehri
         {
             get
             {
-                if (AhriQMissile != null && AhriQMissile.IsValid)
+                if (AhriQMissile != null && AhriQMissile.IsValid && AhriQMissile.IsVisible)
                 {
                     return AhriQMissile;
                 }
 
-                if (AhriQParticle != null && AhriQParticle.IsValid)
+                if (AhriQParticle != null && AhriQParticle.IsValid && AhriQParticle.IsVisible)
                 {
                     return AhriQParticle;
                 }
@@ -489,7 +489,8 @@ namespace Babehri
                 }
             }
 
-            if (Spells.W.IsReady() && Menu.Item("FarmW").IsActive() && Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && Spells.W.Cast()) {}
+            if (Spells.W.IsReady() && Menu.Item("FarmW").IsActive() &&
+                Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && Spells.W.Cast()) {}
         }
 
         #endregion
