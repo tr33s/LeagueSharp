@@ -91,7 +91,7 @@ namespace Babehri
             farm.AddBool("FarmQ", "Smart Farm with Q");
             farm.AddSlider("FarmQHC", "Q Min HitCount", 3, 1, 5);
             farm.AddBool("FarmQLH", "Save Q for LH", false);
-            farm.AddBool("FarmW", "Use W", false);
+            farm.AddBool("FarmW", "Farm W (LC)", false);
             farm.AddSlider("FarmMana", "Minimum Mana %", 50);
 
             var misc = Menu.AddMenu("Misc", "Misc");
@@ -489,7 +489,7 @@ namespace Babehri
                 }
             }
 
-            if (Spells.W.IsReady() && Menu.Item("FarmW").IsActive() && Spells.W.Cast()) {}
+            if (Spells.W.IsReady() && Menu.Item("FarmW").IsActive() && Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && Spells.W.Cast()) {}
         }
 
         #endregion
