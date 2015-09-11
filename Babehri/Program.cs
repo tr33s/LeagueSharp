@@ -88,9 +88,11 @@ namespace Babehri
             harass.AddSlider("HarassMinMana", "Min Mana Percent", 30);
 
             var farm = Menu.AddMenu("Farm", "Farm");
-            farm.AddBool("Farm-Use-Q", "Use Smart Q for LH");
-            farm.AddBool("Farm-Use-Q-LH", "Use Q only for LH");
-            farm.AddSlider("Farm-Mana", "Minimum Mana %", 50);
+            farm.AddBool("FarmQ", "Smart Farm with Q");
+            farm.AddSlider("FarmQHC", "Q Min HitCount", 3, 1, 5);
+            farm.AddBool("FarmQLH", "Save Q for LH", false);
+            farm.AddBool("FarmW", "Use W", false);
+            farm.AddSlider("FarmMana", "Minimum Mana %", 50);
 
             var misc = Menu.AddMenu("Misc", "Misc");
             var eMisc = misc.AddMenu("E", "E");
@@ -108,7 +110,7 @@ namespace Babehri
             damage.AddCircle("FillColor", "Damage Color", System.Drawing.Color.DeepPink);
 
             drawing.AddCircle("DrawQ", "Draw Q", System.Drawing.Color.DeepPink, Spells.Q.Range);
-            drawing.AddCircle("DrawW", "Draw W", System.Drawing.Color.White, Spells.W.Range);
+            drawing.AddCircle("DrawW", "Draw W", System.Drawing.Color.White, Spells.W.Range, false);
             drawing.AddCircle("DrawE", "Draw E", System.Drawing.Color.MediumVioletRed, Spells.E.Range);
             drawing.AddCircle("DrawR", "Draw R", System.Drawing.Color.Cyan, Spells.R.Range);
             drawing.AddCircle("DrawPassive", "Draw Passive Stack", System.Drawing.Color.White);
@@ -128,11 +130,6 @@ namespace Babehri
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             GameObject.OnCreate += GameObject_OnCreate;
             GameObject.OnDelete += GameObject_OnDelete;
-
-            if (QObject != null)
-            {
-                Console.WriteLine(QObject.NetworkId.ToString("X4"));
-            }
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
@@ -168,53 +165,44 @@ namespace Babehri
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if (Player.IsDead)
+            if (Player.IsDead || Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
             {
                 return;
             }
 
             Flee();
+            Farm();
 
             var activeMode = Orbwalker.ActiveMode;
             var mode = activeMode.GetModeString();
             var target = TargetSelector.GetTarget(Spells.E.Range, TargetSelector.DamageType.Magical);
 
-            if (activeMode.IsComboMode())
+            if (!activeMode.IsComboMode())
             {
-                if (target == null || !target.IsValidTarget(Spells.E.Range))
-                {
-                    return;
-                }
-
-                if (mode.Equals("Harass") && Player.ManaPercent < Menu.Item("HarassMinMana").GetValue<Slider>().Value)
-                {
-                    return;
-                }
-
-                if (Spells.E.IsActive() && CastE(target))
-                {
-                    return;
-                }
-
-                if (Spells.Q.IsActive() && CastQ(target))
-                {
-                    return;
-                }
-
-                if (Spells.W.IsActive() && CastW(target))
-                {
-                    return;
-                }
+                return;
             }
 
-            if (Spells.Q.IsReady() &&
-                (Player.ManaPercent >= Menu.Item("Farm-Mana").GetValue<Slider>().Value &&
-                 (activeMode == Orbwalking.OrbwalkingMode.LaneClear || activeMode == Orbwalking.OrbwalkingMode.Mixed) &&
-                 (Menu.Item("Farm-Use-Q-LH").IsActive() ||
-                  (!Menu.Item("Farm-Use-Q-LH").IsActive() && !ShouldWaitForMinionKill()))))
+            if (target == null || !target.IsValidTarget(Spells.E.Range))
             {
-                Farm();
+                return;
             }
+
+            if (mode.Equals("Harass") && Player.ManaPercent < Menu.Item("HarassMinMana").GetValue<Slider>().Value)
+            {
+                return;
+            }
+
+            if (Spells.E.IsActive() && CastE(target))
+            {
+                return;
+            }
+
+            if (Spells.Q.IsActive() && CastQ(target))
+            {
+                return;
+            }
+
+            if (Spells.W.IsActive() && CastW(target)) {}
         }
 
         private static void GameObject_OnCreate(GameObject sender, EventArgs args)
@@ -266,7 +254,20 @@ namespace Babehri
 
         private static bool CastQ(Obj_AI_Base target)
         {
-            return Spells.Q.CanCast(target) && !Player.IsDashing() && Spells.Q.Cast(target).IsCasted();
+            if (!Spells.Q.IsReady() || Player.IsDashing() || !target.IsValidTarget(Spells.Q.Range))
+            {
+                return false;
+            }
+
+            for (var i = 5; i >= 2; i--)
+            {
+                if (Spells.Q.CastIfWillHit(target, i))
+                {
+                    return true;
+                }
+            }
+
+            return Spells.Q.Cast(target).IsCasted();
         }
 
         private static bool CastW(AttackableUnit target)
@@ -323,19 +324,28 @@ namespace Babehri
 
         public static void Flee()
         {
-            if (!Menu.Item("FleeR").IsActive() || !Spells.R.IsReady())
+            if (!Menu.Item("FleeR").IsActive())
             {
                 return;
             }
 
             Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
-            var pos = Player.ServerPosition.Extend(Game.CursorPos, Spells.R.Range + 10);
-            Spells.R.Cast(pos);
+
+            if (!Player.IsDashing() && Player.GetWaypoints().Last().Distance(Game.CursorPos) > 100)
+            {
+                Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+            }
+
+            if (Spells.R.IsReady())
+            {
+                var pos = Player.ServerPosition.Extend(Game.CursorPos, Spells.R.Range + 10);
+                Spells.R.Cast(pos);
+            }
         }
 
         public static void HandlePassive()
         {
-            if (QObject == null || QObject.Position.Equals(Vector3.Zero))
+            if (QObject == null || QObject.Position.Equals(Vector3.Zero) || !QObject.IsVisible)
             {
                 PassiveText.Visible = false;
                 return;
@@ -419,41 +429,66 @@ namespace Babehri
 
         private static void Orbwalking_AfterAttack(AttackableUnit unit, AttackableUnit target)
         {
-            if (!Menu.Item("Farm-Use-Q").GetValue<bool>() &&
-                (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.LaneClear) ||
-                 Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.LastHit)) || !Spells.Q.IsReady())
+            if (!Spells.Q.IsReady() || !Menu.Item("FarmQ").GetValue<bool>())
             {
                 return;
             }
 
-            if (
+
+            if (!Orbwalker.ActiveMode.IsFarmMode() ||
+                Player.ManaPercent < Menu.Item("FarmMana").GetValue<Slider>().Value)
+            {
+                return;
+            }
+
+            var killable =
                 MinionManager.GetMinions(Spells.Q.Range)
-                    .Where(
+                    .FirstOrDefault(
                         minion =>
                             !target.NetworkId.Equals(minion.NetworkId) &&
                             HealthPrediction.GetHealthPrediction(
                                 minion, (int) ((Player.AttackDelay * 1000) * 2.65f + Game.Ping / 2f), 0) <= 0 &&
-                            Spells.Q.GetDamage(minion) >= minion.Health)
-                    .Any(minionGoingToDie => Spells.Q.Cast(minionGoingToDie).IsCasted())) {}
+                            Spells.Q.GetDamage(minion) >= minion.Health);
+
+            if (killable != null)
+            {
+                Spells.Q.Cast(killable);
+            }
         }
 
         private static void Farm()
         {
-            var target = TargetSelector.GetTarget(Spells.Q.Range, TargetSelector.DamageType.Magical, false);
-
-            //If we can hit the target and 2 other things, then cast Q
-            if (Spells.Q.CastIfWillHit(target, 3))
+            if (!Orbwalker.ActiveMode.IsFarmMode() ||
+                Player.ManaPercent < Menu.Item("FarmMana").GetValue<Slider>().Value)
             {
                 return;
             }
 
-            //  Otherwise, cast Q on the minion wave
-            var minions = MinionManager.GetMinions(Player.ServerPosition, Spells.Q.Range);
-            var qHit = Spells.Q.GetLineFarmLocation(minions);
-            if (qHit.MinionsHit >= 4)
+            if (Spells.Q.IsReady() && Menu.Item("FarmQ").IsActive())
             {
-                Spells.Q.Cast(qHit.Position);
+                if (Menu.Item("FarmQLH").IsActive() && ShouldWaitForMinionKill())
+                {
+                    return;
+                }
+
+                var target = TargetSelector.GetTarget(Spells.Q.Range, TargetSelector.DamageType.Magical, false);
+
+                //If we can hit the target and 2 other things, then cast Q
+                if (Spells.Q.CastIfWillHit(target, 3))
+                {
+                    return;
+                }
+
+                //  Otherwise, cast Q on the minion wave
+                var minions = MinionManager.GetMinions(Player.ServerPosition, Spells.Q.Range);
+                var qHit = Spells.Q.GetLineFarmLocation(minions);
+                if (qHit.MinionsHit >= Menu.Item("FarmQHC").GetValue<Slider>().Value && Spells.Q.Cast(qHit.Position))
+                {
+                    return;
+                }
             }
+
+            if (Spells.W.IsReady() && Menu.Item("FarmW").IsActive() && Spells.W.Cast()) {}
         }
 
         #endregion

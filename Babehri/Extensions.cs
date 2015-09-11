@@ -52,6 +52,11 @@ namespace Babehri
             return mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
         }
 
+        public static bool IsFarmMode(this Orbwalking.OrbwalkingMode mode)
+        {
+            return mode.Equals(Orbwalking.OrbwalkingMode.LaneClear) || mode.Equals(Orbwalking.OrbwalkingMode.LastHit);
+        }
+
         public static string GetModeString(this Orbwalking.OrbwalkingMode mode)
         {
             return mode.Equals(Orbwalking.OrbwalkingMode.Mixed) ? "Harass" : mode.ToString();

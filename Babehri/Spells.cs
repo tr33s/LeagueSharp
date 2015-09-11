@@ -22,7 +22,7 @@ namespace Babehri
             E = new Spell(SpellSlot.E, 975);
             E.SetSkillshot(.25f, 60, 1550, true, SkillshotType.SkillshotLine);
 
-            R = new Spell(SpellSlot.R);
+            R = new Spell(SpellSlot.R, 450);
 
             var ignite = ObjectManager.Player.Spellbook.Spells.FirstOrDefault(spell => spell.Name.Equals("summonerdot"));
 
