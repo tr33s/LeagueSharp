@@ -14,15 +14,11 @@ namespace AutoLantern
     {
         public static Menu Menu;
         public static Render.Text LanternText;
+        public static SpellSlot LanternSlot = (SpellSlot) 62;
 
         private static Obj_AI_Hero Player
         {
             get { return ObjectManager.Player; }
-        }
-
-        public static SpellSlot LanternSlot
-        {
-            get { return (SpellSlot) 62; }
         }
 
         public static SpellDataInst LanternSpell
@@ -49,10 +45,9 @@ namespace AutoLantern
             Menu.AddItem(new MenuItem("Draw", "Draw Helper Text").SetValue(true));
             Menu.AddToMainMenu();
 
-            LanternText = new Render.Text("Click Lantern", Drawing.Width/2 - Drawing.Width/3, Drawing.Height/2 + Drawing.Height/3, 28, Color.Red, "Verdana")
-            {
-                VisibleCondition = sender => Menu.Item("Draw").IsActive()
-            };
+            LanternText = new Render.Text(
+                "Click Lantern", Drawing.Width / 2 - Drawing.Width / 3, Drawing.Height / 2 + Drawing.Height / 3, 28,
+                Color.Red, "Verdana") { VisibleCondition = sender => Menu.Item("Draw").IsActive() };
 
             LanternText.Add();
 
@@ -91,7 +86,7 @@ namespace AutoLantern
                     .FirstOrDefault(
                         o => o.IsValid && o.IsAlly && o.Name.Equals("ThreshLantern") && Player.Distance(o) <= 500);
 
-            return lantern != null && Player.Spellbook.CastSpell(LanternSlot, lantern);
+            return lantern != null && lantern.IsVisible && Player.Spellbook.CastSpell(LanternSlot, lantern);
         }
 
         private static bool IsLow()
@@ -101,7 +96,7 @@ namespace AutoLantern
 
         private static bool ThreshInGame()
         {
-            return ObjectManager.Get<Obj_AI_Hero>().Any(h => h.IsAlly && !h.IsMe && h.ChampionName.Equals("Thresh"));
+            return HeroManager.Allies.Any(h => !h.IsMe && h.ChampionName.Equals("Thresh"));
         }
     }
 }
