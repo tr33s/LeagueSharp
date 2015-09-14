@@ -15,6 +15,7 @@ namespace AutoLantern
         public static Menu Menu;
         public static Render.Text LanternText;
         public static SpellSlot LanternSlot = (SpellSlot) 62;
+        public static int LastLantern;
 
         private static Obj_AI_Hero Player
         {
@@ -52,6 +53,15 @@ namespace AutoLantern
             LanternText.Add();
 
             Game.OnUpdate += OnGameUpdate;
+            Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
+        }
+
+        private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+        {
+            if (sender is Obj_AI_Hero && sender.IsAlly && args.SData.Name.Equals("LanternWAlly"))
+            {
+                LastLantern = Utils.TickCount;
+            }
         }
 
         private static void OnGameUpdate(EventArgs args)
@@ -86,7 +96,8 @@ namespace AutoLantern
                     .FirstOrDefault(
                         o => o.IsValid && o.IsAlly && o.Name.Equals("ThreshLantern") && Player.Distance(o) <= 500);
 
-            return lantern != null && lantern.IsVisible && Player.Spellbook.CastSpell(LanternSlot, lantern);
+            return lantern != null && lantern.IsVisible && Utils.TickCount - LastLantern > 5000 &&
+                   Player.Spellbook.CastSpell(LanternSlot, lantern);
         }
 
         private static bool IsLow()
