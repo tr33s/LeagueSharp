@@ -16,11 +16,11 @@ namespace jesuisFiora
         public static Orbwalking.Orbwalker Orbwalker;
         public static Spell Q, W, E, R;
         public static Menu Menu;
-        public static Color LorahColor = new Color(255, 0, 255);
+        public static Color ScriptColor = new Color(255, 0, 255);
         public static UltTarget UltTarget;
         public static Spell Ignite;
 
-        private static List<Obj_AI_Hero> Enemies
+        private static IEnumerable<Obj_AI_Hero> Enemies
         {
             get { return HeroManager.Enemies; }
         }
@@ -35,7 +35,7 @@ namespace jesuisFiora
             get { return MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral); }
         }
 
-        private static List<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
+        private static IEnumerable<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
         {
             get
             {
@@ -44,19 +44,17 @@ namespace jesuisFiora
                         .Where(
                             obj =>
                                 obj.IsValid && obj.Name.Contains("Fiora_Base_R_Mark") ||
-                                (obj.Name.Contains("Fiora_Base_R") && obj.Name.Contains("Timeout")))
-                        .ToList();
+                                (obj.Name.Contains("Fiora_Base_R") && obj.Name.Contains("Timeout")));
             }
         }
 
-        private static List<Obj_GeneralParticleEmitter> FioraPassiveObjects
+        private static IEnumerable<Obj_GeneralParticleEmitter> FioraPassiveObjects
         {
             get
             {
                 return
                     ObjectManager.Get<Obj_GeneralParticleEmitter>()
-                        .Where(obj => obj.IsValid && obj.Name.Contains("Fiora_Base_Passive"))
-                        .ToList();
+                        .Where(obj => obj.IsValid && obj.Name.Contains("Fiora_Base_Passive"));
             }
         }
 
@@ -94,7 +92,7 @@ namespace jesuisFiora
             R.SetTargetted(.066f, 500);
 
             Menu = new Menu("jesuisFiora", "jesuisFiora", true);
-            Menu.SetFontStyle(FontStyle.Regular, LorahColor);
+            Menu.SetFontStyle(FontStyle.Regular, ScriptColor);
 
             Orbwalker = Menu.AddOrbwalker();
             Menu.AddTargetSelector();
@@ -108,14 +106,15 @@ namespace jesuisFiora
             Q.Range = 750 - qMenu.Item("QRange").GetValue<Slider>().Value;
             qMenu.Item("QRange").ValueChanged +=
                 (sender, eventArgs) => { Q.Range = 750 - eventArgs.GetNewValue<Slider>().Value; };
-            qMenu.AddInfo("QFleeInfo", "Flee:", LorahColor);
+            qMenu.AddInfo("QFleeInfo", "Flee:", ScriptColor);
             qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
-            qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", LorahColor);
+            qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", ScriptColor);
             qMenu.AddBool("QKillsteal", "Use for Killsteal");
 
             var wMenu = spells.AddMenu("W", "W");
             var wSpells = wMenu.AddMenu("BlockSpells", "Blocked Spells");
             wMenu.AddKeyBind("WSpells", "W Spellblock", 'U', KeyBindType.Toggle, true);
+            wMenu.AddList("WMode", "W Spellblock to: ", new[] { "Spell Caster", "Target" });
             wMenu.AddBool("WKillsteal", "Use for Killsteal");
             wMenu.AddBool("WTurret", "Block W Under Enemy Turret");
 
@@ -149,10 +148,10 @@ namespace jesuisFiora
                 mode.SetValue(new StringList(new[] { "Duelist", "Combo" }, index));
             };
 
-            rMenu.AddInfo("RModeInfo", " --> Duelist Mode: Only use R when target is killable.", LorahColor);
-            rMenu.AddInfo("RModeInfo2", " --> Combo Mode: Use R in normal combo", LorahColor);
+            rMenu.AddInfo("RModeInfo", " --> Duelist Mode: Only use R when target is killable.", ScriptColor);
+            rMenu.AddInfo("RModeInfo2", " --> Combo Mode: Use R in normal combo", ScriptColor);
             rMenu.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
-            rMenu.AddInfo("RVitalInfo", " --> Note: This is only for damage calculation in Duelist Mode.", LorahColor);
+            rMenu.AddInfo("RVitalInfo", " --> Note: This is only for damage calculation in Duelist Mode.", ScriptColor);
             rMenu.AddBool("RComboSelected", "Use R Selected on Selected Unit Only");
 
             var items = spells.AddMenu("Items", "Items");
@@ -174,7 +173,7 @@ namespace jesuisFiora
             eFarm.AddBool("ELaneClear", "Use in LaneClear");
 
             farm.AddKeyBind("FarmEnabled", "Farm Enabled", 'J', KeyBindType.Toggle, true);
-            farm.AddInfo("FarmInfo", " --> Enabled in LaneClear and LastHit", LorahColor);
+            farm.AddInfo("FarmInfo", " --> Enabled in LaneClear and LastHit", ScriptColor);
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
 
             var draw = Menu.AddMenu("Drawing", "Drawing");
@@ -188,35 +187,35 @@ namespace jesuisFiora
 
             if (draw.Item("WPermashow").IsActive())
             {
-                wMenu.Item("WSpells").Permashow(true, null, LorahColor);
+                wMenu.Item("WSpells").Permashow(true, null, ScriptColor);
             }
 
             draw.Item("WPermashow").ValueChanged +=
                 (sender, eventArgs) =>
                 {
-                    wMenu.Item("WSpells").Permashow(eventArgs.GetNewValue<bool>(), null, LorahColor);
+                    wMenu.Item("WSpells").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
                 };
 
             if (draw.Item("RPermashow").IsActive())
             {
-                rMenu.Item("RMode").Permashow(true, null, LorahColor);
+                rMenu.Item("RMode").Permashow(true, null, ScriptColor);
             }
 
             draw.Item("RPermashow").ValueChanged +=
                 (sender, eventArgs) =>
                 {
-                    rMenu.Item("RMode").Permashow(eventArgs.GetNewValue<bool>(), null, LorahColor);
+                    rMenu.Item("RMode").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
                 };
 
             if (draw.Item("FarmPermashow").IsActive())
             {
-                farm.Item("FarmEnabled").Permashow(true, null, LorahColor);
+                farm.Item("FarmEnabled").Permashow(true, null, ScriptColor);
             }
 
             draw.Item("FarmPermashow").ValueChanged +=
                 (sender, eventArgs) =>
                 {
-                    farm.Item("FarmEnabled").Permashow(eventArgs.GetNewValue<bool>(), null, LorahColor);
+                    farm.Item("FarmEnabled").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
                 };
 
             var dmg = draw.AddMenu("DamageIndicator", "Damage Indicator");
@@ -226,7 +225,7 @@ namespace jesuisFiora
             dmg.AddBool("Killable", "Killable Text");
 
             Menu.AddBool("Sounds", "Sounds");
-            Menu.AddInfo("Info", "By Trees!", LorahColor);
+            Menu.AddInfo("Info", "By Trees!", ScriptColor);
             Menu.AddToMainMenu();
 
             if (Menu.Item("Sounds").IsActive())
@@ -373,6 +372,7 @@ namespace jesuisFiora
             }
 
             var unit = sender as Obj_AI_Hero;
+            var castUnit = unit;
             var type = args.SData.TargettingType;
 
             var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
@@ -383,6 +383,14 @@ namespace jesuisFiora
             }
 
             //Console.WriteLine(type);
+            if (!unit.IsValidTarget() || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
+            {
+                var target = TargetSelector.GetTargetNoCollision(W);
+                if (target != null && target.IsValidTarget(W.Range))
+                {
+                    castUnit = target;
+                }
+            }
 
             if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
             {
@@ -391,38 +399,38 @@ namespace jesuisFiora
                     return;
                 }
 
-                CastW(sender);
+                CastW(castUnit);
             }
             else if (unit.ChampionName.Equals("Riven") && unit.Distance(Player) < 400)
             {
-                CastW(sender);
+                CastW(castUnit);
             }
             else if (unit.ChampionName.Equals("Bard") && type.Equals(SpellDataTargetType.Location) &&
                      args.End.Distance(Player.ServerPosition) < 300)
             {
-                Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(sender));
+                Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(castUnit));
             }
             else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
             {
-                CastW(sender);
+                CastW(castUnit);
             }
             else if (type.Equals(SpellDataTargetType.SelfAoe) &&
                      unit.Distance(Player.ServerPosition) < args.SData.CastRange + args.SData.CastRadius / 2)
             {
-                CastW(sender);
+                CastW(castUnit);
             }
             else if (type.Equals(SpellDataTargetType.Self))
             {
                 // this probably isn't needed
                 if ((unit.ChampionName.Equals("Kalista") && Player.Distance(unit) < 350))
                 {
-                    CastW(sender);
+                    CastW(castUnit);
                 }
 
                 // need to look into this
                 if (unit.ChampionName.Equals("Zed") && Player.Distance(unit) < 300)
                 {
-                    Utility.DelayAction.Add(200, () => CastW(sender));
+                    Utility.DelayAction.Add(200, () => CastW(castUnit));
                 }
             }
         }
