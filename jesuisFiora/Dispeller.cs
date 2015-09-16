@@ -51,10 +51,23 @@ namespace jesuisFiora
                 )
             {
                 var buff = ObjectManager.Player.Buffs.FirstOrDefault(b => b.DisplayName.Equals(dispel.BuffName));
-                if (buff != null && buff.IsValid && buff.IsActive &&
-                    (buff.EndTime - Game.Time) * 1000f + 500 < w.Delay * 1000f + Game.Ping / 1.85f + 750 + dispel.Offset)
+                if (buff == null || !buff.IsValid || !buff.IsActive)
                 {
-                    w.Cast(Game.CursorPos);
+                    continue;
+                }
+
+                if ((buff.EndTime - Game.Time) * 1000f + 500 < w.Delay * 1000f + Game.Ping / 1.85f + 750 + dispel.Offset)
+                {
+                    var target = TargetSelector.GetTargetNoCollision(w);
+                    if (target != null && target.IsValidTarget(w.Range) && w.Cast(target).IsCasted())
+                    {
+                        return;
+                    }
+
+                    if (w.Cast(Game.CursorPos))
+                    {
+                        return;
+                    }
                 }
             }
         }
