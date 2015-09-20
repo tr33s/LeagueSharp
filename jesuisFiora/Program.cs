@@ -253,11 +253,12 @@ namespace jesuisFiora
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            if (Player.IsDead || Flee())
+            if (Player.IsDead)
             {
                 return;
             }
 
+            Flee();
             DuelistMode();
             Farm();
             KillstealQ();
@@ -266,6 +267,7 @@ namespace jesuisFiora
 
             var mode = Orbwalker.ActiveMode;
             var combo = mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
+
 
             if (!combo)
             {
@@ -296,24 +298,6 @@ namespace jesuisFiora
                 return;
             }
 
-            if (rCombo)
-            {
-                if (Menu.Item("RComboSelected").IsActive())
-                {
-                    var unit = TargetSelector.GetSelectedTarget();
-                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) && CastR(target))
-                    {
-                        return;
-                    }
-                    return;
-                }
-
-                if (CastR(target))
-                {
-                    Hud.SelectedUnit = target;
-                }
-            }
-
             if (qCombo)
             {
                 if (target.IsValidTarget(FioraAutoAttackRange) && !Orbwalking.IsAutoAttack(Player.LastCastedSpellName()))
@@ -335,6 +319,25 @@ namespace jesuisFiora
                 if ((dT > .2f || (d2 < 690 && dT > -1)) && CastQ(target))
                 {
                     //  Console.WriteLine("{0} {1}", dT, d2);
+                    return;
+                }
+            }
+
+            if (rCombo)
+            {
+                if (Menu.Item("RComboSelected").IsActive())
+                {
+                    var unit = TargetSelector.GetSelectedTarget();
+                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(target.NetworkId) && CastR(target))
+                    {
+                        return;
+                    }
+                    return;
+                }
+
+                if (CastR(target))
+                {
+                    Hud.SelectedUnit = target;
                 }
             }
         }
@@ -382,13 +385,7 @@ namespace jesuisFiora
             //Console.WriteLine(type);
             if (!unit.IsValidTarget() || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
             {
-                var target = TargetSelector.GetSelectedTarget();
-
-                if (target == null || !target.IsValidTarget(W.Range))
-                {
-                    target = TargetSelector.GetTargetNoCollision(W);
-                }
-
+                var target = TargetSelector.GetTargetNoCollision(W);
                 if (target != null && target.IsValidTarget(W.Range))
                 {
                     castUnit = target;
@@ -618,7 +615,8 @@ namespace jesuisFiora
             }
 
             var pos = GetPassivePosition(target);
-            return pos.Equals(Vector3.Zero) || Player.Distance(pos) > Q.Range ? Q.Cast(target).IsCasted() : Q.Cast(pos);
+
+            return pos.Equals(Vector3.Zero) ? Q.Cast(target).IsCasted() : Q.Cast(pos);
         }
 
         public static bool CastW(Obj_AI_Base target)
@@ -732,11 +730,11 @@ namespace jesuisFiora
             }
         }
 
-        public static bool Flee()
+        public static void Flee()
         {
             if (!Menu.Item("QFlee").IsActive())
             {
-                return false;
+                return;
             }
 
             Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
@@ -750,8 +748,6 @@ namespace jesuisFiora
             {
                 Q.Cast(Player.ServerPosition.Extend(Game.CursorPos, Q.Range + 10));
             }
-
-            return true;
         }
 
         public static double GetPassiveDamage(Obj_AI_Base target)
