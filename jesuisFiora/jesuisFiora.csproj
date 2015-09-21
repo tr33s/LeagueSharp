@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>jesuisFiora</RootNamespace>
     <AssemblyName>jesuisFiora</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PreBuildEvent />
     <PostBuildEvent />
@@ -68,6 +68,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="SpellBlock.cs" />
+    <Compile Include="UltTarget.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
