@@ -7,7 +7,6 @@ using SharpDX;
 
 namespace Babehri
 {
-    [PermissionSet(SecurityAction.Assert, Unrestricted = true)]
     internal static class DamageIndicator
     {
         public delegate float DamageToUnitDelegate(Obj_AI_Hero hero);
@@ -42,7 +41,7 @@ namespace Babehri
 
         public static bool Killable
         {
-            get { return Program.Menu.Item("Killable").IsActive(); }
+            get { return Program.Menu.Item("DmgEnabled").IsActive(); }
         }
 
         public static System.Drawing.Color DamageColor
@@ -52,7 +51,7 @@ namespace Babehri
 
         public static bool Enabled
         {
-            get { return Program.Menu.Item("DmgEnabled").GetValue<bool>(); }
+            get { return Program.Menu.Item("Enabled").GetValue<bool>(); }
         }
 
         public static DamageToUnitDelegate DamageToUnit { get; set; }

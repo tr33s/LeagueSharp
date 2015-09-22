@@ -105,9 +105,10 @@ namespace Babehri
             var drawing = Menu.AddMenu("Drawing", "Drawing");
 
             var damage = drawing.AddMenu("Damage Indicator", "Damage Indicator");
-            damage.AddBool("DmgEnabled", "Enabled");
+            damage.AddBool("Enabled", "Enabled");
             damage.AddCircle("HPColor", "Health Color", System.Drawing.Color.White);
             damage.AddCircle("FillColor", "Damage Color", System.Drawing.Color.DeepPink);
+            damage.AddBool("DmgEnabled", "Killable");
 
             drawing.AddCircle("DrawQ", "Draw Q", System.Drawing.Color.DeepPink, Spells.Q.Range);
             drawing.AddCircle("DrawW", "Draw W", System.Drawing.Color.White, Spells.W.Range, false);
