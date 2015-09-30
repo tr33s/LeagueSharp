@@ -34,29 +34,6 @@ namespace jesuisFiora
             get { return MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral); }
         }
 
-        private static IEnumerable<Obj_GeneralParticleEmitter> FioraUltPassiveObjects
-        {
-            get
-            {
-                return
-                    ObjectManager.Get<Obj_GeneralParticleEmitter>()
-                        .Where(
-                            obj =>
-                                obj.IsValid && obj.Name.Contains("Fiora_Base_R_Mark") ||
-                                (obj.Name.Contains("Fiora_Base_R") && obj.Name.Contains("Timeout")));
-            }
-        }
-
-        private static IEnumerable<Obj_GeneralParticleEmitter> FioraPassiveObjects
-        {
-            get
-            {
-                return
-                    ObjectManager.Get<Obj_GeneralParticleEmitter>()
-                        .Where(obj => obj.IsValid && obj.Name.Contains("Fiora_Base_Passive"));
-            }
-        }
-
         private static float FioraAutoAttackRange
         {
             get { return Orbwalking.GetRealAutoAttackRange(Player); }
@@ -263,11 +240,11 @@ namespace jesuisFiora
                 return;
             }
 
-            DuelistMode();
-            Farm();
             KillstealQ();
             KillstealW();
             AutoIgnite();
+            DuelistMode();
+            Farm();
 
             var mode = Orbwalker.ActiveMode;
             var combo = mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
@@ -516,7 +493,7 @@ namespace jesuisFiora
                     enemy =>
                         Menu.Item("Duelist" + enemy.ChampionName).IsActive() && enemy.IsValidTarget(R.Range) &&
                         GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
-                        enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + GetPassiveDamage(enemy, 1)))
+                        enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + enemy.GetPassiveDamage(1)))
             {
                 if (Menu.Item("RComboSelected").IsActive())
                 {
@@ -592,7 +569,7 @@ namespace jesuisFiora
             if (lane != null && Q.Cast(lane).IsCasted()) {}
         }
 
-        public static bool CastQ(Obj_AI_Base target)
+        public static bool CastQ(Obj_AI_Base target, bool force = false)
         {
             if (!Q.IsReady() || !target.IsValidTarget(Q.Range))
             {
@@ -600,27 +577,27 @@ namespace jesuisFiora
             }
 
 
-            var forcePassive = Menu.Item("QForcePassive").IsActive();
+            var forcePassive = Menu.Item("QForcePassive").IsActive() && !force;
             var predicted = Prediction.GetPrediction(target, Q.Delay);
             var condition = predicted.Hitchance > HitChance.High && Q.IsInRange(predicted.UnitPosition);
 
-            if (CountPassive(target) == 0)
+            if (target.CountPassive() == 0)
             {
                 if (forcePassive)
                 {
-                    Console.WriteLine("NO PASSIVE");
+                    //  Console.WriteLine("NO PASSIVE");
                     return false;
                 }
 
                 return condition && Q.Cast(predicted.UnitPosition);
             }
 
-            var pos = GetPassivePosition(target);
+            var pos = target.GetPassivePosition();
             if (pos.Equals(Vector3.Zero))
             {
                 if (forcePassive)
                 {
-                    Console.WriteLine("CAN'T FIND PASSIVE POS");
+                    // Console.WriteLine("CAN'T FIND PASSIVE POS");
                     return false;
                 }
                 return condition && Q.Cast(predicted.UnitPosition);
@@ -630,7 +607,7 @@ namespace jesuisFiora
             {
                 if (forcePassive)
                 {
-                    Console.WriteLine("PASSIVE OUT OF RANGE");
+                    // Console.WriteLine("PASSIVE OUT OF RANGE");
                     return false;
                 }
                 return condition && Q.Cast(predicted.UnitPosition);
@@ -651,10 +628,11 @@ namespace jesuisFiora
             }
 
             var unit =
-                Enemies.FirstOrDefault(o => o.IsValidTarget(Q.Range) && o.Health < Q.GetDamage(o) + GetPassiveDamage(o));
+                Enemies.FirstOrDefault(
+                    o => o.IsValidTarget(Q.Range) && o.Health < Q.GetDamage(o) + o.GetPassiveDamage());
             if (unit != null)
             {
-                CastQ(unit);
+                CastQ(unit, true);
             }
         }
 
@@ -793,71 +771,6 @@ namespace jesuisFiora
             return true;
         }
 
-        public static double GetPassiveDamage(Obj_AI_Base target)
-        {
-            var count = CountPassive(target);
-            return count == 0 ? 0 : GetPassiveDamage(target, count);
-        }
-
-        public static double GetPassiveDamage(Obj_AI_Base target, int passiveCount)
-        {
-            return passiveCount *
-                   (.03f +
-                    (Math.Min(
-                        Math.Max(.028f, (.027 + .001f * Player.Level * Player.FlatPhysicalDamageMod / 100f)), .45f))) *
-                   target.MaxHealth;
-        }
-
-        public static int CountPassive(Obj_AI_Base target)
-        {
-            return FioraPassiveObjects.Count(obj => obj.Position.Distance(target.ServerPosition) <= 50) +
-                   FioraUltPassiveObjects.Count(obj => obj.Position.Distance(target.ServerPosition) <= 50);
-        }
-
-        public static Vector3 GetPassivePosition(Obj_AI_Base target)
-        {
-            Console.WriteLine("SEARCH PASSIVE " + target.Name);
-            var passive =
-                FioraUltPassiveObjects.OrderBy(obj => obj.Position.Distance(target.ServerPosition))
-                    .FirstOrDefault(obj => obj.IsValid && obj.IsVisible);
-            var d = 320;
-
-            if (passive == null)
-            {
-                passive = FioraPassiveObjects.FirstOrDefault(obj => obj.Position.Distance(target.ServerPosition) < 50);
-                d = 200;
-            }
-
-            if (passive == null)
-            {
-                return Vector3.Zero;
-            }
-
-            var pos = Prediction.GetPrediction(target, Q.Delay).UnitPosition.To2D();
-
-            if (passive.Name.Contains("NE"))
-            {
-                pos.Y += d;
-            }
-
-            if (passive.Name.Contains("SE"))
-            {
-                pos.X -= d;
-            }
-
-            if (passive.Name.Contains("NW"))
-            {
-                pos.X += d;
-            }
-
-            if (passive.Name.Contains("SW"))
-            {
-                pos.Y -= d;
-            }
-
-            return pos.To3D();
-        }
-
         public static float GetComboDamage(Obj_AI_Hero unit)
         {
             return GetComboDamage(unit, 0);
@@ -918,16 +831,16 @@ namespace jesuisFiora
             {
                 if (R.IsReady())
                 {
-                    d += GetPassiveDamage(unit, 4);
+                    d += unit.GetPassiveDamage(4);
                 }
                 else
                 {
-                    d += GetPassiveDamage(unit);
+                    d += unit.GetPassiveDamage();
                 }
             }
             else
             {
-                d += GetPassiveDamage(unit, maxStacks);
+                d += unit.GetPassiveDamage(maxStacks);
             }
 
             return (float) d;
