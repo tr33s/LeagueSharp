@@ -14,7 +14,7 @@ namespace Humanizer
         public static Menu Menu;
         public static float LastMove;
         public static Obj_AI_Base Player = ObjectManager.Player;
-        public static List<String> SpellList = new List<string> { "Q", "W", "E", "R" };
+        public static List<string> SpellList = new List<string> { "Q", "W", "E", "R" };
         public static List<float> LastCast = new List<float> { 0, 0, 0, 0 };
 
         private static void Main(string[] args)
@@ -33,12 +33,14 @@ namespace Humanizer
                 var spell = SpellList[i];
                 var menu = spells.AddSubMenu(new Menu(spell, spell));
                 menu.AddItem(new MenuItem("Enabled" + i, "Delay " + spell, true).SetValue(true));
-                menu.AddItem(new MenuItem("Delay" + i, "Cast Delay", true).SetValue(new Slider(80, 0, 400)));
+                menu.AddItem(new MenuItem("MinDelay" + i, "Minimum Delay", true).SetValue(new Slider(80)));
+                menu.AddItem(new MenuItem("MaxDelay" + i, "Maximum Delay", true).SetValue(new Slider(200, 100, 400)));
             }
 
             var move = Menu.AddSubMenu(new Menu("Movement", "Movement"));
             move.AddItem(new MenuItem("MovementEnabled", "Enabled").SetValue(true));
-            move.AddItem(new MenuItem("MovementDelay", "Movement Delay")).SetValue(new Slider(80, 0, 400));
+            move.AddItem(new MenuItem("MinDelay", "Minimum Delay")).SetValue(new Slider(80));
+            move.AddItem(new MenuItem("MaxDelay", "Maximum Delay")).SetValue(new Slider(200, 100, 400));
 
             Menu.AddToMainMenu();
 
@@ -56,7 +58,9 @@ namespace Humanizer
                 return;
             }
 
-            var delay = Menu.Item("Delay" + spell).GetValue<Slider>().Value;
+            var min = Menu.Item("MinDelay" + spell).GetValue<Slider>().Value;
+            var max = Menu.Item("MaxDelay" + spell).GetValue<Slider>().Value;
+            var delay = min > max ? min : WeightedRandom.Next(min, max);
 
             if (Utils.TickCount - LastCast[spell] < delay)
             {
@@ -75,8 +79,11 @@ namespace Humanizer
             {
                 return;
             }
+            var min = Menu.Item("MinDelay").GetValue<Slider>().Value;
+            var max = Menu.Item("MaxDelay").GetValue<Slider>().Value;
+            var delay = min > max ? min : WeightedRandom.Next(min, max);
 
-            if (Utils.TickCount - LastMove < Menu.Item("MovementDelay").GetValue<Slider>().Value)
+            if (Utils.TickCount - LastMove < delay)
             {
                 args.Process = false;
                 return;
