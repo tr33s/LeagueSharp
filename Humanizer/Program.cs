@@ -53,13 +53,13 @@ namespace Humanizer
             var spell = (int) args.Slot;
             var senderValid = sender != null && sender.Owner != null && sender.Owner.IsMe;
 
-            if (!senderValid || !args.Slot.IsMainSpell() || !Menu.Item("Enabled" + spell).IsActive())
+            if (!senderValid || !args.Slot.IsMainSpell() || !Menu.Item("Enabled" + spell, true).IsActive())
             {
                 return;
             }
 
-            var min = Menu.Item("MinDelay" + spell).GetValue<Slider>().Value;
-            var max = Menu.Item("MaxDelay" + spell).GetValue<Slider>().Value;
+            var min = Menu.Item("MinDelay" + spell, true).GetValue<Slider>().Value;
+            var max = Menu.Item("MaxDelay" + spell, true).GetValue<Slider>().Value;
             var delay = min > max ? min : WeightedRandom.Next(min, max);
 
             if (Utils.TickCount - LastCast[spell] < delay)
