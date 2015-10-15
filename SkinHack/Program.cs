@@ -30,7 +30,7 @@ namespace SkinHack
 
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>())
             {
-                var champMenu = new Menu(hero.ChampionName, hero.ChampionName);
+                var champMenu = new Menu(hero.ChampionName, hero.ChampionName + hero.Team);
                 var modelUnit = new ModelUnit(hero);
 
                 PlayerList.Add(modelUnit);
@@ -88,19 +88,17 @@ namespace SkinHack
             minions.AddItem(new MenuItem("Minions", "Pool Party Minions").SetValue(false));
 
             Game.OnInput += Game_OnInput;
-
         }
 
         private static void Program_ValueChanged(object sender, OnValueChangeEventArgs e)
         {
-            foreach (
-                var ward in
-                    ObjectManager.Get<Obj_AI_Base>()
-                        .Where(o => o.CharData.BaseSkinName.Contains("ward"))
-                        .Where(
-                            ward =>
-                                !Config.Item("WardOwn").IsActive() ||
-                                ward.Buffs.Any(b => b.SourceName.Equals(ObjectManager.Player.ChampionName))))
+            foreach (var ward in
+                ObjectManager.Get<Obj_AI_Base>()
+                    .Where(o => o.CharData.BaseSkinName.Contains("ward"))
+                    .Where(
+                        ward =>
+                            !Config.Item("WardOwn").IsActive() ||
+                            ward.Buffs.Any(b => b.SourceName.Equals(ObjectManager.Player.ChampionName))))
             {
                 ward.SetSkin(ward.CharData.BaseSkinName, Convert.ToInt32(e.GetNewValue<StringList>().SelectedValue));
             }

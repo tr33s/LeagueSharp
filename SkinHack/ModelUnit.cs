@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using LeagueSharp;
-using LeagueSharp.Common;
+using LeagueSharp.Common.Utility;
 
 namespace SkinHack
 {
@@ -21,7 +21,7 @@ namespace SkinHack
             SkinIndex = unit.BaseSkinId;
             //UpdateAdditionalObjects();
             //Obj_AI_Base.OnCreate += Obj_AI_Base_OnCreate;
-            Utility.DelayAction.Add(300, () => Game.OnUpdate += Game_OnUpdate);
+            DelayAction.Add(300, () => Game.OnUpdate += Game_OnUpdate);
         }
 
         public CharacterData CharData

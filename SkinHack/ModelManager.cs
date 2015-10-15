@@ -6,6 +6,7 @@ using System.Net;
 using System.Web.Script.Serialization;
 using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.Common.Utility;
 
 namespace SkinHack
 {
@@ -608,7 +609,7 @@ namespace SkinHack
             if (Program.Config.Item("Ward").IsActive() && name.Contains("ward") || name.Equals("yellowtrinket"))
             {
                 var index = Convert.ToInt32(Program.Config.Item("WardIndex").GetValue<StringList>().SelectedValue);
-                Utility.DelayAction.Add(
+                DelayAction.Add(
                     50, () =>
                     {
                         if (Program.Config.Item("WardOwn").IsActive() &&
@@ -659,7 +660,7 @@ namespace SkinHack
         public static void SetSkin(this Obj_AI_Base unit, string model, int index, int delay)
         {
             //unit.SetSkin(model, index);
-            Utility.DelayAction.Add(delay, () => unit.SetSkin(model, index));
+            DelayAction.Add(delay, () => unit.SetSkin(model, index));
         }
     }
 
