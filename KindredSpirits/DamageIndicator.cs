@@ -13,9 +13,9 @@ namespace KindredSpirits
         public delegate float DamageToUnitDelegate(Obj_AI_Hero hero);
 
         private const int XOffset = 11;
-        private const int YOffset = 16;
+        private const int YOffset = 17;
         private const int Width = 103;
-        private const int Height = 15;
+        private const int Height = 11;
         private static readonly Render.Text Text = new Render.Text(0, 0, "", 16, Color.DeepPink);
         private static readonly Render.Rectangle DamageBar = new Render.Rectangle(0, 0, 1, 8, Color.White);
         private static readonly Render.Line HealthLine = new Render.Line(Vector2.Zero, Vector2.Zero, 1, Color.White);
@@ -88,9 +88,9 @@ namespace KindredSpirits
                     var differenceInHp = xPosCurrentHp - xPosDamage;
                     DamageBar.Color = DamageColor.ToBGRA();
                     DamageBar.X = (int) (barPos.X + 9 + (107 * percentHealthAfterDamage));
-                    DamageBar.Y = (int) yPos - 1;
+                    DamageBar.Y = (int) yPos - 5;
                     DamageBar.Width = (int) Math.Round(differenceInHp);
-                    DamageBar.Height = Height + 5;
+                    DamageBar.Height = Height + 14;
                     DamageBar.OnEndScene();
                 }
 

@@ -52,7 +52,10 @@ namespace KindredSpirits
         private static void Game_OnUpdate(EventArgs args)
         {
             if (!Menu.Item("RCombo").IsActive() || !SpellManager.R.IsReady() ||
-                ObjectManager.Player.HealthPercent > Menu.Item("RSelf").GetValue<Slider>().Value) {}
+                ObjectManager.Player.HealthPercent > Menu.Item("RSelf").GetValue<Slider>().Value)
+            {
+                return;
+            }
 
             SpellManager.R.CastOnUnit(ObjectManager.Player);
         }
@@ -77,13 +80,19 @@ namespace KindredSpirits
                 var predictedHealth = Player.Health - enemy.GetSpellDamage(Player, args.Slot);
                 var hpp = predictedHealth / Player.MaxHealth * 100;
                 Console.WriteLine("TAKING DAMAGE: {0}", hpp);
-                if (hpp < 0 || hpp < Menu.Item("RSelf").GetValue<Slider>().Value)
+                if (predictedHealth < 0 || hpp < Menu.Item("RSelf").GetValue<Slider>().Value)
                 {
-                    Console.WriteLine("ULT");
-                    SpellManager.R.CastOnUnit(Player);
+                    //Console.WriteLine("ULT");
+                    //SpellManager.R.CastOnUnit(Player);
                 }
                 return;
             }
+
+            if (!ally.IsValidTarget(SpellManager.R.Range, false))
+            {
+                return;
+            }
+
             var ultTarget = GetBestUltTarget();
             if (ultTarget == null || ultTarget.Target == null)
             {
@@ -98,7 +107,7 @@ namespace KindredSpirits
 
         private static UltTarget GetBestUltTarget()
         {
-            var possibleAllies = Allies.Where(o => !o.IsMe && SpellManager.R.IsInRange(o));
+            var possibleAllies = Allies.Where(o => SpellManager.R.IsInRange(o));
 
             Obj_AI_Hero bestAlly = null;
             var allyCount = 0;
@@ -106,7 +115,7 @@ namespace KindredSpirits
             var allies = new List<Obj_AI_Hero>();
             foreach (var ally in possibleAllies)
             {
-                if (!Menu.Item("R" + ally.ChampionName).IsActive())
+                if (!ally.IsMe && !Menu.Item("R" + ally.ChampionName).IsActive())
                 {
                     continue;
                 }
@@ -115,13 +124,13 @@ namespace KindredSpirits
                     Allies.Where(
                         o =>
                             !ally.Equals(o) && ally.Distance(o) <= UltimateRadius &&
-                            o.HealthPercent < Menu.Item("RHP" + o.ChampionName).GetValue<Slider>().Value);
+                            o.HealthPercent < (o.IsMe ? Menu.Item("RSelf").GetValue<Slider>().Value : Menu.Item("RHP" + o.ChampionName).GetValue<Slider>().Value));
                 var count = alliesInRange.Count();
                 if (count < MinAllies)
                 {
                     continue;
                 }
-
+                Console.WriteLine("ALLIES IN RANGE: {0}/{1}", count, MinAllies);
                 var enemiesInRange = Enemies.Count(o => ally.Distance(o) <= UltimateRadius);
 
                 if (enemiesInRange > MaxEnemies)
@@ -129,6 +138,7 @@ namespace KindredSpirits
                     continue;
                 }
 
+                Console.WriteLine("ENEMIES IN RANGE: {0}/{1}", enemiesInRange, MaxEnemies);
                 if (count > allyCount || (count == allyCount && enemyCount > enemiesInRange))
                 {
                     bestAlly = ally;

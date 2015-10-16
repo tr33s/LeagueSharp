@@ -415,7 +415,7 @@ namespace KindredSpirits
 
             if (target.IsValidTarget(500))
             {
-                // return SpellManager.Q.Cast(Player.ServerPosition);
+               return SpellManager.Q.Cast(Player.ServerPosition);
             }
 
 
@@ -429,17 +429,12 @@ namespace KindredSpirits
 
         public static bool CastW(Obj_AI_Base target)
         {
-            return SpellManager.W.IsInRange(target) && SpellManager.W.Cast(target).IsCasted();
+            return target.IsValidTarget(SpellManager.W.Range - 50)&& SpellManager.W.Cast(target).IsCasted();
         }
 
         public static bool CastE(Obj_AI_Base target)
         {
             return target.IsValidTarget(SpellManager.E.Range) && SpellManager.E.CastOnUnit(target);
-        }
-
-        public static bool CastR(Obj_AI_Base target)
-        {
-            return SpellManager.R.Cast(target).IsCasted();
         }
 
         public static bool CastItems(Obj_AI_Base target)
