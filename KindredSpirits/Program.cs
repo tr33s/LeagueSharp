@@ -77,6 +77,7 @@ namespace KindredSpirits
             qMenu.AddInfo("KiteInfo", " --> Q's towards cursor position if enemy will be hit.", ScriptColor);
             qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
             qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", ScriptColor);
+            qMenu.AddBool("QGapClose", "AntiGapclose with Q");
             qMenu.AddBool("QKillsteal", "Use for Killsteal");
 
             var wMenu = spells.AddMenu("W", "W");
@@ -154,7 +155,7 @@ namespace KindredSpirits
             PassiveManager.Initialize();
 
             //Menu.AddBool("Sounds", "Sounds");
-            Menu.AddInfo("Info", "By Trees!", ScriptColor);
+            Menu.AddInfo("Info", "By Trees and Lilith!", ScriptColor);
             Menu.AddToMainMenu();
 
             /*if (Menu.Item("Sounds").IsActive())
@@ -168,7 +169,7 @@ namespace KindredSpirits
             Game.OnUpdate += Game_OnGameUpdate;
             Orbwalking.BeforeAttack += BeforeAttack;
             Orbwalking.AfterAttack += AfterAttack;
-            //   Obj_AI_Base.OnDamage += Obj_AI_Base_OnDamage;
+            AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Drawing.OnDraw += Drawing_OnDraw;
             Game.PrintChat(
                 "<font color=\"{0}\">Kindred Spirits Loaded!</font>", System.Drawing.Color.Blue.ToHexString());
@@ -280,6 +281,11 @@ namespace KindredSpirits
                 return;
             }
 
+            if (Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
+            {
+                return;
+            }
+
             if (eCombo && !Menu.Item("EBeforeAttack").IsActive() && SpellManager.E.CastOnUnit(target))
             {
                 if (!Menu.Item("ESelectedTarget").IsActive() && CastE(target))
@@ -304,6 +310,17 @@ namespace KindredSpirits
             }
 
             if (qCombo && CastQ(target, Menu.Item("QKiteMachine").IsActive())) {}
+        }
+
+        private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
+        {
+            if (Menu.Item("QGapCloser").IsActive() && SpellManager.Q.IsReady() &&
+                gapcloser.End.Distance(Player.ServerPosition) < 300)
+            {
+                var d = gapcloser.End.Distance(Player.ServerPosition);
+                var castPos = gapcloser.End.Extend(Player.ServerPosition, d + SpellManager.Q.Range - 500);
+                SpellManager.Q.Cast(castPos);
+            }
         }
 
         public static void Farm()
@@ -399,17 +416,13 @@ namespace KindredSpirits
 
             if (kiteMachine)
             {
-                //if (!(target is Obj_AI_Hero && target.IsValidTarget(AutoAttackRange)))
+                //var d = Player.Distance(cast.UnitPosition);
+                //var d2 = cast.UnitPosition.Distance(Game.CursorPos);
+                var castPos = target.ServerPosition.Extend(Game.CursorPos, 500);
+                var d = Player.Distance(target);
+                if (d < 500)
                 {
-                    //var d = Player.Distance(cast.UnitPosition);
-                    //var d2 = cast.UnitPosition.Distance(Game.CursorPos);
-                    var cursorPos = Player.ServerPosition.Extend(Game.CursorPos, 300);
-                    var d = Player.Distance(target);
-                    var d2 = target.Distance(cursorPos);
-                    if (d2 < 500 && d2 > d)
-                    {
-                        SpellManager.Q.Cast(cursorPos);
-                    }
+                    SpellManager.Q.Cast(castPos);
                 }
             }
 
@@ -439,6 +452,11 @@ namespace KindredSpirits
 
         public static bool CastItems(Obj_AI_Base target)
         {
+            if (Player.IsDashing() || Player.IsWindingUp)
+            {
+                return false;
+            }
+
             var botrk = ItemManager.Botrk;
             if (botrk.IsValidAndReady() && botrk.Cast(target))
             {
