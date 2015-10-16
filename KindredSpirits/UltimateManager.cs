@@ -83,7 +83,7 @@ namespace KindredSpirits
                 if (predictedHealth < 0 || hpp < Menu.Item("RSelf").GetValue<Slider>().Value)
                 {
                     //Console.WriteLine("ULT");
-                    //SpellManager.R.CastOnUnit(Player);
+                    SpellManager.R.CastOnUnit(Player);
                 }
                 return;
             }
@@ -124,7 +124,10 @@ namespace KindredSpirits
                     Allies.Where(
                         o =>
                             !ally.Equals(o) && ally.Distance(o) <= UltimateRadius &&
-                            o.HealthPercent < (o.IsMe ? Menu.Item("RSelf").GetValue<Slider>().Value : Menu.Item("RHP" + o.ChampionName).GetValue<Slider>().Value));
+                            o.HealthPercent <
+                            (o.IsMe
+                                ? Menu.Item("RSelf").GetValue<Slider>().Value
+                                : Menu.Item("RHP" + o.ChampionName).GetValue<Slider>().Value));
                 var count = alliesInRange.Count();
                 if (count < MinAllies)
                 {
