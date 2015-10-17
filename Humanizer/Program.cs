@@ -15,12 +15,22 @@ namespace Humanizer
         public static Menu Menu;
         public static float LastMove;
         public static Obj_AI_Base Player = ObjectManager.Player;
-        public static List<string> SpellList = new List<string> { "Q", "W", "E", "R" };
-        public static List<float> LastCast = new List<float> { 0, 0, 0, 0 };
+        public static Dictionary<SpellSlot, int> LastCast = new Dictionary<SpellSlot, int>();
         public static Render.Text BlockedMovement;
         public static Render.Text BlockedSpells;
         public static int BlockedSpellCount;
         public static int BlockedMoveCount;
+
+        public static List<SpellSlot> Items = new List<SpellSlot>
+        {
+            SpellSlot.Item1,
+            SpellSlot.Item2,
+            SpellSlot.Item3,
+            SpellSlot.Item4,
+            SpellSlot.Item5,
+            SpellSlot.Item6,
+            SpellSlot.Trinket
+        };
 
         private static void Main(string[] args)
         {
@@ -33,13 +43,14 @@ namespace Humanizer
 
             var spells = Menu.AddSubMenu(new Menu("Spells", "Spells"));
 
-            for (var i = 0; i <= 3; i++)
+            foreach (var spell in Items)
+
             {
-                var spell = SpellList[i];
-                var menu = spells.AddSubMenu(new Menu(spell, spell));
-                menu.AddItem(new MenuItem("Enabled" + i, "Delay " + spell, true).SetValue(true));
-                menu.AddItem(new MenuItem("MinDelay" + i, "Minimum Delay", true).SetValue(new Slider(80)));
-                menu.AddItem(new MenuItem("MaxDelay" + i, "Maximum Delay", true).SetValue(new Slider(200, 100, 400)));
+                var menu = spells.AddSubMenu(new Menu(spell.ToString(), spell.ToString()));
+                menu.AddItem(new MenuItem("Enabled" + spell, "Delay " + spell).SetValue(true));
+                menu.AddItem(new MenuItem("MinDelay" + spell, "Minimum Delay").SetValue(new Slider(80)));
+                menu.AddItem(new MenuItem("MaxDelay" + spell, "Maximum Delay").SetValue(new Slider(200, 100, 400)));
+                LastCast.Add(spell, 0);
             }
 
             spells.AddItem(new MenuItem("DrawSpells", "Draw Blocked Spell Count").SetValue(true));
@@ -51,7 +62,7 @@ namespace Humanizer
             move.AddItem(new MenuItem("DrawMove", "Draw Blocked Movement Count").SetValue(true));
 
             Menu.AddToMainMenu();
-            Console.WriteLine("{0} {1}", Drawing.Width, Drawing.Height);
+
             BlockedSpells = new Render.Text(
                 "Blocked Spells: ", Drawing.Width - 200, Drawing.Height - 600, 28, Color.Green);
             BlockedSpells.VisibleCondition += sender => Menu.Item("DrawSpells").IsActive();
@@ -71,16 +82,16 @@ namespace Humanizer
 
         private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
         {
-            var spell = (int) args.Slot;
+            var spell = args.Slot;
             var senderValid = sender != null && sender.Owner != null && sender.Owner.IsMe;
 
-            if (!senderValid || !args.Slot.IsMainSpell() || !Menu.Item("Enabled" + spell, true).IsActive())
+            if (!senderValid || !Items.Contains(spell) || !Menu.Item("Enabled" + spell).IsActive())
             {
                 return;
             }
 
-            var min = Menu.Item("MinDelay" + spell, true).GetValue<Slider>().Value;
-            var max = Menu.Item("MaxDelay" + spell, true).GetValue<Slider>().Value;
+            var min = Menu.Item("MinDelay" + spell).GetValue<Slider>().Value;
+            var max = Menu.Item("MaxDelay" + spell).GetValue<Slider>().Value;
             var delay = min >= max ? min : WeightedRandom.Next(min, max);
 
             if (Utils.TickCount - LastCast[spell] < delay)
