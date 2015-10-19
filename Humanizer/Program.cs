@@ -13,13 +13,14 @@ namespace Humanizer
     public class Program
     {
         public static Menu Menu;
-        public static float LastMove;
+        public static int LastMove;
         public static Obj_AI_Base Player = ObjectManager.Player;
         public static Dictionary<SpellSlot, int> LastCast = new Dictionary<SpellSlot, int>();
         public static Render.Text BlockedMovement;
         public static Render.Text BlockedSpells;
         public static int BlockedSpellCount;
         public static int BlockedMoveCount;
+        public static int NextMovementDelay;
 
         public static List<SpellSlot> Items = new List<SpellSlot>
         {
@@ -94,7 +95,7 @@ namespace Humanizer
             var max = Menu.Item("MaxDelay" + spell).GetValue<Slider>().Value;
             var delay = min >= max ? min : WeightedRandom.Next(min, max);
 
-            if (Utils.TickCount - LastCast[spell] < delay)
+            if (LastCast[spell].TimeSince() < delay)
             {
                 BlockedSpellCount++;
                 args.Process = false;
@@ -112,12 +113,17 @@ namespace Humanizer
             {
                 return;
             }
-            var min = Menu.Item("MinDelay").GetValue<Slider>().Value;
-            var max = Menu.Item("MaxDelay").GetValue<Slider>().Value;
-            var delay = min > max ? min : WeightedRandom.Next(min, max);
 
-            if (Utils.TickCount - LastMove < delay)
+            if (NextMovementDelay == 0)
             {
+                var min = Menu.Item("MinDelay").GetValue<Slider>().Value;
+                var max = Menu.Item("MaxDelay").GetValue<Slider>().Value;
+                NextMovementDelay = min > max ? min : WeightedRandom.Next(min, max);
+            }
+
+            if (LastMove.TimeSince() < NextMovementDelay)
+            {
+                NextMovementDelay = 0;
                 BlockedMoveCount++;
                 args.Process = false;
                 return;

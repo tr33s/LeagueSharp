@@ -1,12 +1,12 @@
-﻿using LeagueSharp;
+﻿using LeagueSharp.Common;
 
 namespace Humanizer
 {
     internal static class Extensions
     {
-        public static bool IsMainSpell(this SpellSlot slot)
+        public static int TimeSince(this int time)
         {
-            return slot == SpellSlot.Q || slot == SpellSlot.W || slot == SpellSlot.E || slot == SpellSlot.R;
+            return Utils.TickCount - time;
         }
     }
 }
