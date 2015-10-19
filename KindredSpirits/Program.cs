@@ -75,8 +75,7 @@ namespace KindredSpirits
             qMenu.AddBool("QSafety", "Q Safety Check");
             qMenu.AddBool("QKiteMachine", "Q KiteMachine");
             qMenu.AddInfo("KiteInfo", " --> Q's towards cursor position if enemy will be hit.", ScriptColor);
-            qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
-            qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", ScriptColor);
+            qMenu.AddBool("QAlwaysKite", "Q Always to Cursor", false);
             qMenu.AddBool("QGapClose", "AntiGapclose with Q");
             qMenu.AddBool("QKillsteal", "Use for Killsteal");
 
@@ -102,8 +101,8 @@ namespace KindredSpirits
                 allyMenu.AddSlider("RHP" + ally.ChampionName, "Health Percent", 15);
             }
 
-            savingMenu.AddSlider("SavingAllies", "Minimum Allies In Range", 2, 0, 5);
-            savingMenu.AddSlider("SavingEnemies", "Maximum Enemies In Range", 2, 0, 5);
+            savingMenu.AddSlider("SavingAllies", "Minimum Allies In Range", 0, 0, 5);
+            savingMenu.AddSlider("SavingEnemies", "Maximum Enemies In Range", 0, 0, 5);
 
             rMenu.AddBool("RCombo", "Use R");
             rMenu.AddSlider("RSelf", "Self Health Percent", 15);
@@ -126,6 +125,13 @@ namespace KindredSpirits
             farm.AddKeyBind("FarmEnabled", "Farm Enabled", 'J', KeyBindType.Toggle, true);
             farm.AddInfo("FarmInfo", " --> Enabled in LaneClear and LastHit", ScriptColor);
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
+
+            var flee = Menu.AddMenu("Flee", "Flee");
+            flee.AddInfo("FleeInfo", " --> Flees towards cursor position.", ScriptColor);
+            flee.AddKeyBind("Flee", "Flee", 'T');
+            flee.AddBool("FleeQ", "Use Q");
+            flee.AddBool("FleeW", "Use W");
+            flee.AddBool("FleeMove", "Move to Cursor Position");
 
             var draw = Menu.AddMenu("Drawing", "Drawing");
             draw.AddCircle("0Draw", "Draw Q", System.Drawing.Color.Purple, SpellManager.Q.Range);
@@ -173,21 +179,6 @@ namespace KindredSpirits
             Drawing.OnDraw += Drawing_OnDraw;
             Game.PrintChat(
                 "<font color=\"{0}\">Kindred Spirits Loaded!</font>", System.Drawing.Color.Blue.ToHexString());
-        }
-
-        private static void Obj_AI_Base_OnDamage(AttackableUnit sender, AttackableUnitDamageEventArgs args)
-        {
-            if (args.TargetNetworkId.Equals(Player.NetworkId))
-            {
-                var predictedHealth = Player.Health - args.Damage;
-                var hpp = predictedHealth / Player.MaxHealth * 100;
-                Console.WriteLine("TAKING DAMAGE: {0}", hpp);
-                if (hpp < 0 || hpp < Menu.Item("RSelf").GetValue<Slider>().Value)
-                {
-                    Console.WriteLine("ULT");
-                    SpellManager.R.CastOnUnit(Player);
-                }
-            }
         }
 
         public static void Drawing_OnDraw(EventArgs args)
@@ -309,7 +300,7 @@ namespace KindredSpirits
                 return;
             }
 
-            if (qCombo && CastQ(target, Menu.Item("QKiteMachine").IsActive())) {}
+            if (qCombo && CastQ(target, Menu.Item("QKiteMachine").IsActive(), Menu.Item("QAlwaysKite").IsActive())) {}
         }
 
         private static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
@@ -405,8 +396,13 @@ namespace KindredSpirits
             return activeSpell.CastOnUnit(jungle);
         }
 
-        public static bool CastQ(Obj_AI_Base target, bool kiteMachine = false)
+        public static bool CastQ(Obj_AI_Base target, bool kiteMachine = false, bool forceToCursor = false)
         {
+            if (forceToCursor)
+            {
+                SpellManager.Q.Cast(Game.CursorPos);
+            }
+
             if (!target.IsValidTarget(SpellManager.Q.Range))
             {
                 return false;
@@ -480,14 +476,14 @@ namespace KindredSpirits
 
         public static bool Flee()
         {
-            if (!Menu.Item("QFlee").IsActive())
+            if (!Menu.Item("Flee").IsActive())
             {
                 return false;
             }
 
             Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
 
-            if (SpellManager.Q.IsReady())
+            if (Menu.Item("FleeQ").IsActive() && SpellManager.Q.IsReady())
             {
                 var pos = Player.ServerPosition.Extend(Game.CursorPos, SpellManager.Q.Range + 10);
                 if (SpellManager.Q.Cast(pos))
@@ -496,12 +492,19 @@ namespace KindredSpirits
                 }
             }
 
-            if (!Player.IsDashing() && Player.GetWaypoints().Last().Distance(Game.CursorPos) > 100)
+            if (Menu.Item("FleeW").IsActive() && SpellManager.W.IsReady() && SpellManager.W.Cast())
             {
-                Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+                return true;
             }
 
-            return true;
+            if (Menu.Item("FleeMove").IsActive() && !Player.IsDashing() &&
+                Player.GetWaypoints().Last().Distance(Game.CursorPos) > 100)
+            {
+                Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
+                return true;
+            }
+
+            return false;
         }
 
         public static bool Killsteal()
