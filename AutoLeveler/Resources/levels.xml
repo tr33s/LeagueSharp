@@ -1,0 +1,638 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<levels xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Champion>
+    <Name>Aatrox</Name>
+    <Sequence>0, 1, 2, 1, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Ahri</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Akali</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Alistar</Name>
+    <Sequence>0, 2, 1, 0, 2, 3, 0, 2, 0, 2, 3, 0, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Amumu</Name>
+    <Sequence>1, 2, 2, 0, 2, 3, 2, 0, 2, 0, 3, 0, 0, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Anivia</Name>
+    <Sequence>0, 2, 0, 2, 2, 3, 2, 1, 2, 1, 3, 0, 0, 0, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Annie</Name>
+    <Sequence>1, 0, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Ashe</Name>
+    <Sequence>1, 2, 1, 0, 1, 3, 1, 0, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Azir</Name>
+    <Sequence>1, 0, 2, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Bard</Name>
+    <Sequence>1, 0, 1, 0, 2, 3, 1, 1, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Blitzcrank</Name>
+    <Sequence>0, 2, 1, 2, 1, 3, 2, 1, 2, 1, 3, 2, 1, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Brand</Name>
+    <Sequence>1, 2, 1, 0, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Braum</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Caitlyn</Name>
+    <Sequence>1, 0, 0, 2, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Cassiopeia</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Chogath</Name>
+    <Sequence>0, 2, 1, 1, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Corki</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Darius</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 2, 1, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Diana</Name>
+    <Sequence>1, 0, 1, 2, 0, 3, 0, 0, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>DrMundo</Name>
+    <Sequence>1, 0, 2, 1, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Draven</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Ekko</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Elise</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Evelynn</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Ezreal</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Fiddlesticks</Name>
+    <Sequence>2, 1, 1, 0, 1, 3, 1, 0, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Fiora</Name>
+    <Sequence>1, 0, 2, 1, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Fizz</Name>
+    <Sequence>2, 0, 1, 0, 1, 3, 0, 0, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Galio</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 3, 2, 2, 1, 1, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Gangplank</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Garen</Name>
+    <Sequence>0, 1, 2, 2, 2, 3, 2, 0, 2, 0, 3, 0, 0, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Gnar</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Gragas</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 2, 1, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Graves</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Hecarim</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Heimerdinger</Name>
+    <Sequence>0, 1, 1, 0, 0, 3, 2, 1, 1, 1, 3, 0, 0, 2, 2, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Irelia</Name>
+    <Sequence>2, 0, 1, 1, 1, 3, 1, 2, 1, 2, 3, 0, 0, 2, 0, 3, 2, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Janna</Name>
+    <Sequence>2, 0, 2, 1, 2, 3, 2, 1, 2, 1, 0, 1, 1, 0, 0, 0, 3, 3</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>JarvanIV</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 1, 0, 3, 2, 2, 2, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Jax</Name>
+    <Sequence>2, 1, 0, 1, 1, 3, 1, 2, 1, 2, 3, 0, 2, 0, 0, 3, 2, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Jayce</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Jinx</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Kalista</Name>
+    <Sequence>2, 1, 0, 2, 2, 3, 2, 2, 1, 1, 3, 1, 1, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Karma</Name>
+    <Sequence>0, 2, 0, 1, 2, 0, 2, 0, 2, 0, 2, 0, 2, 1, 1, 1, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Karthus</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 0, 2, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Kassadin</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Katarina</Name>
+    <Sequence>0, 2, 1, 1, 1, 3, 1, 2, 1, 0, 3, 0, 0, 0, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Kayle</Name>
+    <Sequence>2, 1, 2, 0, 2, 3, 2, 1, 2, 1, 3, 1, 1, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Kennen</Name>
+    <Sequence>0, 2, 1, 1, 1, 3, 1, 0, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Khazix</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Kindred</Name>
+    <Sequence>1, 0, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>KogMaw</Name>
+    <Sequence>1, 2, 1, 0, 1, 3, 1, 0, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Leblanc</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 2, 1, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>LeeSin</Name>
+    <Sequence>2, 0, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Leona</Name>
+    <Sequence>0, 2, 1, 1, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Lissandra</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Lucian</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Lulu</Name>
+    <Sequence>2, 1, 0, 2, 2, 3, 2, 1, 2, 1, 3, 1, 1, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Lux</Name>
+    <Sequence>2, 0, 2, 1, 2, 3, 2, 0, 2, 0, 3, 0, 0, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Malphite</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 1, 2, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Malzahar</Name>
+    <Sequence>0, 2, 2, 1, 2, 3, 0, 2, 0, 2, 3, 1, 0, 1, 0, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Maokai</Name>
+    <Sequence>2, 0, 1, 2, 2, 3, 2, 1, 2, 1, 3, 1, 1, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>MasterYi</Name>
+    <Sequence>2, 0, 2, 0, 2, 3, 2, 0, 2, 0, 3, 0, 1, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>MissFortune</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>MonkeyKing</Name>
+    <Sequence>2, 0, 1, 0, 0, 3, 2, 0, 2, 0, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Mordekaiser</Name>
+    <Sequence>2, 0, 2, 1, 2, 3, 2, 0, 2, 0, 3, 0, 0, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Morgana</Name>
+    <Sequence>0, 1, 1, 2, 1, 3, 1, 0, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Nami</Name>
+    <Sequence>0, 1, 2, 1, 1, 3, 1, 1, 2, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Nasus</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 2, 1, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Nautilus</Name>
+    <Sequence>1, 2, 1, 0, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Nidalee</Name>
+    <Sequence>1, 2, 0, 2, 0, 3, 2, 1, 2, 0, 3, 2, 0, 0, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Nocturne</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Nunu</Name>
+    <Sequence>2, 0, 2, 1, 0, 3, 2, 0, 2, 0, 3, 0, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Olaf</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Orianna</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Pantheon</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 2, 0, 2, 3, 2, 1, 2, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Poppy</Name>
+    <Sequence>2, 1, 0, 0, 0, 3, 0, 1, 0, 1, 1, 1, 2, 2, 2, 2, 3, 3</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Quinn</Name>
+    <Sequence>2, 0, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Rammus</Name>
+    <Sequence>0, 1, 2, 2, 2, 3, 2, 1, 2, 1, 3, 1, 1, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>RekSai</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Renekton</Name>
+    <Sequence>1, 0, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Rengar</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 1, 0, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Riven</Name>
+    <Sequence>0, 2, 1, 0, 2, 3, 0, 0, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Rumble</Name>
+    <Sequence>2, 0, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Ryze</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Sejuani</Name>
+    <Sequence>1, 0, 2, 2, 1, 3, 2, 1, 2, 2, 3, 1, 0, 1, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Shaco</Name>
+    <Sequence>1, 2, 0, 2, 2, 3, 2, 1, 2, 1, 3, 1, 1, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Shen</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Shyvana</Name>
+    <Sequence>1, 0, 1, 2, 1, 3, 1, 2, 1, 2, 3, 2, 0, 2, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Singed</Name>
+    <Sequence>0, 2, 0, 2, 0, 3, 0, 1, 0, 1, 3, 2, 1, 2, 1, 3, 1, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Sion</Name>
+    <Sequence>0, 2, 2, 1, 2, 3, 2, 0, 2, 0, 3, 0, 0, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Sivir</Name>
+    <Sequence>1, 0, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Skarner</Name>
+    <Sequence>0, 1, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 2, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Sona</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Soraka</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 2, 3, 1, 2, 1, 2, 3, 1, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Swain</Name>
+    <Sequence>1, 2, 2, 0, 2, 3, 2, 0, 2, 0, 3, 0, 0, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Syndra</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>TahmKench</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 2, 1, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Talon</Name>
+    <Sequence>1, 2, 0, 1, 1, 3, 1, 0, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Taric</Name>
+    <Sequence>2, 1, 0, 1, 1, 3, 0, 1, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Teemo</Name>
+    <Sequence>0, 2, 1, 2, 0, 3, 2, 2, 2, 0, 3, 1, 1, 0, 1, 3, 1, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Thresh</Name>
+    <Sequence>0, 2, 1, 1, 1, 3, 1, 2, 1, 2, 3, 2, 2, 0, 0, 3, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Tristana</Name>
+    <Sequence>2, 1, 1, 2, 1, 3, 1, 0, 1, 0, 3, 0, 0, 0, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Trundle</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 1, 0, 2, 3, 1, 2, 1, 2, 3, 1, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Tryndamere</Name>
+    <Sequence>2, 0, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>TwistedFate</Name>
+    <Sequence>1, 0, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Twitch</Name>
+    <Sequence>2, 1, 0, 2, 2, 3, 2, 0, 2, 0, 3, 0, 0, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Udyr</Name>
+    <Sequence>3, 1, 2, 3, 3, 1, 3, 1, 3, 1, 1, 0, 2, 2, 2, 2, 0, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Urgot</Name>
+    <Sequence>2, 0, 0, 1, 0, 3, 0, 1, 0, 2, 3, 1, 2, 1, 2, 3, 1, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Varus</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Vayne</Name>
+    <Sequence>0, 2, 1, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Veigar</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 1, 1, 1, 1, 3, 2, 0, 0, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>VelKoz</Name>
+    <Sequence>0, 1, 2, 1, 1, 3, 1, 0, 1, 0, 3, 0, 0, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Vi</Name>
+    <Sequence>1, 2, 0, 0, 0, 3, 0, 1, 0, 0, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Viktor</Name>
+    <Sequence>2, 1, 2, 0, 2, 3, 2, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Vladimir</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Volibear</Name>
+    <Sequence>1, 2, 1, 0, 1, 3, 2, 1, 0, 1, 3, 2, 0, 2, 0, 3, 2, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Warwick</Name>
+    <Sequence>1, 0, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 2, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Xerath</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>XinZhao</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Yasuo</Name>
+    <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Yorick</Name>
+    <Sequence>1, 2, 0, 2, 2, 3, 2, 1, 2, 0, 3, 1, 0, 1, 0, 3, 1, 0</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Zac</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Zed</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Ziggs</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Zilean</Name>
+    <Sequence>0, 1, 0, 2, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Zyra</Name>
+    <Sequence>2, 1, 0, 0, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+</levels>
