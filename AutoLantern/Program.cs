@@ -13,7 +13,6 @@ namespace AutoLantern
     internal class Program
     {
         public static Menu Menu;
-        public static Render.Text LanternText;
         public static SpellSlot LanternSlot = (SpellSlot) 62;
         public static int LastLantern;
 
@@ -43,14 +42,29 @@ namespace AutoLantern
             Menu.AddItem(new MenuItem("Auto", "Auto-Lantern at Low HP").SetValue(true));
             Menu.AddItem(new MenuItem("Low", "Low HP Percent").SetValue(new Slider(20, 10, 50)));
             Menu.AddItem(new MenuItem("Hotkey", "Hotkey").SetValue(new KeyBind(32, KeyBindType.Press)));
-            Menu.AddItem(new MenuItem("Draw", "Draw Helper Text").SetValue(true));
+            Menu.AddItem(new MenuItem("LanternReady", "Lantern Ready").SetValue(false));
+            Menu.AddItem(new MenuItem("PermaShowLantern", "PermaShow Helper").SetValue(true));
+
+            if (Menu.Item("PermaShowLantern").IsActive())
+            {
+                var active = IsLanternSpellActive();
+                Menu.Item("LanternReady")
+                    .Permashow(
+                        true, active ? "[AutoLantern] Lantern Ready" : "[AutoLantern] Click Lantern",
+                        active ? Color.Green : Color.Red);
+            }
+
+            Menu.Item("PermaShowLantern").ValueChanged += (sender, eventArgs) =>
+            {
+                var lanternActive = IsLanternSpellActive();
+                Menu.Item("LanternReady")
+                    .Permashow(
+                        eventArgs.GetNewValue<bool>(),
+                        lanternActive ? "[AutoLantern] Lantern Ready" : "[AutoLantern] Click Lantern",
+                        lanternActive ? Color.Green : Color.Red);
+            };
+
             Menu.AddToMainMenu();
-
-            LanternText = new Render.Text(
-                "Click Lantern", Drawing.Width / 2 - Drawing.Width / 3, Drawing.Height / 2 + Drawing.Height / 3, 28,
-                Color.Red, "Verdana") { VisibleCondition = sender => Menu.Item("Draw").IsActive() };
-
-            LanternText.Add();
 
             Game.OnUpdate += OnGameUpdate;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
@@ -66,15 +80,13 @@ namespace AutoLantern
 
         private static void OnGameUpdate(EventArgs args)
         {
-            if (LanternSpell == null || !LanternSpell.Name.Equals("LanternWAlly"))
+            if (!IsLanternSpellActive())
             {
-                LanternText.Color = Color.Red;
-                LanternText.text = "Click Lantern";
+                Menu.Item("LanternReady").SetValue(false);
                 return;
             }
 
-            LanternText.Color = new ColorBGRA(0, 250, 0, 255);
-            LanternText.text = "AutoLantern Ready";
+            Menu.Item("LanternReady").SetValue(true);
 
             if (Menu.Item("Auto").IsActive() && IsLow() && UseLantern())
             {
@@ -87,6 +99,11 @@ namespace AutoLantern
             }
 
             UseLantern();
+        }
+
+        private static bool IsLanternSpellActive()
+        {
+            return LanternSpell != null && LanternSpell.Name.Equals("LanternWAlly");
         }
 
         private static bool UseLantern()
