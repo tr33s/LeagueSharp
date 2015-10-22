@@ -48,8 +48,6 @@ namespace TUrgot
             Q2.SetSkillshot(0.3f, 60f, 1800f, false, SkillshotType.SkillshotLine);
             E.SetSkillshot(0.2658f, 120f, 1500f, false, SkillshotType.SkillshotCircle);
 
-            Ignite = Player.Spellbook.GetSpell(Player.GetSpellSlot("summonerdot"));
-
             Menu = new Menu("TUrgot", "TreesUrgot", true);
 
 
@@ -160,7 +158,7 @@ namespace TUrgot
             var target = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Physical);
             var mode = Orbwalker.ActiveMode.GetModeString();
 
-            if (target == null || Menu.Item(mode + "Active") == null || !Menu.Item(mode + "Active").IsActive())
+            if (target == null || !Orbwalker.ActiveMode.IsComboMode())
             {
                 return;
             }
