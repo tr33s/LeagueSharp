@@ -1,10 +1,10 @@
 ﻿#region
 
 using System;
-using System.Drawing;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
+using SharpDX;
 
 #endregion
 
@@ -25,6 +25,11 @@ namespace TUrgot
         public static Obj_AI_Hero Player
         {
             get { return ObjectManager.Player; }
+        }
+
+        public static Color ScriptColor
+        {
+            get { return Color.Cyan; }
         }
 
         private static void Main(string[] args)
@@ -52,26 +57,42 @@ namespace TUrgot
 
 
             Orbwalker = Menu.AddOrbwalker();
-            Menu.AddTargetSelector();
 
-            var combo = Menu.AddMenu("Combo", "Combo");
-            combo.AddBool("ComboQ", "Use Q");
-            combo.AddBool("ComboE", "Use E");
+            var q = Menu.AddMenu("Q", "Q Settings");
 
-            var harass = Menu.AddMenu("Harass", "Harass");
-            harass.AddBool("HarassQ", "Use Q");
-            harass.AddBool("HarassE", "Use E");
+            q.AddBool("ComboQ", "Use in Combo");
+            q.Item("ComboQ").SetSpellTooltip("Combo", "Q", ScriptColor);
 
-            var laneclear = Menu.AddMenu("LaneClear", "LaneClear");
-            laneclear.AddBool("LaneClearQ", "Use Q");
-            laneclear.AddSlider("LaneClearQManaPercent", "Minimum Q Mana Percent", 30);
+            q.AddBool("HarassQ", "Use in Harass");
+            q.Item("HarassQ").SetSpellTooltip("Harass", "Q", ScriptColor);
 
-            var draw = Menu.AddMenu("Drawings", "Drawings");
-            draw.AddCircle("QRange", "Q", Color.Red, Q.Range);
-            draw.AddCircle("ERange", "E", Color.Blue, E.Range);
+            q.AddBool("AutoQ", "Smart Q");
+            q.Item("AutoQ")
+                .SetTooltip(
+                    "Automatically uses Q on nearby enemies with Urgot's E Buff.", System.Drawing.Color.Cyan.ToBGRA());
 
-            Menu.AddBool("AutoQ", "Smart Q");
-            Menu.AddBool("Interrupt", "Interrupt with Ult");
+            q.AddBool("LaneClearQ", "Use in LaneClear");
+            q.Item("LaneClearQ").SetSpellTooltip("LaneClear", "Q", ScriptColor);
+
+            q.AddSlider("LaneClearQManaPercent", "Minimum Q Mana Percent", 30);
+            q.Item("LaneClearQManaPercent").SetManaTooltip(ScriptColor, "Q");
+
+            q.AddCircle("QRange", "Q", System.Drawing.Color.Red, Q.Range);
+            q.Item("QRange").SetDrawingTooltip("Q", ScriptColor);
+
+            var e = Menu.AddMenu("E", "E Settings");
+
+            e.AddBool("ComboE", "Use in Combo");
+            e.Item("ComboE").SetSpellTooltip("Combo", "E", ScriptColor);
+
+            e.AddBool("HarassE", "Use in Harass");
+            e.Item("HarassE").SetSpellTooltip("Harass", "E", ScriptColor);
+
+            e.AddCircle("ERange", "E", System.Drawing.Color.Blue, E.Range);
+            e.Item("ERange").SetDrawingTooltip("E", ScriptColor);
+
+            Menu.AddBool("Interrupt", "Interrupt with R");
+            Menu.Item("Interrupt").SetTooltip("Cast Urgot's R to interrupt enemy abilities.", ScriptColor);
 
             Menu.AddToMainMenu();
 
@@ -209,7 +230,7 @@ namespace TUrgot
 
         private static bool CastE(Obj_AI_Base target, string mode)
         {
-            return E.IsReady() && Menu.Item(mode + "E").IsActive() && target.IsValidTarget(E.Range) &&
+            return E.IsReady() && Menu.Item(mode + "E").IsActive() && target.IsValidTarget(E.Range - 10) &&
                    E.Cast(target).IsCasted();
         }
 

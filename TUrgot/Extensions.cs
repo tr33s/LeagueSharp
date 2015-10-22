@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
@@ -149,6 +150,22 @@ namespace TUrgot
         {
             menu.AddItem(new MenuItem(name, displayName).SetValue(new KeyBind(key, type, defaultValue)));
         }
+
+        public static void SetSpellTooltip(this MenuItem item, string mode, string spell, SharpDX.Color color)
+        {
+            item.SetTooltip("Cast " + spell + " in " + mode + ".", color);
+        }
+        public static void SetDrawingTooltip(this MenuItem item, string spell, SharpDX.Color color)
+        {
+            item.SetTooltip("Draw " + spell + " range.", color);
+        }
+
+        public static void SetManaTooltip(this MenuItem item, SharpDX.Color color, string spell = null)
+        {
+            var text = spell == null ? "spells" : (spell + ".");
+                item.SetTooltip("Minimum mana to cast " + text, color);
+
+    }
 
         public static ColorBGRA ToBGRA(this Color color)
         {
