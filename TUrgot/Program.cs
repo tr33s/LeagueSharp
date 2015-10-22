@@ -52,41 +52,28 @@ namespace TUrgot
 
             Menu = new Menu("TUrgot", "TreesUrgot", true);
 
-            Menu.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
-            Orbwalker = new Orbwalking.Orbwalker(Menu.SubMenu("Orbwalker"));
 
-            var ts = new Menu("Target Selector", "Target Selector");
-            TargetSelector.AddToMenu(ts);
-            Menu.AddSubMenu(ts);
+            Orbwalker = Menu.AddOrbwalker();
+            Menu.AddTargetSelector();
 
-            Menu.AddSubMenu(new Menu("Combo", "Combo"));
-            Menu.SubMenu("Combo").AddItem(new MenuItem("ComboQ", "Use Q").SetValue(true));
-            Menu.SubMenu("Combo").AddItem(new MenuItem("ComboE", "Use E").SetValue(true));
-            Menu.SubMenu("Combo")
-                .AddItem(new MenuItem("ComboActive", "Combo").SetValue(new KeyBind(32, KeyBindType.Press)));
+            var combo = Menu.AddMenu("Combo", "Combo");
+            combo.AddBool("ComboQ", "Use Q");
+            combo.AddBool("ComboE", "Use E");
 
-            Menu.AddSubMenu(new Menu("Harass", "Harass"));
-            Menu.SubMenu("Harass").AddItem(new MenuItem("HarassQ", "Use Q").SetValue(true));
-            Menu.SubMenu("Harass").AddItem(new MenuItem("HarassE", "Use E").SetValue(true));
-            Menu.SubMenu("Harass")
-                .AddItem(new MenuItem("HarassActive", "Harass").SetValue(new KeyBind((byte) 'C', KeyBindType.Press)));
+            var harass = Menu.AddMenu("Harass", "Harass");
+            harass.AddBool("HarassQ", "Use Q");
+            harass.AddBool("HarassE", "Use E");
 
-            Menu.AddSubMenu(new Menu("LaneClear", "LaneClear"));
-            Menu.SubMenu("LaneClear").AddItem(new MenuItem("LaneClearQ", "Use Q").SetValue(true));
-            Menu.SubMenu("LaneClear")
-                .AddItem(new MenuItem("LaneClearQManaPercent", "Minimum Q Mana Percent").SetValue(new Slider(30)));
-            Menu.SubMenu("LaneClear")
-                .AddItem(
-                    new MenuItem("LaneClearActive", "LaneClear").SetValue(new KeyBind((byte) 'V', KeyBindType.Press)));
+            var laneclear = Menu.AddMenu("LaneClear", "LaneClear");
+            laneclear.AddBool("LaneClearQ", "Use Q");
+            laneclear.AddSlider("LaneClearQManaPercent", "Minimum Q Mana Percent", 30);
 
-            Menu.AddSubMenu(new Menu("Drawings", "Drawings"));
-            Menu.SubMenu("Drawings")
-                .AddItem(new MenuItem("QRange", "Q").SetValue(new Circle(false, Color.Red, Q.Range)));
-            Menu.SubMenu("Drawings")
-                .AddItem(new MenuItem("ERange", "E").SetValue(new Circle(false, Color.Blue, E.Range)));
+            var draw = Menu.AddMenu("Drawings", "Drawings");
+            draw.AddCircle("QRange", "Q", Color.Red, Q.Range);
+            draw.AddCircle("ERange", "E", Color.Blue, E.Range);
 
-            Menu.AddItem(new MenuItem("AutoQ", "Smart Q").SetValue(true));
-            Menu.AddItem(new MenuItem("Interrupt", "Interrupt with Ult").SetValue(true));
+            Menu.AddBool("AutoQ", "Smart Q");
+            Menu.AddBool("Interrupt", "Interrupt with Ult");
 
             Menu.AddToMainMenu();
 
@@ -112,7 +99,7 @@ namespace TUrgot
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if (Player.IsDead || Player.IsDashing() || Player.Spellbook.IsAutoAttacking || Player.IsWindingUp)
+            if (Player.IsDead || Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
             {
                 return;
             }
@@ -143,12 +130,19 @@ namespace TUrgot
                 return;
             }
 
+            var minions = MinionManager.GetMinions(Q.Range);
+            var killable = minions.FirstOrDefault(m => Q.GetDamage(m) > m.Health);
+            if (killable != null)
+            {
+                CastQ(killable);
+                return;
+            }
             var unit =
                 ObjectManager.Get<Obj_AI_Minion>()
                     .FirstOrDefault(
                         minion =>
                             MinionManager.IsMinion(minion) &&
-                            minion.IsValidTarget(minion.HasBuff("urgotcorrosivedebuff") ? Q2.Range : Q.Range) &&
+                            minion.IsValidTarget(minion.HasUrgotEBuff() ? Q2.Range : Q.Range) &&
                             minion.Health <= Q.GetDamage(minion));
             if (unit != null)
             {
@@ -158,54 +152,67 @@ namespace TUrgot
 
         private static void CastLogic()
         {
-            SmartQ();
-
-            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
-            if (target == null || (!Menu.Item("ComboActive").IsActive() && !Menu.Item("HarassActive").IsActive()))
+            if (SmartQ())
             {
                 return;
             }
 
-            var mode = Menu.Item("ComboActive").IsActive() ? "Combo" : "Harass";
+            var target = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Physical);
+            var mode = Orbwalker.ActiveMode.GetModeString();
 
-            CastE(TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Physical), mode);
+            if (target == null || Menu.Item(mode + "Active") == null || !Menu.Item(mode + "Active").IsActive())
+            {
+                return;
+            }
+
+            if (CastE(target, mode))
+            {
+                return;
+            }
+
             CastQ(target, mode);
         }
 
-        private static void SmartQ()
+        private static bool SmartQ()
         {
             if (!Q.IsReady() || !Menu.Item("AutoQ").IsActive())
             {
-                return;
+                return false;
             }
 
             var unit =
                 ObjectManager.Get<Obj_AI_Hero>()
-                    .FirstOrDefault(obj => obj.IsValidTarget(Q2.Range) && obj.HasBuff("urgotcorrosivedebuff"));
+                    .Where(obj => obj.IsValidTarget(Q2.Range) && obj.HasUrgotEBuff())
+                    .MinOrDefault(obj => obj.HealthPercent);
 
             if (unit != null && unit.IsValid)
             {
                 W.Cast();
-                Q2.Cast(unit);
+                return Q2.Cast(unit).IsCasted();
             }
+
+            return false;
         }
 
-        private static void CastQ(Obj_AI_Base target, string mode)
+        private static bool CastQ(Obj_AI_Base target, string mode = null)
         {
-            if (Q.IsReady() && Menu.Item(mode + "Q").IsActive() && target.IsValidTarget(Q.Range))
+            if (!Q.IsReady() || (mode != null && !Menu.Item(mode + "Q").IsActive()))
             {
-                Q.Cast(target);
+                return false;
             }
+
+            if (target.HasUrgotEBuff() && target.IsValidTarget(Q2.Range) && Q2.Cast(target).IsCasted())
+            {
+                return true;
+            }
+
+            return target.IsValidTarget(Q.Range) && Q.Cast(target).IsCasted();
         }
 
-        private static void CastE(Obj_AI_Base target, string mode)
+        private static bool CastE(Obj_AI_Base target, string mode)
         {
-            if (!E.IsReady() || !Menu.Item(mode + "E").IsActive() || !target.IsValidTarget(E.Range))
-            {
-                return;
-            }
-
-            E.Cast(target);
+            return E.IsReady() && Menu.Item(mode + "E").IsActive() && target.IsValidTarget(E.Range) &&
+                   E.Cast(target).IsCasted();
         }
 
         private static bool IsManaLow()
