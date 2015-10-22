@@ -104,7 +104,7 @@ namespace TUrgot
                 return;
             }
 
-            if (Menu.Item("LaneClearActive").IsActive() && !IsManaLow())
+            if (Orbwalker.ActiveMode.IsFarmMode() && !IsManaLow())
             {
                 LaneClear();
                 return;

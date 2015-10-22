@@ -29,6 +29,11 @@ namespace TUrgot
             return mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
         }
 
+        public static bool IsFarmMode(this Orbwalking.OrbwalkingMode mode)
+        {
+            return mode.Equals(Orbwalking.OrbwalkingMode.LastHit) || mode.Equals(Orbwalking.OrbwalkingMode.LaneClear);
+        }
+
         public static SpellSlot GetSpellSlot(this Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             var instance = sender.Spellbook.Spells.FirstOrDefault(spell => spell.Name.Equals(args.SData.Name));
