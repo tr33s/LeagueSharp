@@ -148,8 +148,6 @@ namespace Humanizer
                     //Console.WriteLine("HUMANIZE WAYPOINTS");
                     BlockedMoveCount++;
                     args.Process = false;
-                    Render.Circle.DrawCircle(
-                        args.TargetPosition, 150, args.Process ? System.Drawing.Color.Green : System.Drawing.Color.Red);
                     return;
                 }
 
