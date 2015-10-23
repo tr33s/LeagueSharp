@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
@@ -21,6 +22,7 @@ namespace Humanizer
         public static int BlockedSpellCount;
         public static int BlockedMoveCount;
         public static int NextMovementDelay;
+        public static Vector3 LastMovementPosition = Vector3.Zero;
 
         public static List<SpellSlot> Items = new List<SpellSlot>
         {
@@ -58,6 +60,13 @@ namespace Humanizer
 
             var move = Menu.AddSubMenu(new Menu("Movement", "Movement"));
             move.AddItem(new MenuItem("MovementEnabled", "Enabled").SetValue(true));
+            move.AddItem(new MenuItem("MovementHumanizeDistance", "Humanize Movement Distance").SetValue(true));
+            move.Item("MovementHumanizeDistance")
+                .SetTooltip("Stops the orbwalker from moving too closely to last movement");
+
+            move.AddItem(new MenuItem("MovementHumanizeRate", "Humanize Movement Rate").SetValue(true));
+            move.Item("MovementHumanizeRate").SetTooltip("Stops the orbwalker from sending too many movement requests.");
+
             move.AddItem(new MenuItem("MinDelay", "Minimum Delay")).SetValue(new Slider(80));
             move.AddItem(new MenuItem("MaxDelay", "Maximum Delay")).SetValue(new Slider(200, 100, 400));
             move.AddItem(new MenuItem("DrawMove", "Draw Blocked Movement Count").SetValue(true));
@@ -121,14 +130,47 @@ namespace Humanizer
                 NextMovementDelay = min > max ? min : WeightedRandom.Next(min, max);
             }
 
-            if (LastMove.TimeSince() < NextMovementDelay)
+            if (Menu.Item("MovementHumanizeRate").IsActive() && LastMove.TimeSince() < NextMovementDelay)
             {
                 NextMovementDelay = 0;
                 BlockedMoveCount++;
                 args.Process = false;
+                Render.Circle.DrawCircle(
+                    args.TargetPosition, 150, args.Process ? System.Drawing.Color.Green : System.Drawing.Color.Red);
                 return;
             }
 
+            if (Menu.Item("MovementHumanizeDistance").IsActive())
+            {
+                var wp = ObjectManager.Player.GetWaypoints();
+                if (wp.Count > 1 && wp.Last().Distance(args.TargetPosition) < 60)
+                {
+                    //Console.WriteLine("HUMANIZE WAYPOINTS");
+                    BlockedMoveCount++;
+                    args.Process = false;
+                    Render.Circle.DrawCircle(
+                        args.TargetPosition, 150, args.Process ? System.Drawing.Color.Green : System.Drawing.Color.Red);
+                    return;
+                }
+
+                if (LastMovementPosition != Vector3.Zero && args.TargetPosition.Distance(LastMovementPosition) < 60)
+                {
+                    //Console.WriteLine("HUMANIZE LAST POSITION");
+                    BlockedMoveCount++;
+                    args.Process = false;
+                    return;
+                }
+
+                if (args.TargetPosition.Distance(Player.ServerPosition) < 100)
+                {
+                    // Console.WriteLine("HUMANIZE CURRENT POSITION");
+                    BlockedMoveCount++;
+                    args.Process = false;
+                    return;
+                }
+            }
+
+            LastMovementPosition = args.TargetPosition;
             LastMove = Utils.TickCount;
         }
     }
