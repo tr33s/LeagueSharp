@@ -135,8 +135,6 @@ namespace Humanizer
                 NextMovementDelay = 0;
                 BlockedMoveCount++;
                 args.Process = false;
-                Render.Circle.DrawCircle(
-                    args.TargetPosition, 150, args.Process ? System.Drawing.Color.Green : System.Drawing.Color.Red);
                 return;
             }
 
