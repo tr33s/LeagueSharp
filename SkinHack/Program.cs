@@ -28,7 +28,7 @@ namespace SkinHack
             var champs = Config.AddSubMenu(new Menu("Champions", "Champions"));
             champs.AddItem(new MenuItem("Champions", "Reskin Champions").SetValue(true));
 
-            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>())
+            foreach (var hero in HeroManager.AllHeroes.Where(h => !h.ChampionName.Equals("Ezreal")))
             {
                 var champMenu = new Menu(hero.ChampionName, hero.ChampionName + hero.Team);
                 var modelUnit = new ModelUnit(hero);
