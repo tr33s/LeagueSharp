@@ -38,13 +38,6 @@ namespace TreeLib.Extensions
             return new Orbwalking.Orbwalker(orbwalk);
         }
 
-        public static void AddTargetSelector(this Menu menu)
-        {
-            var ts = new Menu("Target Selector", "Target Selector");
-            TargetSelector.AddToMenu(ts);
-            menu.AddSubMenu(ts);
-        }
-
         public static void AddObject(this Menu menu, string name, string displayName, object value = null)
         {
             var i = menu.AddItem(new MenuItem(name, displayName));
