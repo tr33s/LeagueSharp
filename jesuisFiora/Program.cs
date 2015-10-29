@@ -274,7 +274,7 @@ namespace jesuisFiora
                 return;
             }
 
-            if (Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
+            if (Player.IsDashing() || Player.IsWindingUp) //|| Player.Spellbook.IsCastingSpell)
             {
                 return;
             }
