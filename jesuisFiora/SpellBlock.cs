@@ -327,9 +327,9 @@ namespace jesuisFiora
             BlockedSpells.Add("Syndra", new List<BlockedSpell> { r });
             BlockedSpells.Add("Swain", new List<BlockedSpell> { q, e });
             BlockedSpells.Add("TahmKench", new List<BlockedSpell> { w });
-            BlockedSpells.Add(
+            /*BlockedSpells.Add(
                 "Talon",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" }, e });
+                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" }, e });*/
             BlockedSpells.Add("Taric", new List<BlockedSpell> { e });
             BlockedSpells.Add("Teemo", new List<BlockedSpell> { q });
             BlockedSpells.Add("Tristana", new List<BlockedSpell> { e, r });
@@ -353,20 +353,20 @@ namespace jesuisFiora
                     new BlockedSpell { AutoAttackName = new[] { "UdyrBearAttack" }, Name = "Bear" }
                 });
             BlockedSpells.Add("Urgot", new List<BlockedSpell> { r });
-            BlockedSpells.Add(
+            /*BlockedSpells.Add(
                 "Vayne",
                 new List<BlockedSpell>
                 {
                     new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Silver Bolts" },
                     e
-                });
+                });*/
             BlockedSpells.Add("Veigar", new List<BlockedSpell> { r });
-            BlockedSpells.Add(
+            /*BlockedSpells.Add(
                 "Vi",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered E" }, r });
-            BlockedSpells.Add(
+                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered E" }, r });*/
+            /*BlockedSpells.Add(
                 "Viktor",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" } });
+                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" } });*/
             BlockedSpells.Add("Vladimir", new List<BlockedSpell> { r });
             BlockedSpells.Add(
                 "Volibear",
@@ -385,9 +385,9 @@ namespace jesuisFiora
                     r
                 });
             BlockedSpells.Add("Yasuo", new List<BlockedSpell> { e });
-            BlockedSpells.Add(
+           /* BlockedSpells.Add(
                 "Yorick",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" }, e });
+                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" }, e });*/
             BlockedSpells.Add("Zac", new List<BlockedSpell> { w, r });
             BlockedSpells.Add("Zilean", new List<BlockedSpell> { e });
         }
