@@ -117,7 +117,10 @@ namespace jesuisFiora
         public readonly Obj_AI_Hero Target;
         private Geometry.Polygon _polygon;
         private Vector3 LastPolygonPosition;
-
+        private static float LastPolygonRadius;
+        private static float LastPolygonAngle;
+        private static float PolygonAngle => PassiveManager.Menu.Item("SectorAngle").GetValue<Slider>().Value;
+        private static float PolygonRadius => PassiveManager.Menu.Item("SectorMaxRadius").GetValue<Slider>().Value;
         public FioraPassive(Obj_GeneralParticleEmitter emitter, Obj_AI_Hero enemy)
             : base((ushort) emitter.Index, (uint) emitter.NetworkId)
         {
@@ -152,13 +155,25 @@ namespace jesuisFiora
         {
             get
             {
-                if (Target.ServerPosition.Equals(LastPolygonPosition) && _polygon != null)
+                if (LastPolygonRadius == 0)
+                {
+                    LastPolygonRadius = PolygonRadius;
+                }
+
+                if (LastPolygonAngle == 0)
+                {
+                    LastPolygonAngle = PolygonAngle;
+                }
+
+                if (Target.ServerPosition.Equals(LastPolygonPosition) && PolygonRadius.Equals(LastPolygonRadius) && PolygonAngle.Equals(LastPolygonAngle) && _polygon != null)
                 {
                     return _polygon;
                 }
 
                 _polygon = GetFilledPolygon();
                 LastPolygonPosition = Target.ServerPosition;
+                LastPolygonAngle = PolygonAngle;
+                LastPolygonRadius = PolygonRadius;
                 return _polygon;
             }
         }
@@ -180,19 +195,17 @@ namespace jesuisFiora
 
         private Geometry.Polygon GetFilledPolygon(bool predictPosition = false)
         {
-            var degrees = PassiveManager.Menu.Item("SectorAngle").GetValue<Slider>().Value;
-            var maxD = PassiveManager.Menu.Item("SectorMaxRadius").GetValue<Slider>().Value;
             var basePos = predictPosition ? SpellManager.Q.GetPrediction(Target).UnitPosition : Target.ServerPosition;
             var pos = basePos + GetPassiveOffset();
             var points = new List<Vector2>();
-            for (var i = 100; i < maxD; i += 10)
+            for (var i = 100; i < PolygonRadius; i += 10)
             {
-                if (i > maxD)
+                if (i > PolygonRadius)
                 {
                     break;
                 }
 
-                var calcRads = maxD - i < 50 ? degrees - 20 : degrees;
+                var calcRads = PolygonRadius - i < 50 ? PolygonAngle - 20 : PolygonAngle;
                 var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(calcRads), i, 30);
                 sector.UpdatePolygon();
                 points.AddRange(sector.Points);

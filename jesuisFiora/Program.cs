@@ -109,7 +109,7 @@ namespace jesuisFiora
             qVital.AddBool("QPassiveTimeout", "Q to Near Timeout Vital");
             qVital.Item("QPassiveTimeout")
                 .SetTooltip("Q to vital as it is being timed out. May not proc vital.", ScriptColor);
-            var misc = passive.AddMenu("Misc", "Misc");
+            var misc = passive.AddMenu("Draw", "Draw");
 
             misc.AddBool("DrawCenter", "Draw Center");
             misc.Item("DrawCenter").SetTooltip("Draw the center of vital polygon. No FPS drops.", ScriptColor);
