@@ -1,5 +1,6 @@
 ﻿using System;
 using LeagueSharp;
+using LeagueSharp.Common;
 
 namespace jesuisFiora
 {
@@ -17,20 +18,19 @@ namespace jesuisFiora
 
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender == null || !sender.IsValid || !sender.IsMe ||
-                !ObjectManager.Player.GetSpellSlot(args).Equals(SpellSlot.R))
+            if (sender == null || !sender.IsValid || !sender.IsMe || !args.Slot.Equals(SpellSlot.R))
             {
                 return;
             }
 
             Target = args.Target as Obj_AI_Hero;
-            CastTime = Environment.TickCount;
+            CastTime = Utils.TickCount;
             EndTime = CastTime + 8000;
         }
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if ((Target != null && Target.IsValid) && (Target.IsDead || Environment.TickCount - EndTime > 0))
+            if ((Target != null && Target.IsValid) && (Target.IsDead || Utils.TickCount - EndTime > 0))
             {
                 Target = null;
             }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
+using TreeLib.Extensions;
 
 namespace jesuisFiora
 {
@@ -12,24 +14,27 @@ namespace jesuisFiora
 
         static Dispeller()
         {
-            new Dispel("Vladimir", "VladimirHemoplagueDebuff", SpellSlot.R).Add();
-            new Dispel("Tristana", "TristanaEChargeSound", SpellSlot.E).Add();
-            new Dispel("Karthus", "KarthusFallenOne", SpellSlot.R).Add();
-            new Dispel("Zed", "ZedUltExecute", SpellSlot.R).Add();
-            //new Dispel("Fizz", "FizzRBonusBuff", SpellSlot.R, 2000).Add();
+            new Dispel("Vladimir", "vladimirhemoplaguedebuff", SpellSlot.R).Add();
+            new Dispel("Tristana", "tristanaechargesound", SpellSlot.E).Add();
+            new Dispel("Karma", "karmaspiritbind", SpellSlot.W).Add();
+            new Dispel("Karthus", "karthusfallenone", SpellSlot.R).Add();
+            new Dispel("Leblanc", "leblancsoulshackle", SpellSlot.E).Add();
+            new Dispel("Leblanc", "leblancsoulshacklem", SpellSlot.R).Add();
+            new Dispel("Morgana", "soulshackles", SpellSlot.R).Add();
+            new Dispel("Zed", "zedultexecute", SpellSlot.R).Add();
+            new Dispel("Fizz", "fizzmarinerdoombomb", SpellSlot.R, 500).Add();
         }
 
-        public static List<Dispel> Dispells
-        {
-            get { return Dispel.GetDispelList(); }
-        }
+        public static List<Dispel> Dispells => Dispel.GetDispelList();
 
         public static void Initialize(Menu menu)
         {
             foreach (var dispel in
                 Dispel.GetDispelList().Where(d => HeroManager.Enemies.Any(h => h.ChampionName.Equals(d.ChampionName))))
             {
-                menu.AddBool("Dispel" + dispel.ChampionName, "Dispel " + dispel.ChampionName + " " + dispel.Slot);
+                menu.AddBool(
+                    "Dispel" + dispel.ChampionName + dispel.BuffName,
+                    "Dispel " + dispel.ChampionName + " " + dispel.Slot);
             }
 
             Menu = menu;
@@ -38,7 +43,15 @@ namespace jesuisFiora
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            var w = Program.W;
+            const int x = 100;
+            var y = 100;
+            foreach (var buffs in
+                ObjectManager.Player.Buffs.Where(b => !b.SourceName.Equals(ObjectManager.Player.ChampionName)))
+            {
+                Drawing.DrawText(x, y, Color.Blue, buffs.Name + " " + buffs.SourceName);
+                y += 20;
+            }
+            var w = SpellManager.W;
 
             if (!w.IsReady())
             {
@@ -47,18 +60,25 @@ namespace jesuisFiora
 
             foreach (var dispel in
                 Dispells.Where(
-                    d => Menu.Item("Dispel" + d.ChampionName) != null && Menu.Item("Dispel" + d.ChampionName).IsActive())
-                )
+                    d =>
+                        (ObjectManager.Player.HasBuff(d.BuffName) &&
+                         Menu.Item("Dispel" + d.ChampionName + d.BuffName) != null &&
+                         Menu.Item("Dispel" + d.ChampionName + d.BuffName).IsActive())))
             {
-                var buff = ObjectManager.Player.Buffs.FirstOrDefault(b => b.DisplayName.Equals(dispel.BuffName));
+                var buff = ObjectManager.Player.Buffs.FirstOrDefault(b => b.Name.ToLower().Equals(dispel.BuffName));
                 if (buff == null || !buff.IsValid || !buff.IsActive)
                 {
+                    Console.WriteLine("CONTINUE");
                     continue;
                 }
 
-                if ((buff.EndTime - Game.Time) * 1000f + 500 < w.Delay * 1000f + Game.Ping / 1.85f + 750 + dispel.Offset)
+                var t = (buff.EndTime - Game.Time) * 1000f + 500 + dispel.Offset;
+                var wT = w.Delay * 1000f + Game.Ping / 1.85f + 750;
+                Console.WriteLine("T: {0} WT: {1}", t, wT);
+                if (t < wT)
                 {
                     var target = TargetSelector.GetTargetNoCollision(w);
+                    Console.WriteLine("CAST DISPEL");
                     if (target != null && target.IsValidTarget(w.Range) && w.Cast(target).IsCasted())
                     {
                         return;

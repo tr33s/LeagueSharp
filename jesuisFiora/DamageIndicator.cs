@@ -4,6 +4,7 @@ using System.Security.Permissions;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using TreeLib.Extensions;
 
 namespace jesuisFiora
 {
@@ -25,36 +26,12 @@ namespace jesuisFiora
             Drawing.OnDraw += Drawing_OnDraw;
         }
 
-        public static bool PredictedHealth
-        {
-            get { return Program.Menu.Item("HPColor").GetValue<Circle>().Active; }
-        }
-
-        public static bool Fill
-        {
-            get { return Program.Menu.Item("FillColor").GetValue<Circle>().Active; }
-        }
-
-        public static System.Drawing.Color HealthColor
-        {
-            get { return Program.Menu.Item("HPColor").GetValue<Circle>().Color; }
-        }
-
-        public static bool Killable
-        {
-            get { return Program.Menu.Item("Killable").IsActive(); }
-        }
-
-        public static System.Drawing.Color DamageColor
-        {
-            get { return Program.Menu.Item("FillColor").GetValue<Circle>().Color; }
-        }
-
-        public static bool Enabled
-        {
-            get { return Program.Menu.Item("DmgEnabled").GetValue<bool>(); }
-        }
-
+        public static bool PredictedHealth => Program.Menu.Item("HPColor").GetValue<Circle>().Active;
+        public static bool Fill => Program.Menu.Item("FillColor").GetValue<Circle>().Active;
+        public static System.Drawing.Color HealthColor => Program.Menu.Item("HPColor").GetValue<Circle>().Color;
+        public static bool Killable => Program.Menu.Item("Killable").IsActive();
+        public static System.Drawing.Color DamageColor => Program.Menu.Item("FillColor").GetValue<Circle>().Color;
+        public static bool Enabled => Program.Menu.Item("DmgEnabled").GetValue<bool>();
         public static DamageToUnitDelegate DamageToUnit { get; set; }
 
         [PermissionSet(SecurityAction.Assert, Unrestricted = true)]
@@ -86,7 +63,7 @@ namespace jesuisFiora
                 if (Fill)
                 {
                     var differenceInHp = xPosCurrentHp - xPosDamage;
-                    DamageBar.Color = DamageColor.ToBGRA();
+                    DamageBar.Color = DamageColor.ToSharpDXColor();
                     DamageBar.X = (int) (barPos.X + 9 + (107 * percentHealthAfterDamage));
                     DamageBar.Y = (int) yPos - 1;
                     DamageBar.Width = (int) Math.Round(differenceInHp);
@@ -99,7 +76,7 @@ namespace jesuisFiora
                     HealthLine.Start = new Vector2(xPosDamage, yPos - 1);
                     HealthLine.End = new Vector2(xPosDamage, yPos + Height);
                     HealthLine.Width = 2;
-                    HealthLine.Color = HealthColor.ToBGRA();
+                    HealthLine.Color = HealthColor.ToSharpDXColor();
                     HealthLine.OnEndScene();
                 }
             }

@@ -6,97 +6,156 @@ using jesuisFiora.Properties;
 using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
+using TreeLib.Core;
+using TreeLib.Extensions;
+using TreeLib.Objects;
 using Color = SharpDX.Color;
-using ItemData = LeagueSharp.Common.Data.ItemData;
 
 namespace jesuisFiora
 {
     internal static class Program
     {
         public static Orbwalking.Orbwalker Orbwalker;
-        public static Spell Q, W, E, R;
         public static Menu Menu;
         public static Color ScriptColor = new Color(255, 0, 255);
-        public static Spell Ignite;
-
-        private static IEnumerable<Obj_AI_Hero> Enemies
-        {
-            get { return HeroManager.Enemies; }
-        }
-
-        private static List<Obj_AI_Base> QLaneMinions
-        {
-            get { return MinionManager.GetMinions(Q.Range); }
-        }
+        public static Spell Q => SpellManager.Q;
+        public static Spell W => SpellManager.W;
+        public static Spell E => SpellManager.E;
+        public static Spell R => SpellManager.R;
+        public static Spell Ignite => TreeLib.Managers.SpellManager.Ignite;
+        private static IEnumerable<Obj_AI_Hero> Enemies => HeroManager.Enemies;
+        private static List<Obj_AI_Base> QLaneMinions => MinionManager.GetMinions(Q.Range);
 
         private static List<Obj_AI_Base> QJungleMinions
-        {
-            get { return MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral); }
-        }
+            => MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral);
 
-        private static float FioraAutoAttackRange
-        {
-            get { return Orbwalking.GetRealAutoAttackRange(Player); }
-        }
-
-        private static Obj_AI_Hero Player
-        {
-            get { return ObjectManager.Player; }
-        }
+        private static float FioraAutoAttackRange => Orbwalking.GetRealAutoAttackRange(Player);
+        private static Obj_AI_Hero Player => ObjectManager.Player;
 
         private static void Main(string[] args)
         {
+            Bootstrap.Initialize();
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
         private static void Game_OnGameLoad(EventArgs args)
         {
-            if (Player.ChampionName != "Fiora")
+            if (!Player.IsChampion("Fiora"))
             {
                 return;
             }
-
-            Q = new Spell(SpellSlot.Q, 400 + 350);
-            Q.SetSkillshot(.25f, 0, 500, false, SkillshotType.SkillshotLine);
-
-            W = new Spell(SpellSlot.W, 750);
-            W.SetSkillshot(0.5f, 70, 3200, false, SkillshotType.SkillshotLine);
-
-            E = new Spell(SpellSlot.E);
-
-            R = new Spell(SpellSlot.R, 500);
-            R.SetTargetted(.066f, 500);
 
             Menu = new Menu("jesuisFiora", "jesuisFiora", true);
             Menu.SetFontStyle(FontStyle.Regular, ScriptColor);
 
             Orbwalker = Menu.AddOrbwalker();
-            Menu.AddTargetSelector();
+
+            var hr = Menu.SubMenu("Orbwalker").Item("HoldPosRadius").GetValue<Slider>();
+            if (hr.Value < 80)
+            {
+                Menu.SubMenu("Orbwalker").Item("HoldPosRadius").SetValue(new Slider(80, hr.MinValue, hr.MaxValue));
+            }
 
             var spells = Menu.AddMenu("Spells", "Spells");
+            var passive = Menu.AddMenu("Passive", "Vital Settings");
+            var wMenu = Menu.AddMenu("W", "W (SpellBlock)");
+
+            var orbwalker = passive.AddMenu("Orbwalker", "Orbwalk Vital");
+
+            orbwalker.AddKeyBind("OrbwalkPassive", "Orbwalk to Target Vital", 'N', KeyBindType.Toggle);
+            orbwalker.Item("OrbwalkPassive").SetTooltip("Attempt to orbwalk to AA enemy vital.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkCombo", "In Combo");
+            orbwalker.Item("OrbwalkCombo").SetTooltip("Only orbwalk to vital in Combo mode.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkHarass", "In Harass");
+            orbwalker.Item("OrbwalkHarass").SetTooltip("Only orbwalk to vital in Harass mode.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkPrepassive", "Orbwalk PreVital");
+            orbwalker.Item("OrbwalkPrepassive")
+                .SetTooltip("Orbwalk to a vital before it has been identified.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkUltPassive", "Orbwalk Ultimate Vital");
+            orbwalker.Item("OrbwalkUltPassive").SetTooltip("Orbwalk to ultimate vitals.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkPassiveTimeout", "Orbwalk Near Timeout Vital");
+            orbwalker.Item("OrbwalkPassiveTimeout")
+                .SetTooltip("Orbwalk to  to vital as it is being timed out.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkTurret", "Block Under Turret");
+            orbwalker.Item("OrbwalkTurret").SetTooltip("In order to avoid walking under turrets.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkQ", "Only if Q Down");
+            orbwalker.Item("OrbwalkQ").SetTooltip("To avoid orbwalking to a vital that will be Q'ed to.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkAARange", "Only in AA Range");
+            orbwalker.Item("OrbwalkAARange").SetTooltip("Only orbwalk to vital if it is in AA range.", ScriptColor);
+
+            orbwalker.AddBool("OrbwalkAA", "Only if not able to AA");
+            orbwalker.Item("OrbwalkAA")
+                .SetTooltip("Only orbwalk to vital if not able to AA, in order to avoid loss of dps.", ScriptColor);
+
+            var qVital = passive.AddMenu("QVital", "Q Vital");
+            qVital.AddBool("QPassive", "Only Q to Vitals", false);
+            qVital.Item("QPassive").SetTooltip("Attempt to only Q to Fiora's vital passive.", ScriptColor);
+
+            qVital.AddBool("QUltPassive", "Q to Ultimate Vital");
+            qVital.Item("QUltPassive").SetTooltip("Q to ultimate vital passive.", ScriptColor);
+
+            qVital.AddBool("QPrepassive", "Q to PreVital", false);
+            qVital.Item("QPrepassive")
+                .SetTooltip("Attempt to Q to vital before it has been identified. May not proc vital.", ScriptColor);
+
+            qVital.AddBool("QPassiveTimeout", "Q to Near Timeout Vital");
+            qVital.Item("QPassiveTimeout")
+                .SetTooltip("Q to vital as it is being timed out. May not proc vital.", ScriptColor);
+            var misc = passive.AddMenu("Misc", "Misc");
+
+            misc.AddBool("DrawCenter", "Draw Center");
+            misc.Item("DrawCenter").SetTooltip("Draw the center of vital polygon. No FPS drops.", ScriptColor);
+
+            misc.AddBool("DrawPolygon", "Draw Polygon", false);
+            misc.Item("DrawPolygon").SetTooltip("Draw the vital polygon. May cause FPS drops.", ScriptColor);
+
+            passive.AddSlider("SectorMaxRadius", "Vital Polygon Range", 380, 300, 400);
+            passive.Item("SectorMaxRadius")
+                .SetTooltip("The max range of vital polygon. Draw polygon to understand what this is.", ScriptColor);
+
+            passive.AddSlider("SectorAngle", "Vital Polygon Angle", 80, 60, 90);
+            passive.Item("SectorAngle")
+                .SetTooltip("The angle of vital polygon. Draw polygon to understand what this is.", ScriptColor);
 
             var qMenu = spells.AddMenu("Q", "Q");
             qMenu.AddBool("QCombo", "Use in Combo");
             qMenu.AddBool("QHarass", "Use in Harass");
-            qMenu.AddSlider("QRange", "Decrease Q Max Range", 10, 0, 150);
-            Q.Range = 750 - qMenu.Item("QRange").GetValue<Slider>().Value;
-            qMenu.Item("QRange").ValueChanged += (sender, eventArgs) =>
+            qMenu.AddSlider("QRangeDecrease", "Decrease Q Range", 10, 0, 150);
+            Q.Range = 750 - qMenu.Item("QRangeDecrease").GetValue<Slider>().Value;
+            qMenu.Item("QRangeDecrease").ValueChanged += (sender, eventArgs) =>
             {
                 Q.Range = 750 - eventArgs.GetNewValue<Slider>().Value;
                 var qDraw = Menu.Item("QDraw");
+                if (qDraw == null)
+                {
+                    return;
+                }
                 var qCircle = qDraw.GetValue<Circle>();
                 qDraw.SetValue(new Circle(qCircle.Active, qCircle.Color, Q.Range));
             };
-            qMenu.AddBool("QForcePassive", "Only Q to Vitals", false);
-            qMenu.AddInfo("QFleeInfo", "Flee:", ScriptColor);
+
+            qMenu.AddBool("QBlockTurret", "Block Q Under Turret");
+            qMenu.Item("QBlockTurret").SetTooltip("Don't Q under turret in combo/harass.", ScriptColor);
+
             qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
-            qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", ScriptColor);
+            qMenu.Item("QFlee").SetTooltip("Flees towards cursor position.", ScriptColor);
+            //qMenu.AddInfo("FleeInfo", " --> Flees towards cursor position.", ScriptColor);
+
             qMenu.AddBool("QKillsteal", "Use for Killsteal");
 
-            var wMenu = spells.AddMenu("W", "W");
             var wSpells = wMenu.AddMenu("BlockSpells", "Blocked Spells");
-            wMenu.AddKeyBind("WSpells", "W Spellblock", 'U', KeyBindType.Toggle, true);
+            wMenu.AddKeyBind("WSpells", "Enabled", 'U', KeyBindType.Toggle, true);
+
             wMenu.AddList("WMode", "W Spellblock to: ", new[] { "Spell Caster", "Target" });
+            wMenu.Item("WMode").SetTooltip("TR", ScriptColor);
             wMenu.AddBool("WKillsteal", "Use for Killsteal");
             wMenu.AddBool("WTurret", "Block W Under Enemy Turret");
 
@@ -116,8 +175,13 @@ namespace jesuisFiora
             }
 
             rMenu.AddBool("RCombo", "Use R");
+
             rMenu.AddList("RMode", "Cast Mode", new[] { "Duelist", "Combo" });
+            rMenu.Item("RMode")
+                .SetTooltip("Duelist: Only cast when killable. Combo: Cast during normal combo.", ScriptColor);
+
             rMenu.AddKeyBind("RToggle", "Toggle Mode", 'L');
+            rMenu.Item("RToggle").SetTooltip("Toggles cast mode between Duelist and Combo.", ScriptColor);
 
             rMenu.Item("RToggle").ValueChanged += (sender, eventArgs) =>
             {
@@ -130,17 +194,17 @@ namespace jesuisFiora
                 mode.SetValue(new StringList(new[] { "Duelist", "Combo" }, index));
             };
 
-            rMenu.AddInfo("RModeInfo", " --> Duelist Mode: Only use R when target is killable.", ScriptColor);
-            rMenu.AddInfo("RModeInfo2", " --> Combo Mode: Use R in normal combo", ScriptColor);
             rMenu.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
-            rMenu.AddInfo("RVitalInfo", " --> Note: This is only for damage calculation in Duelist Mode.", ScriptColor);
+            rMenu.Item("RKillVital").SetTooltip("Used for damage calculation in Duelist Mode", ScriptColor);
+
             rMenu.AddBool("RComboSelected", "Use R Selected on Selected Unit Only");
+            rMenu.Item("RComboSelected")
+                .SetTooltip("Only cast R when enemy has been left clicked or selected.", ScriptColor);
 
             var items = spells.AddMenu("Items", "Items");
             items.AddBool("ItemsCombo", "Use in Combo");
             items.AddBool("ItemsHarass", "Use in Harass");
 
-            spells.AddBool("Ignite", "Auto Ignite");
             spells.AddSlider("ManaHarass", "Harass Min Mana Percent", 40);
 
             var farm = Menu.AddMenu("Farm", "Farm");
@@ -155,17 +219,19 @@ namespace jesuisFiora
             eFarm.AddBool("ELaneClear", "Use in LaneClear");
 
             farm.AddKeyBind("FarmEnabled", "Farm Enabled", 'J', KeyBindType.Toggle, true);
-            farm.AddInfo("FarmInfo", " --> Enabled in LaneClear and LastHit", ScriptColor);
+            farm.Item("FarmEnabled").SetTooltip("Enabled in LastHit and LaneClear mode.", ScriptColor);
+
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
 
             var draw = Menu.AddMenu("Drawing", "Drawing");
-            draw.AddCircle("QDraw", "Draw Q", System.Drawing.Color.Purple, Q.Range);
-            draw.AddCircle("WDraw", "Draw W", System.Drawing.Color.DeepPink, W.Range);
-            draw.AddCircle("RDraw", "Draw R", System.Drawing.Color.White, R.Range);
+            draw.AddCircle("0Draw", "Draw Q", System.Drawing.Color.Purple, Q.Range);
+            draw.AddCircle("1Draw", "Draw W", System.Drawing.Color.DeepPink, W.Range);
+            draw.AddCircle("3Draw", "Draw R", System.Drawing.Color.White, R.Range);
             draw.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
             draw.AddBool("WPermashow", "Permashow W Spellblock");
             draw.AddBool("RPermashow", "Permashow R Mode");
             draw.AddBool("FarmPermashow", "Permashow Farm Enabled");
+            draw.AddBool("OrbwalkPermashow", "Permashow Orbwalk Vital");
 
             if (draw.Item("WPermashow").IsActive())
             {
@@ -200,6 +266,17 @@ namespace jesuisFiora
                     farm.Item("FarmEnabled").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
                 };
 
+            if (draw.Item("OrbwalkPermashow").IsActive())
+            {
+                orbwalker.Item("OrbwalkPassive").Permashow(true, null, ScriptColor);
+            }
+
+            draw.Item("OrbwalkPermashow").ValueChanged +=
+                (sender, eventArgs) =>
+                {
+                    wMenu.Item("OrbwalkPassive").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
+                };
+
             var dmg = draw.AddMenu("DamageIndicator", "Damage Indicator");
             dmg.AddBool("DmgEnabled", "Draw Damage Indicator");
             dmg.AddCircle("HPColor", "Predicted Health Color", System.Drawing.Color.White);
@@ -207,7 +284,7 @@ namespace jesuisFiora
             dmg.AddBool("Killable", "Killable Text");
 
             Menu.AddBool("Sounds", "Sounds");
-            Menu.AddInfo("Info", "By Trees!", ScriptColor);
+            Menu.AddInfo("Info", "By Trees and Lilith!", ScriptColor);
             Menu.AddToMainMenu();
 
             if (Menu.Item("Sounds").IsActive())
@@ -215,14 +292,8 @@ namespace jesuisFiora
                 new SoundObject(Resources.OnLoad).Play();
             }
 
-            var ignite = ObjectManager.Player.Spellbook.GetSpell(ObjectManager.Player.GetSpellSlot("summonerdot"));
-            if (ignite.Slot != SpellSlot.Unknown)
-            {
-                Ignite = new Spell(ignite.Slot, 600);
-                //Ignite.SetTargetted();
-            }
-
             DamageIndicator.DamageToUnit = GetComboDamage;
+            PassiveManager.Initialize();
 
             Game.OnUpdate += Game_OnGameUpdate;
             Orbwalking.BeforeAttack += BeforeAttack;
@@ -235,6 +306,8 @@ namespace jesuisFiora
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
+            Orbwalker.SetOrbwalkingPoint(Vector3.Zero);
+
             if (Player.IsDead || Flee())
             {
                 return;
@@ -242,56 +315,64 @@ namespace jesuisFiora
 
             KillstealQ();
             KillstealW();
-            AutoIgnite();
             DuelistMode();
             Farm();
 
-            var mode = Orbwalker.ActiveMode;
-            var combo = mode.Equals(Orbwalking.OrbwalkingMode.Combo) || mode.Equals(Orbwalking.OrbwalkingMode.Mixed);
-
-
-            if (!combo)
+            if (Player.IsDashing() || Player.IsWindingUp) // || Player.Spellbook.IsCastingSpell)
             {
                 return;
             }
 
-            var comboMode = mode.GetModeString();
+            if (!Orbwalker.ActiveMode.IsComboMode())
+            {
+                return;
+            }
+
+            var aaTarget = UltTarget.Target != null && UltTarget.Target.IsValidTarget(1000)
+                ? UltTarget.Target
+                : LockedTargetSelector.GetTarget(FioraAutoAttackRange, TargetSelector.DamageType.Physical);
+            if (aaTarget != null)
+            {
+                Orbwalker.ForceTarget(aaTarget);
+
+                if (Menu.Item("OrbwalkPassive").IsActive() &&
+                    Menu.Item("Orbwalk" + Orbwalker.ActiveMode.GetModeString()).IsActive())
+                {
+                    OrbwalkToPassive(aaTarget);
+                }
+            }
+
             var target = UltTarget.Target != null && UltTarget.Target.IsValidTarget(Q.Range)
                 ? UltTarget.Target
-                : TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+                : LockedTargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
+            //TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
 
             if (target == null || !target.IsValidTarget(W.Range))
             {
                 return;
             }
 
-            var qCombo = Menu.Item("Q" + comboMode).IsActive();
-            var rCombo = comboMode.Equals("Combo") && Menu.Item("R" + comboMode).IsActive() &&
-                         Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(1);
 
-            if (comboMode.Equals("Harass") && Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
+            if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Mixed) &&
+                Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
             {
                 return;
             }
 
-            if (Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
+            if (R.IsActive() && Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(1) && ComboR(target))
             {
                 return;
             }
 
-            if (rCombo && ComboR(target))
-            {
-                return;
-            }
-
-            if (qCombo)
+            if (Q.IsActive())
             {
                 if (target.IsValidTarget(FioraAutoAttackRange) && !Orbwalking.IsAutoAttack(Player.LastCastedSpellName()))
                 {
                     return;
                 }
 
-                var path = target.GetWaypoints();
+                CastQ(target);
+                /*  var path = target.GetWaypoints();
                 if (path.Count == 1 || Player.Distance(target) < 700)
                 {
                     CastQ(target);
@@ -305,48 +386,33 @@ namespace jesuisFiora
                 if ((dT > .2f || (d2 < 690 && dT > -1)) && CastQ(target))
                 {
                     //  Console.WriteLine("{0} {1}", dT, d2);
-                }
+                }*/
             }
         }
 
         private static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender == null || !sender.IsValid)
-            {
-                return;
-            }
-
-            if (sender.IsMe)
-            {
-                var slot = Player.GetSpellSlot(args.SData.Name);
-
-                if (slot.Equals(SpellSlot.E))
-                {
-                    Orbwalking.ResetAutoAttackTimer();
-                }
-
-                return;
-            }
-
-            var autoW = Menu.Item("WSpells").IsActive() && W.IsReady();
-
-            if (!autoW)
-            {
-                return;
-            }
-
             var unit = sender as Obj_AI_Hero;
+
+            if (unit == null || !unit.IsValid)
+            {
+                return;
+            }
+
+            if (unit.IsMe && args.Slot.Equals(SpellSlot.E))
+            {
+                Orbwalking.ResetAutoAttackTimer();
+                return;
+            }
+            Console.WriteLine(args.Slot + " " + args.SData.Name);
+            if (!unit.IsEnemy || !Menu.Item("WSpells").IsActive() || !W.IsReady() || !SpellBlock.Contains(unit, args))
+            {
+                return;
+            }
+
             var castUnit = unit;
             var type = args.SData.TargettingType;
 
-            var blockableSpell = unit != null && unit.IsEnemy && SpellBlock.Contains(unit, args);
-            if (!blockableSpell)
-            {
-                //Console.WriteLine("RETURN");
-                return;
-            }
-
-            //Console.WriteLine(type);
             if (!unit.IsValidTarget() || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
             {
                 var target = TargetSelector.GetSelectedTarget();
@@ -361,13 +427,44 @@ namespace jesuisFiora
                 }
             }
 
-            if (type.IsTargeted() && args.Target != null && args.Target.IsMe)
+            if (type.IsSkillShot())
             {
+                CastW(castUnit);
+            }
+            if (type.IsTargeted() && args.Target != null)
+            {
+                if (!args.Target.IsMe || (args.Target.Name.Equals("Barrel") && args.Target.DistanceToPlayer() > 200))
+                {
+                    return;
+                }
+
                 if (Menu.Item("WTurret").IsActive() && Player.UnderTurret(true))
                 {
                     return;
                 }
 
+                if (unit.ChampionName.Equals("Nautilus") ||
+                    (unit.ChampionName.Equals("Caitlyn") && args.Slot.Equals(SpellSlot.R)))
+                {
+                    var d = unit.DistanceToPlayer();
+                    var travelTime = d / args.SData.MissileSpeed;
+                    var delay = travelTime * 1000 - W.Delay + 150;
+                    Console.WriteLine("TT: " + travelTime + " " + delay);
+                    Utility.DelayAction.Add((int) (delay), () => CastW(castUnit));
+                    return;
+                }
+
+                CastW(castUnit);
+            }
+            // lol no skillshots =_//
+            else if (type.Equals(SpellDataTargetType.LocationAoe) &&
+                     args.End.Distance(Player.ServerPosition) < args.SData.CastRange)
+            {
+                CastW(castUnit);
+            }
+            else if (type.Equals(SpellDataTargetType.Cone) &&
+                     args.End.Distance(Player.ServerPosition) < args.SData.CastRange)
+            {
                 CastW(castUnit);
             }
             else if (unit.ChampionName.Equals("Riven") && unit.Distance(Player) < 400)
@@ -383,23 +480,16 @@ namespace jesuisFiora
             {
                 CastW(castUnit);
             }
-            else if (type.Equals(SpellDataTargetType.SelfAoe) &&
-                     unit.Distance(Player.ServerPosition) < args.SData.CastRange + args.SData.CastRadius / 2)
+            else if (type.Equals(SpellDataTargetType.SelfAoe))
             {
-                CastW(castUnit);
-            }
-            else if (type.Equals(SpellDataTargetType.Self))
-            {
-                // this probably isn't needed
-                if ((unit.ChampionName.Equals("Kalista") && Player.Distance(unit) < 350))
+                var d = args.End.Distance(Player.ServerPosition);
+                var c = args.SData.CastRange;
+                var p = args.SData.CastRadius;
+                Console.WriteLine(d + " " + c + " " + p);
+                if (d < c + p)
                 {
+                    Console.WriteLine("CAST");
                     CastW(castUnit);
-                }
-
-                // need to look into this
-                if (unit.ChampionName.Equals("Zed") && Player.Distance(unit) < 300)
-                {
-                    Utility.DelayAction.Add(200, () => CastW(castUnit));
                 }
             }
         }
@@ -411,9 +501,10 @@ namespace jesuisFiora
                 return;
             }
 
-            foreach (var circle in
-                new[] { "Q", "W", "R" }.Select(spell => Menu.Item(spell + "Draw").GetValue<Circle>())
-                    .Where(circle => circle.Active))
+            foreach (var circle in from spell in new[] { 0, 1, 3 }
+                let circle = Menu.Item(spell + "Draw").GetValue<Circle>()
+                where circle.Active && Player.Spellbook.GetSpell((SpellSlot) spell).IsReady()
+                select circle)
             {
                 Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
             }
@@ -422,24 +513,20 @@ namespace jesuisFiora
         private static void BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
         {
             var targ = args.Target as Obj_AI_Base;
+
             if (!args.Unit.IsMe || targ == null)
             {
                 return;
             }
 
-            if (!Orbwalker.ActiveMode.IsComboMode())
-            {
-                return;
-            }
-
-            var mode = Orbwalker.ActiveMode.GetModeString();
-            if (!Menu.Item("E" + mode).IsActive() || !E.IsReady())
+            if (!E.IsActive() || !E.IsReady() || (Orbwalker.ActiveMode.IsComboMode() && !(targ is Obj_AI_Hero)))
             {
                 return;
             }
 
             if (!targ.IsFacing(Player) && targ.Distance(Player) >= FioraAutoAttackRange - 10)
             {
+                Console.WriteLine("BEFORE");
                 E.Cast();
             }
         }
@@ -447,11 +534,12 @@ namespace jesuisFiora
         private static void AfterAttack(AttackableUnit unit, AttackableUnit target)
         {
             var targ = target as Obj_AI_Base;
+
             if (!unit.IsMe || targ == null)
             {
                 return;
             }
-
+            Orbwalker.SetOrbwalkingPoint(Vector3.Zero);
             var mode = Orbwalker.ActiveMode;
 
             if (mode.Equals(Orbwalking.OrbwalkingMode.None) || mode.Equals(Orbwalking.OrbwalkingMode.LastHit))
@@ -461,112 +549,58 @@ namespace jesuisFiora
 
             var comboMode = mode.GetModeString();
 
-            if (comboMode.Equals("LaneClear") && !Menu.Item("FarmEnabled").IsActive())
+            if (!E.IsActive() || (comboMode.Equals("LaneClear") && !Menu.Item("FarmEnabled").IsActive()))
             {
                 return;
             }
 
-            if (Menu.Item("E" + comboMode).IsActive() && E.IsReady() && E.Cast())
+            if (E.IsReady() && E.Cast())
             {
+                Console.WriteLine("AFRTE");
                 return;
             }
 
-            if (Menu.Item("Items" + comboMode).IsActive())
+            if (ItemManager.IsActive())
             {
                 CastItems(targ);
             }
         }
 
-        public static void DuelistMode()
+        public static void OrbwalkToPassive(Obj_AI_Hero target)
         {
-            if (!Menu.Item("RCombo").IsActive() || !Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) ||
-                !Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(0) || !R.IsReady() ||
-                Player.CountEnemiesInRange(R.Range) == 0)
-
+            if (Menu.Item("OrbwalkAA").IsActive() && Orbwalking.CanAttack() &&
+                target.IsValidTarget(FioraAutoAttackRange))
             {
                 return;
             }
 
-            var vitalCalc = Menu.Item("RKillVital").GetValue<Slider>().Value;
-            foreach (var obj in
-                HeroManager.Enemies.Where(
-                    enemy =>
-                        Menu.Item("Duelist" + enemy.ChampionName).IsActive() && enemy.IsValidTarget(R.Range) &&
-                        GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
-                        enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + enemy.GetPassiveDamage(1)))
-            {
-                if (Menu.Item("RComboSelected").IsActive())
-                {
-                    var unit = TargetSelector.GetSelectedTarget();
-                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) && CastR(obj))
-                    {
-                        return;
-                    }
-                    return;
-                }
-
-                if (CastR(obj))
-                {
-                    Hud.SelectedUnit = obj;
-                }
-
-
-                if (Menu.Item("DuelistDraw").IsActive())
-                {
-                    var pos = obj.HPBarPosition;
-                    Drawing.DrawText(pos.X, pos.Y - 30, System.Drawing.Color.DeepPink, "Killable!");
-                }
-            }
-        }
-
-        public static void Farm()
-        {
-            var mode = Orbwalker.ActiveMode;
-            if (!Menu.Item("FarmEnabled").IsActive() ||
-                !mode.Equals(Orbwalking.OrbwalkingMode.LaneClear) && !mode.Equals(Orbwalking.OrbwalkingMode.LastHit))
+            if (Menu.Item("OrbwalkQ").IsActive() && Q.IsReady())
             {
                 return;
             }
 
-            var active = Q.IsReady() && Menu.Item("Q" + mode.GetModeString()).IsActive() &&
-                         Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value;
+            var passive = target.GetNearestPassive();
 
-            if (!active)
+            if (passive == null ||
+                (Menu.Item("Orbwalk" + passive.Passive) == null || !Menu.Item("Orbwalk" + passive.Passive).IsActive()))
             {
                 return;
             }
 
-            var laneMinions = QLaneMinions;
-            var jungleMinions = QJungleMinions;
 
-            var jungleKillable =
-                jungleMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
-            if (jungleKillable != null && Q.Cast(jungleKillable).IsCasted())
+            var pos = passive.OrbwalkPosition; //PassivePosition;
+            var underTurret = Menu.Item("OrbwalkTurret").IsActive() && pos.UnderTurret(true);
+            var outsideAARange = Menu.Item("OrbwalkAARange").IsActive() && Player.Distance(pos) > FioraAutoAttackRange;
+            if (underTurret || outsideAARange)
             {
                 return;
             }
 
-            var jungle = jungleMinions.MinOrDefault(obj => obj.Health);
-            if (jungle != null && Q.Cast(jungle).IsCasted())
-            {
-                return;
-            }
-
-            var killable = laneMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
-
-            if (Menu.Item("QFarmAA").IsActive() && killable != null && killable.IsValidTarget(FioraAutoAttackRange) &&
-                !Player.UnderTurret(false))
-            {
-                return;
-            }
-
-            if (killable != null && Q.Cast(killable).IsCasted())
-            {
-                return;
-            }
-
-            var lane = laneMinions.MinOrDefault(obj => obj.Health);
-            if (lane != null && Q.Cast(lane).IsCasted()) {}
+            var path = Player.GetPath(pos);
+            var point = path.Length < 3 ? pos : path.Skip(path.Length / 2).FirstOrDefault();
+            //  Console.WriteLine(path.Length);
+            Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
+            Orbwalker.SetOrbwalkingPoint(target.IsMoving ? point : pos);
         }
 
         public static bool CastQ(Obj_AI_Base target, bool force = false)
@@ -576,48 +610,74 @@ namespace jesuisFiora
                 return false;
             }
 
+            var qPos = GetBestCastPosition(target);
 
-            var forcePassive = Menu.Item("QForcePassive").IsActive() && !force;
-            var predicted = Prediction.GetPrediction(target, Q.Delay);
-            var condition = predicted.Hitchance > HitChance.High && Q.IsInRange(predicted.UnitPosition);
-
-            if (target.CountPassive() == 0)
+            if (!Q.IsInRange(qPos.Position))
             {
-                if (forcePassive)
-                {
-                    //  Console.WriteLine("NO PASSIVE");
-                    return false;
-                }
-
-                return condition && Q.Cast(predicted.UnitPosition);
+                Console.WriteLine("NOT IN RANGE");
+                return false;
             }
 
-            var pos = target.GetPassivePosition();
-            if (pos.Equals(Vector3.Zero))
+            // cast q because we don't care
+            if (force)
             {
-                if (forcePassive)
-                {
-                    // Console.WriteLine("CAN'T FIND PASSIVE POS");
-                    return false;
-                }
-                return condition && Q.Cast(predicted.UnitPosition);
+                return Q.Cast(qPos.Position);
             }
 
-            if (Player.Distance(pos) > Q.Range)
+            // q pos under turret
+            if (Menu.Item("QBlockTurret").IsActive() && qPos.Position.UnderTurret(true))
             {
-                if (forcePassive)
+                return false;
+            }
+
+            var forcePassive = Menu.Item("QPassive").IsActive();
+            var passiveType = qPos.Type.ToString();
+
+            // passive type is none, no special checks needed
+            if (passiveType.Equals("None"))
+            {
+                //  Console.WriteLine("NO PASSIVE");
+                return !forcePassive && Q.Cast(qPos.Position);
+            }
+
+            var active = Menu.Item("Q" + passiveType) != null && Menu.Item("Q" + passiveType).IsActive();
+
+            // if forcePassive is false cast q
+            if (forcePassive)
+            {
+                if (!active)
                 {
-                    // Console.WriteLine("PASSIVE OUT OF RANGE");
+                    Console.WriteLine("NOT ACTIVE " + passiveType);
                     return false;
                 }
-                return condition && Q.Cast(predicted.UnitPosition);
+                return Q.Cast(qPos.Position);
             }
-            return Q.Cast(pos);
+
+            return Q.Cast(qPos.Position);
+        }
+
+        public static QPosition GetBestCastPosition(Obj_AI_Base target)
+        {
+            var passive = target.GetNearestPassive();
+            if (passive == null)
+            {
+                return new QPosition(Q.GetPrediction(target).UnitPosition, FioraPassive.PassiveType.None);
+            }
+
+            return new QPosition(passive.CastPosition, passive.Passive);
         }
 
         public static bool CastW(Obj_AI_Base target)
         {
-            return target.IsValidTarget(W.Range) ? W.Cast(target).IsCasted() : W.Cast(target.ServerPosition);
+            if (target == null || !target.IsValidTarget(W.Range))
+            {
+                return W.Cast(Game.CursorPos);
+            }
+
+            var cast = W.GetPrediction(target);
+            var castPos = W.IsInRange(cast.CastPosition) ? cast.CastPosition : target.ServerPosition;
+
+            return W.Cast(castPos);
         }
 
         public static void KillstealQ()
@@ -690,16 +750,22 @@ namespace jesuisFiora
                 return false;
             }
 
-            var youmuus = ItemData.Youmuus_Ghostblade.GetItem();
-            if (youmuus != null && youmuus.IsReady() && youmuus.Cast())
+            var botrk = ItemManager.Botrk;
+            if (botrk.IsValidAndReady() && botrk.Cast(target))
             {
                 return true;
             }
 
-            var botrk = ItemData.Blade_of_the_Ruined_King.GetItem();
-            if (botrk != null && botrk.IsReady() && target.IsValidTarget(botrk.Range))
+            var cutlass = ItemManager.Cutlass;
+            if (cutlass.IsValidAndReady() && cutlass.Cast(target))
             {
-                botrk.Cast(target);
+                return true;
+            }
+
+            var youmuus = ItemManager.Youmuus;
+            if (youmuus.IsValidAndReady() && youmuus.Cast())
+            {
+                return true;
             }
 
             var units =
@@ -707,46 +773,20 @@ namespace jesuisFiora
             var heroes = Player.GetEnemiesInRange(385).Count;
             var count = units + heroes;
 
-            var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
-            if (tiamat != null && tiamat.IsReady() && count >= 1 && tiamat.Cast())
+            var tiamat = ItemManager.Tiamat;
+            if (tiamat.IsValidAndReady() && count > 0 && tiamat.Cast())
             {
                 return true;
             }
 
-            var hydra = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
-            if (hydra != null && hydra.IsReady() && count >= 1 && hydra.Cast())
+            var hydra = ItemManager.RavenousHydra;
+            if (hydra.IsValidAndReady() && count > 0 && hydra.Cast())
             {
                 return true;
             }
 
-            const ItemId titanic = (ItemId) 3748;
-            var slot = Player.InventoryItems.FirstOrDefault(i => i.Id.Equals(titanic));
-
-            if (slot == null)
-            {
-                return false;
-            }
-
-            var spell = Player.Spellbook.GetSpell(slot.SpellSlot);
-            return spell.IsReady() && count >= 1 && Player.Spellbook.CastSpell(spell.Slot);
-        }
-
-        public static void AutoIgnite()
-        {
-            if (!Menu.Item("Ignite").IsActive() || Ignite == null || !Ignite.IsReady())
-            {
-                return;
-            }
-
-            var target =
-                HeroManager.Enemies.FirstOrDefault(
-                    h =>
-                        h.IsValidTarget(Ignite.Range) &&
-                        h.Health < Player.GetSummonerSpellDamage(h, Damage.SummonerSpell.Ignite));
-            if (target != null)
-            {
-                Ignite.Cast(target);
-            }
+            var titanic = ItemManager.TitanicHydra;
+            return titanic.IsValidAndReady() && count > 0 && titanic.Cast();
         }
 
         public static bool Flee()
@@ -771,6 +811,98 @@ namespace jesuisFiora
             return true;
         }
 
+        public static void DuelistMode()
+        {
+            if (!Menu.Item("RCombo").IsActive() || !Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Combo) ||
+                !Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(0) || !R.IsReady() ||
+                Player.CountEnemiesInRange(R.Range) == 0)
+
+            {
+                return;
+            }
+
+            var vitalCalc = Menu.Item("RKillVital").GetValue<Slider>().Value;
+            foreach (var obj in
+                Enemies.Where(
+                    enemy =>
+                        Menu.Item("Duelist" + enemy.ChampionName).IsActive() && enemy.IsValidTarget(R.Range) &&
+                        GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
+                        enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + enemy.GetPassiveDamage(1)))
+            {
+                if (Menu.Item("RComboSelected").IsActive())
+                {
+                    var unit = TargetSelector.GetSelectedTarget();
+                    if (unit != null && unit.IsValid && unit.NetworkId.Equals(obj.NetworkId) && CastR(obj))
+                    {
+                        return;
+                    }
+                    return;
+                }
+
+                if (CastR(obj))
+                {
+                    Hud.SelectedUnit = obj;
+                }
+
+
+                if (Menu.Item("DuelistDraw").IsActive())
+                {
+                    var pos = obj.HPBarPosition;
+                    Drawing.DrawText(pos.X, pos.Y - 30, System.Drawing.Color.DeepPink, "Killable!");
+                }
+            }
+        }
+
+        public static void Farm()
+        {
+            var mode = Orbwalker.ActiveMode;
+
+            if (!Menu.Item("FarmEnabled").IsActive() || !mode.IsFarmMode())
+            {
+                return;
+            }
+
+            var active = Q.IsActive() && Q.IsReady() &&
+                         Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value;
+
+            if (!active)
+            {
+                return;
+            }
+
+            var laneMinions = QLaneMinions;
+            var jungleMinions = QJungleMinions;
+
+            var jungleKillable =
+                jungleMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
+            if (jungleKillable != null && Q.Cast(jungleKillable).IsCasted())
+            {
+                return;
+            }
+
+            var jungle = jungleMinions.MinOrDefault(obj => obj.Health);
+            if (jungle != null && Q.Cast(jungle).IsCasted())
+            {
+                return;
+            }
+
+            var killable = laneMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
+
+            if (Menu.Item("QFarmAA").IsActive() && killable != null && killable.IsValidTarget(FioraAutoAttackRange) &&
+                !Player.UnderTurret(false))
+            {
+                return;
+            }
+
+            if (killable != null && Q.Cast(killable).IsCasted())
+            {
+                return;
+            }
+
+            var lane = laneMinions.MinOrDefault(obj => obj.Health);
+            if (lane != null && Q.Cast(lane).IsCasted()) {}
+        }
+
         public static float GetComboDamage(Obj_AI_Hero unit)
         {
             return GetComboDamage(unit, 0);
@@ -780,36 +912,29 @@ namespace jesuisFiora
         {
             var d = 2 * Player.GetAutoAttackDamage(unit);
 
-            var hydra = ItemData.Ravenous_Hydra_Melee_Only.GetItem();
-            if (hydra != null && hydra.IsReady())
+            if (ItemManager.RavenousHydra.IsValidAndReady() || ItemManager.TitanicHydra.IsValidAndReady())
             {
                 d += Player.GetItemDamage(unit, Damage.DamageItems.Hydra);
             }
 
-            const ItemId titanic = (ItemId) 3748;
-            var slot = Player.InventoryItems.FirstOrDefault(i => i.Id.Equals(titanic));
-
-            if (slot != null && Player.Spellbook.GetSpell(slot.SpellSlot).IsReady())
-            {
-                d += Player.GetItemDamage(unit, Damage.DamageItems.Hydra);
-            }
-
-            var tiamat = ItemData.Tiamat_Melee_Only.GetItem();
-            if (tiamat != null && tiamat.IsReady())
+            if (ItemManager.Tiamat.IsValidAndReady())
             {
                 d += Player.GetItemDamage(unit, Damage.DamageItems.Tiamat);
             }
 
-            var cutlass = ItemData.Bilgewater_Cutlass.GetItem();
-            if (cutlass != null && cutlass.IsReady())
+            if (ItemManager.Botrk.IsValidAndReady())
+            {
+                d += Player.GetItemDamage(unit, Damage.DamageItems.Botrk);
+            }
+
+            if (ItemManager.Cutlass.IsValidAndReady())
             {
                 d += Player.GetItemDamage(unit, Damage.DamageItems.Bilgewater);
             }
 
-            var botrk = ItemData.Blade_of_the_Ruined_King.GetItem();
-            if (botrk != null && botrk.IsReady())
+            if (ItemManager.Youmuus.IsValidAndReady())
             {
-                d += Player.GetItemDamage(unit, Damage.DamageItems.Botrk);
+                d += Player.GetAutoAttackDamage(unit, true) * 2;
             }
 
             if (Ignite != null && Ignite.IsReady())
