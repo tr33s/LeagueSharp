@@ -353,13 +353,13 @@ namespace jesuisFiora
                     new BlockedSpell { AutoAttackName = new[] { "UdyrBearAttack" }, Name = "Bear" }
                 });
             BlockedSpells.Add("Urgot", new List<BlockedSpell> { r });
-            /*BlockedSpells.Add(
+            BlockedSpells.Add(
                 "Vayne",
                 new List<BlockedSpell>
                 {
-                    new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Silver Bolts" },
+                    //new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Silver Bolts" },
                     e
-                });*/
+                });
             BlockedSpells.Add("Veigar", new List<BlockedSpell> { r });
             /*BlockedSpells.Add(
                 "Vi",
