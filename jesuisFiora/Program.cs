@@ -352,13 +352,9 @@ namespace jesuisFiora
                 return;
             }
 
-<<<<<<< HEAD
 
             if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Mixed) &&
                 Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
-=======
-            if (Player.IsDashing() || Player.IsWindingUp) //|| Player.Spellbook.IsCastingSpell)
->>>>>>> 949935335f8cc47e6e2d66bcf1c940d4fcc2e284
             {
                 return;
             }
