@@ -122,47 +122,49 @@ namespace Humanizer
             {
                 return;
             }
-
-            if (NextMovementDelay == 0)
+            if (LastMovementPosition != Vector3.Zero && args.TargetPosition.Distance(LastMovementPosition) < 300)
             {
-                var min = Menu.Item("MinDelay").GetValue<Slider>().Value;
-                var max = Menu.Item("MaxDelay").GetValue<Slider>().Value;
-                NextMovementDelay = min > max ? min : WeightedRandom.Next(min, max);
-            }
-
-            if (Menu.Item("MovementHumanizeRate").IsActive() && LastMove.TimeSince() < NextMovementDelay)
-            {
-                NextMovementDelay = 0;
-                BlockedMoveCount++;
-                args.Process = false;
-                return;
-            }
-
-            if (Menu.Item("MovementHumanizeDistance").IsActive())
-            {
-                var wp = ObjectManager.Player.GetWaypoints();
-                if (wp.Count > 1 && wp.Last().Distance(args.TargetPosition) < 60)
+                if (NextMovementDelay == 0)
                 {
-                    //Console.WriteLine("HUMANIZE WAYPOINTS");
+                    var min = Menu.Item("MinDelay").GetValue<Slider>().Value;
+                    var max = Menu.Item("MaxDelay").GetValue<Slider>().Value;
+                    NextMovementDelay = min > max ? min : WeightedRandom.Next(min, max);
+                }
+
+                if (Menu.Item("MovementHumanizeRate").IsActive() && LastMove.TimeSince() < NextMovementDelay)
+                {
+                    NextMovementDelay = 0;
                     BlockedMoveCount++;
                     args.Process = false;
                     return;
                 }
 
-                if (LastMovementPosition != Vector3.Zero && args.TargetPosition.Distance(LastMovementPosition) < 60)
+                if (Menu.Item("MovementHumanizeDistance").IsActive())
                 {
-                    //Console.WriteLine("HUMANIZE LAST POSITION");
-                    BlockedMoveCount++;
-                    args.Process = false;
-                    return;
-                }
+                    var wp = ObjectManager.Player.GetWaypoints();
+                    if (wp.Count > 1 && wp.Last().Distance(args.TargetPosition) < 60)
+                    {
+                        //Console.WriteLine("HUMANIZE WAYPOINTS");
+                        BlockedMoveCount++;
+                        args.Process = false;
+                        return;
+                    }
 
-                if (args.TargetPosition.Distance(Player.ServerPosition) < 100)
-                {
-                    // Console.WriteLine("HUMANIZE CURRENT POSITION");
-                    BlockedMoveCount++;
-                    args.Process = false;
-                    return;
+                    if (args.TargetPosition.Distance(LastMovementPosition) < 60)
+                    {
+                        //Console.WriteLine("HUMANIZE LAST POSITION");
+                        BlockedMoveCount++;
+                        args.Process = false;
+                        return;
+                    }
+
+                    if (args.TargetPosition.Distance(Player.ServerPosition) < 100)
+                    {
+                        // Console.WriteLine("HUMANIZE CURRENT POSITION");
+                        BlockedMoveCount++;
+                        args.Process = false;
+                        return;
+                    }
                 }
             }
 
