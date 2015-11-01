@@ -25,7 +25,10 @@ namespace jesuisFiora
             new Dispel("Fizz", "fizzmarinerdoombomb", SpellSlot.R, 500).Add();
         }
 
-        public static List<Dispel> Dispells => Dispel.GetDispelList();
+        public static List<Dispel> Dispells
+        {
+            get { return Dispel.GetDispelList(); }
+        }
 
         public static void Initialize(Menu menu)
         {

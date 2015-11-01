@@ -111,16 +111,15 @@ namespace jesuisFiora
             None
         }
 
+        private static float LastPolygonRadius;
+        private static float LastPolygonAngle;
         public readonly Color Color;
         public readonly PassiveType Passive;
         private readonly int PassiveDistance;
         public readonly Obj_AI_Hero Target;
         private Geometry.Polygon _polygon;
         private Vector3 LastPolygonPosition;
-        private static float LastPolygonRadius;
-        private static float LastPolygonAngle;
-        private static float PolygonAngle => PassiveManager.Menu.Item("SectorAngle").GetValue<Slider>().Value;
-        private static float PolygonRadius => PassiveManager.Menu.Item("SectorMaxRadius").GetValue<Slider>().Value;
+
         public FioraPassive(Obj_GeneralParticleEmitter emitter, Obj_AI_Hero enemy)
             : base((ushort) emitter.Index, (uint) emitter.NetworkId)
         {
@@ -151,6 +150,16 @@ namespace jesuisFiora
             PassiveDistance = Passive.Equals(PassiveType.UltPassive) ? 320 : 200;
         }
 
+        private static float PolygonAngle
+        {
+            get { return PassiveManager.Menu.Item("SectorAngle").GetValue<Slider>().Value; }
+        }
+
+        private static float PolygonRadius
+        {
+            get { return PassiveManager.Menu.Item("SectorMaxRadius").GetValue<Slider>().Value; }
+        }
+
         public Geometry.Polygon Polygon
         {
             get
@@ -165,7 +174,8 @@ namespace jesuisFiora
                     LastPolygonAngle = PolygonAngle;
                 }
 
-                if (Target.ServerPosition.Equals(LastPolygonPosition) && PolygonRadius.Equals(LastPolygonRadius) && PolygonAngle.Equals(LastPolygonAngle) && _polygon != null)
+                if (Target.ServerPosition.Equals(LastPolygonPosition) && PolygonRadius.Equals(LastPolygonRadius) &&
+                    PolygonAngle.Equals(LastPolygonAngle) && _polygon != null)
                 {
                     return _polygon;
                 }
@@ -178,7 +188,10 @@ namespace jesuisFiora
             }
         }
 
-        public Vector3 OrbwalkPosition => Polygon.CenterOfPolygone().To3D();
+        public Vector3 OrbwalkPosition
+        {
+            get { return Polygon.CenterOfPolygone().To3D(); }
+        }
 
         public Vector3 CastPosition
         {
@@ -191,7 +204,10 @@ namespace jesuisFiora
             }
         }
 
-        public Vector3 PassivePosition => Position + GetPassiveOffset();
+        public Vector3 PassivePosition
+        {
+            get { return Position + GetPassiveOffset(); }
+        }
 
         private Geometry.Polygon GetFilledPolygon(bool predictPosition = false)
         {
@@ -262,13 +278,17 @@ namespace jesuisFiora
 
     public class QPosition
     {
+        public Geometry.Polygon Polygon;
         public Vector3 Position;
         public FioraPassive.PassiveType Type;
 
-        public QPosition(Vector3 position, FioraPassive.PassiveType type)
+        public QPosition(Vector3 position,
+            FioraPassive.PassiveType type = FioraPassive.PassiveType.None,
+            Geometry.Polygon polygon = null)
         {
             Position = position;
             Type = type;
+            Polygon = polygon;
         }
     }
 }

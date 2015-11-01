@@ -6,12 +6,35 @@ namespace jesuisFiora
 {
     internal static class ItemManager
     {
-        public static Items.Item Botrk => ItemData.Blade_of_the_Ruined_King.GetItem();
-        public static Items.Item Cutlass => ItemData.Bilgewater_Cutlass.GetItem();
-        public static Items.Item Youmuus => ItemData.Youmuus_Ghostblade.GetItem();
-        public static Items.Item Tiamat => ItemData.Tiamat_Melee_Only.GetItem();
-        public static Items.Item RavenousHydra => ItemData.Ravenous_Hydra_Melee_Only.GetItem();
-        public static Items.Item TitanicHydra => new Items.Item(3748, 385);
+        public static Items.Item Botrk
+        {
+            get { return ItemData.Blade_of_the_Ruined_King.GetItem(); }
+        }
+
+        public static Items.Item Cutlass
+        {
+            get { return ItemData.Bilgewater_Cutlass.GetItem(); }
+        }
+
+        public static Items.Item Youmuus
+        {
+            get { return ItemData.Youmuus_Ghostblade.GetItem(); }
+        }
+
+        public static Items.Item Tiamat
+        {
+            get { return ItemData.Tiamat_Melee_Only.GetItem(); }
+        }
+
+        public static Items.Item RavenousHydra
+        {
+            get { return ItemData.Ravenous_Hydra_Melee_Only.GetItem(); }
+        }
+
+        public static Items.Item TitanicHydra
+        {
+            get { return new Items.Item(3748, 385); }
+        }
 
         public static bool IsValidAndReady(this Items.Item item)
         {

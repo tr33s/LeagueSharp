@@ -9,6 +9,7 @@ using SharpDX;
 using TreeLib.Core;
 using TreeLib.Extensions;
 using TreeLib.Objects;
+using TreeLib.SpellData;
 using Color = SharpDX.Color;
 
 namespace jesuisFiora
@@ -18,19 +19,56 @@ namespace jesuisFiora
         public static Orbwalking.Orbwalker Orbwalker;
         public static Menu Menu;
         public static Color ScriptColor = new Color(255, 0, 255);
-        public static Spell Q => SpellManager.Q;
-        public static Spell W => SpellManager.W;
-        public static Spell E => SpellManager.E;
-        public static Spell R => SpellManager.R;
-        public static Spell Ignite => TreeLib.Managers.SpellManager.Ignite;
-        private static IEnumerable<Obj_AI_Hero> Enemies => HeroManager.Enemies;
-        private static List<Obj_AI_Base> QLaneMinions => MinionManager.GetMinions(Q.Range);
+
+        public static Spell Q
+        {
+            get { return SpellManager.Q; }
+        }
+
+        public static Spell W
+        {
+            get { return SpellManager.W; }
+        }
+
+        public static Spell E
+        {
+            get { return SpellManager.E; }
+        }
+
+        public static Spell R
+        {
+            get { return SpellManager.R; }
+        }
+
+        public static Spell Ignite
+        {
+            get { return TreeLib.Managers.SpellManager.Ignite; }
+        }
+
+        private static IEnumerable<Obj_AI_Hero> Enemies
+        {
+            get { return HeroManager.Enemies; }
+        }
+
+        private static List<Obj_AI_Base> QLaneMinions
+        {
+            get { return MinionManager.GetMinions(Q.Range); }
+        }
 
         private static List<Obj_AI_Base> QJungleMinions
-            => MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral);
+        {
+            get { return MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral); }
+        }
 
-        private static float FioraAutoAttackRange => Orbwalking.GetRealAutoAttackRange(Player);
-        private static Obj_AI_Hero Player => ObjectManager.Player;
+        private static float FioraAutoAttackRange
+        {
+            get { return Orbwalking.GetRealAutoAttackRange(Player); }
+        }
+
+        private static Obj_AI_Hero Player
+        {
+            get { return ObjectManager.Player; }
+        }
 
         private static void Main(string[] args)
         {
@@ -109,13 +147,15 @@ namespace jesuisFiora
             qVital.AddBool("QPassiveTimeout", "Q to Near Timeout Vital");
             qVital.Item("QPassiveTimeout")
                 .SetTooltip("Q to vital as it is being timed out. May not proc vital.", ScriptColor);
-            var misc = passive.AddMenu("Draw", "Draw");
 
-            misc.AddBool("DrawCenter", "Draw Center");
-            misc.Item("DrawCenter").SetTooltip("Draw the center of vital polygon. No FPS drops.", ScriptColor);
+            qVital.AddBool("QInVitalBlock", "Block Q inside Vital Polygon");
+            qVital.Item("QInVitalBlock").SetTooltip("Block Q if player is inside of enemy vital polygon.", ScriptColor);
 
-            misc.AddBool("DrawPolygon", "Draw Polygon", false);
-            misc.Item("DrawPolygon").SetTooltip("Draw the vital polygon. May cause FPS drops.", ScriptColor);
+            passive.AddBool("DrawCenter", "Draw Vital Center");
+            passive.Item("DrawCenter").SetTooltip("Draw the center of vital polygon. No FPS drops.", ScriptColor);
+
+            passive.AddBool("DrawPolygon", "Draw Vital Polygon", false);
+            passive.Item("DrawPolygon").SetTooltip("Draw the vital polygon. May cause FPS drops.", ScriptColor);
 
             passive.AddSlider("SectorMaxRadius", "Vital Polygon Range", 380, 300, 400);
             passive.Item("SectorMaxRadius")
@@ -404,15 +444,29 @@ namespace jesuisFiora
                 Orbwalking.ResetAutoAttackTimer();
                 return;
             }
-            Console.WriteLine(args.Slot + " " + args.SData.Name);
-            if (!unit.IsEnemy || !Menu.Item("WSpells").IsActive() || !W.IsReady() || !SpellBlock.Contains(unit, args))
+
+            if (!unit.IsEnemy || !Menu.Item("WSpells").IsActive() || !W.IsReady())
             {
                 return;
             }
 
+            // spell handled by evade
+            if (SpellDatabase.GetByName(args.SData.Name) != null)
+            {
+                Console.WriteLine("EVADE PROCESS SPELL RETURN");
+                return;
+            }
+
+            if (!SpellBlock.Contains(unit, args))
+            {
+                return;
+            }
+
+            Console.WriteLine(args.Slot + " " + args.SData.Name);
+
             var castUnit = unit;
             var type = args.SData.TargettingType;
-
+            Console.WriteLine(type);
             if (!unit.IsValidTarget() || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
             {
                 var target = TargetSelector.GetSelectedTarget();
@@ -427,7 +481,7 @@ namespace jesuisFiora
                 }
             }
 
-            if (type.IsSkillShot())
+            if (type.IsSkillShot() && args.End.DistanceToPlayer() < args.SData.CastRange)
             {
                 CastW(castUnit);
             }
@@ -456,7 +510,6 @@ namespace jesuisFiora
 
                 CastW(castUnit);
             }
-            // lol no skillshots =_//
             else if (type.Equals(SpellDataTargetType.LocationAoe) &&
                      args.End.Distance(Player.ServerPosition) < args.SData.CastRange)
             {
@@ -464,10 +517,6 @@ namespace jesuisFiora
             }
             else if (type.Equals(SpellDataTargetType.Cone) &&
                      args.End.Distance(Player.ServerPosition) < args.SData.CastRange)
-            {
-                CastW(castUnit);
-            }
-            else if (unit.ChampionName.Equals("Riven") && unit.Distance(Player) < 400)
             {
                 CastW(castUnit);
             }
@@ -483,10 +532,9 @@ namespace jesuisFiora
             else if (type.Equals(SpellDataTargetType.SelfAoe))
             {
                 var d = args.End.Distance(Player.ServerPosition);
-                var c = args.SData.CastRange;
-                var p = args.SData.CastRadius;
-                Console.WriteLine(d + " " + c + " " + p);
-                if (d < c + p)
+                var p = args.SData.CastRange;
+                Console.WriteLine(d + " " + " " + p);
+                if (d < p)
                 {
                     Console.WriteLine("CAST");
                     CastW(castUnit);
@@ -640,6 +688,10 @@ namespace jesuisFiora
                 return !forcePassive && Q.Cast(qPos.Position);
             }
 
+            if (Menu.Item("QInVitalBlock").IsActive() && qPos.Polygon.IsInside(Player.ServerPosition))
+            {
+                return false;
+            }
             var active = Menu.Item("Q" + passiveType) != null && Menu.Item("Q" + passiveType).IsActive();
 
             // if forcePassive is false cast q
@@ -661,10 +713,10 @@ namespace jesuisFiora
             var passive = target.GetNearestPassive();
             if (passive == null)
             {
-                return new QPosition(Q.GetPrediction(target).UnitPosition, FioraPassive.PassiveType.None);
+                return new QPosition(Q.GetPrediction(target).UnitPosition);
             }
 
-            return new QPosition(passive.CastPosition, passive.Passive);
+            return new QPosition(passive.CastPosition, passive.Passive, passive.Polygon);
         }
 
         public static bool CastW(Obj_AI_Base target)
