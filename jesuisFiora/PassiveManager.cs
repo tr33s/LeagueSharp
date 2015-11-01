@@ -13,7 +13,10 @@ namespace jesuisFiora
     {
         public static List<FioraPassive> PassiveList = new List<FioraPassive>();
         private static readonly List<string> DirectionList = new List<string> { "NE", "NW", "SE", "SW" };
-        public static Menu Menu => Program.Menu.SubMenu("Passive");
+        public static Menu Menu
+        {
+            get { return Program.Menu.SubMenu("Passive"); }
+        }
 
         public static void Initialize()
         {
