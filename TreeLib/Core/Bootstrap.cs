@@ -1,5 +1,6 @@
 ﻿using LeagueSharp.Common;
 using TreeLib.Managers;
+using TreeLib.SpellData;
 
 namespace TreeLib.Core
 {
@@ -20,6 +21,7 @@ namespace TreeLib.Core
             Menu = new Menu("TreeLib", "TreeLib", true);
             Menu.AddToMainMenu();
             SpellManager.Initialize();
+            CustomEvents.Game.OnGameLoad += args => { Evade.Init(); };
         }
     }
 }
