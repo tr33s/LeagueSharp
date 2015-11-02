@@ -188,7 +188,7 @@ namespace jesuisFiora
                 });
             BlockedSpells.Add(
                 "Quinn", new List<BlockedSpell> { new BlockedSpell("QuinnWEnhanced", "Empowered", true), e });
-            BlockedSpells.Add("Rammus", new List<BlockedSpell> { q, e });
+            BlockedSpells.Add("Rammus", new List<BlockedSpell> { e });
             BlockedSpells.Add(
                 "RekSai",
                 new List<BlockedSpell>
@@ -309,12 +309,20 @@ namespace jesuisFiora
                 }
 
                 var enemy = skillshot.Unit as Obj_AI_Hero;
-                if (enemy == null || !BlockedSpells.ContainsKey(enemy.ChampionName))
+                if (enemy == null)
                 {
                     continue;
                 }
 
-                foreach (var spell in BlockedSpells[enemy.ChampionName])
+                var spells = new List<BlockedSpell>();
+                BlockedSpells.TryGetValue(enemy.ChampionName, out spells);
+
+                if (spells == null || spells.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var spell in spells)
                 {
                     var item = Menu.Item(enemy.ChampionName + spell.MenuName);
                     if (item == null || !item.IsActive())
@@ -352,13 +360,16 @@ namespace jesuisFiora
                 return true;
             }
 
-            if (!BlockedSpells.ContainsKey(name))
+            var spells = new List<BlockedSpell>();
+            BlockedSpells.TryGetValue(name, out spells);
+
+            if (spells == null || spells.Count == 0)
             {
                 return false;
             }
 
             foreach (var spell in
-                BlockedSpells[name])
+                spells)
             {
                 var item = Menu.Item(name + spell.MenuName);
                 if (item == null || !item.IsActive())
@@ -418,22 +429,14 @@ namespace jesuisFiora
                     continue;
                 }
 
-                //Console.WriteLine("{0} {1}", args.Slot, args.SData.Name);
-                // is the buff not always applied? =_//
                 if (name.Equals("Riven"))
                 {
-                    Console.WriteLine("RIVEN CHECK");
-                    var buff = unit.Buffs.FirstOrDefault(b => b.Name.Equals("RivenTriCleave"));
-                    if (buff != null && buff.Count == 2)
-                    {
-                        Console.WriteLine("PASS BUFF");
-                        return true;
-                    }
-                    Console.WriteLine("FAIL BUFF");
-                    return false;
+                    return unit.GetBuffCount("RivenTriCleave").Equals(2);
                 }
+
                 return true;
             }
+
             return false;
         }
     }
