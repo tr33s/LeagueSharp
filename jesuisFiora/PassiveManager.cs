@@ -13,6 +13,7 @@ namespace jesuisFiora
     {
         public static List<FioraPassive> PassiveList = new List<FioraPassive>();
         private static readonly List<string> DirectionList = new List<string> { "NE", "NW", "SE", "SW" };
+
         public static Menu Menu
         {
             get { return Program.Menu.SubMenu("Passive"); }
@@ -55,7 +56,7 @@ namespace jesuisFiora
         {
             return
                 PassiveList.Where(obj => obj.IsValid && obj.Target.Equals(target))
-                    .MinOrDefault(obj => obj.PassivePosition.DistanceToPlayer());
+                    .MinOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
         }
 
         public static double GetPassiveDamage(this Obj_AI_Base target, int? passiveCount = null)
@@ -149,7 +150,7 @@ namespace jesuisFiora
                 Passive = PassiveType.Passive;
                 Color = Color.Green;
             }
-            Console.WriteLine("[PASSIVE] Type: {0} Target: {2} Name: {1}", Passive, Name, Target.Name);
+            //Console.WriteLine("[PASSIVE] Type: {0} Target: {2} Name: {1}", Passive, Name, Target.Name);
             PassiveDistance = Passive.Equals(PassiveType.UltPassive) ? 320 : 200;
         }
 
@@ -202,14 +203,11 @@ namespace jesuisFiora
             {
                 return
                     Polygon.Points.Where(p => SpellManager.Q.IsInRange(p) && p.DistanceToPlayer() > 150)
-                        .MaxOrDefault(p => p.DistanceToPlayer())
+                        .OrderByDescending(p => p.DistanceToPlayer())
+                        .ThenBy(p => p.Distance(Target.ServerPosition))
+                        .FirstOrDefault()
                         .To3D();
             }
-        }
-
-        public Vector3 PassivePosition
-        {
-            get { return Position + GetPassiveOffset(); }
         }
 
         private Geometry.Polygon GetFilledPolygon(bool predictPosition = false)
@@ -224,7 +222,7 @@ namespace jesuisFiora
                     break;
                 }
 
-                var calcRads = PolygonRadius - i < 50 ? PolygonAngle - 20 : PolygonAngle;
+                var calcRads = PolygonAngle; //PolygonRadius - i < 50 ? PolygonAngle - 20 : PolygonAngle;
                 var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(calcRads), i, 30);
                 sector.UpdatePolygon();
                 points.AddRange(sector.Points);
@@ -232,17 +230,6 @@ namespace jesuisFiora
 
             points.RemoveAll(p => p.Distance(basePos) < 100);
             return new Geometry.Polygon { Points = points.Distinct().ToList() };
-        }
-
-        public Geometry.Polygon.Sector GetSimpleSector()
-        {
-            var basePos = Target.ServerPosition;
-            var pos = basePos + GetPassiveOffset(true);
-            var rads = Geometry.DegreeToRadian(90);
-            var outsideSector = new Geometry.Polygon.Sector(basePos, pos, rads, 400, 30);
-            outsideSector.UpdatePolygon();
-            outsideSector.Points.RemoveAll(p => p.Distance(basePos) < 100);
-            return outsideSector;
         }
 
         public Vector3 GetPassiveOffset(bool orbwalk = false)

@@ -462,11 +462,13 @@ namespace jesuisFiora
                 return;
             }
 
-            Console.WriteLine(args.Slot + " " + args.SData.Name);
-
             var castUnit = unit;
             var type = args.SData.TargettingType;
-            Console.WriteLine(type);
+
+            Console.WriteLine("({0}) {1}", args.Slot, args.SData.Name);
+            Console.WriteLine("Type: {0} Range: {1} Radius: {2}", type, args.SData.CastRange, args.SData.CastRadius);
+            Console.WriteLine("Distance: " + args.End.DistanceToPlayer());
+
             if (!unit.IsValidTarget() || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
             {
                 var target = TargetSelector.GetSelectedTarget();
@@ -481,13 +483,22 @@ namespace jesuisFiora
                 }
             }
 
-            if (type.IsSkillShot() && args.End.DistanceToPlayer() < args.SData.CastRange)
+            if (type.IsSkillShot() && args.End.DistanceToPlayer() < 60)
             {
-                CastW(castUnit);
+                if (unit.ChampionName.Equals("Bard") && args.End.DistanceToPlayer() < 300)
+                {
+                    Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(castUnit));
+                }
+                else if (args.End.DistanceToPlayer() < 60)
+                {
+                    CastW(castUnit);
+                }
             }
             if (type.IsTargeted() && args.Target != null)
             {
-                if (!args.Target.IsMe || (args.Target.Name.Equals("Barrel") && args.Target.DistanceToPlayer() > 200))
+                if (!args.Target.IsMe ||
+                    (args.Target.Name.Equals("Barrel") && args.Target.DistanceToPlayer() > 200 &&
+                     args.Target.DistanceToPlayer() < 400))
                 {
                     return;
                 }
@@ -510,22 +521,16 @@ namespace jesuisFiora
 
                 CastW(castUnit);
             }
-            else if (type.Equals(SpellDataTargetType.LocationAoe) &&
-                     args.End.Distance(Player.ServerPosition) < args.SData.CastRange)
+            else if (type.Equals(SpellDataTargetType.LocationAoe) && args.End.DistanceToPlayer() < args.SData.CastRadius)
             {
+                // annie moving tibbers
+                if (unit.ChampionName.Equals("Annie") && args.Slot.Equals(SpellSlot.R))
+                {
+                    return;
+                }
                 CastW(castUnit);
             }
-            else if (type.Equals(SpellDataTargetType.Cone) &&
-                     args.End.Distance(Player.ServerPosition) < args.SData.CastRange)
-            {
-                CastW(castUnit);
-            }
-            else if (unit.ChampionName.Equals("Bard") && type.Equals(SpellDataTargetType.Location) &&
-                     args.End.Distance(Player.ServerPosition) < 300)
-            {
-                Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(castUnit));
-            }
-            else if (args.SData.IsAutoAttack() && args.Target != null && args.Target.IsMe)
+            else if (type.Equals(SpellDataTargetType.Cone) && args.End.DistanceToPlayer() < args.SData.CastRadius)
             {
                 CastW(castUnit);
             }
@@ -647,7 +652,7 @@ namespace jesuisFiora
             var path = Player.GetPath(pos);
             var point = path.Length < 3 ? pos : path.Skip(path.Length / 2).FirstOrDefault();
             //  Console.WriteLine(path.Length);
-            Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
+            //Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
             Orbwalker.SetOrbwalkingPoint(target.IsMoving ? point : pos);
         }
 
@@ -723,12 +728,14 @@ namespace jesuisFiora
         {
             if (target == null || !target.IsValidTarget(W.Range))
             {
+                Console.WriteLine("CAST W");
                 return W.Cast(Game.CursorPos);
             }
 
             var cast = W.GetPrediction(target);
             var castPos = W.IsInRange(cast.CastPosition) ? cast.CastPosition : target.ServerPosition;
 
+            Console.WriteLine("CAST W");
             return W.Cast(castPos);
         }
 

@@ -35,7 +35,7 @@ namespace jesuisFiora
             BlockedSpells.Add("Akali", new List<BlockedSpell> { q, w, r }); //
             BlockedSpells.Add("Alistar", new List<BlockedSpell> { q, w });
             BlockedSpells.Add("Anivia", new List<BlockedSpell> { e }); //
-            BlockedSpells.Add("Annie", new List<BlockedSpell> { q }); //
+            BlockedSpells.Add("Annie", new List<BlockedSpell> { q, r }); //
             BlockedSpells.Add("Azir", new List<BlockedSpell> { r });
             BlockedSpells.Add("Bard", new List<BlockedSpell> { r });
             BlockedSpells.Add(
@@ -212,7 +212,6 @@ namespace jesuisFiora
                 {
                     new BlockedSpell(SpellSlot.Q) { Name = "Third Q", BuffName = "RivenTriCleave", IsSelfBuff = true }
                 });
-                //
             BlockedSpells.Add("Ryze", new List<BlockedSpell> { w, e });
             BlockedSpells.Add("Shaco", new List<BlockedSpell> { q, e });
             BlockedSpells.Add("Shen", new List<BlockedSpell> { q });
@@ -250,10 +249,10 @@ namespace jesuisFiora
             /*BlockedSpells.Add(
                 "Viktor",
                 new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" } });*/
-            BlockedSpells.Add("Vladimir", new List<BlockedSpell> { r });
+            //BlockedSpells.Add("Vladimir", new List<BlockedSpell> { r });
             BlockedSpells.Add(
                 "Volibear", new List<BlockedSpell> { new BlockedSpell("VolibearQAttack", "Empowered Q", true), w });
-            BlockedSpells.Add("Warick", new List<BlockedSpell> { q });
+            BlockedSpells.Add("Warwick", new List<BlockedSpell> { q });
             BlockedSpells.Add(
                 "XinZhao", new List<BlockedSpell> { new BlockedSpell("XenZhaoThrust3", "Empowered Q", true), e, r });
             BlockedSpells.Add("Yasuo", new List<BlockedSpell> { e });
@@ -304,6 +303,11 @@ namespace jesuisFiora
             foreach (var skillshot in
                 Evade.GetSkillshotsAboutToHit(ObjectManager.Player, (int) (SpellManager.W.Delay * 1000f)))
             {
+                if (!SpellManager.W.IsReady())
+                {
+                    return;
+                }
+
                 var enemy = skillshot.Unit as Obj_AI_Hero;
                 if (enemy == null || !BlockedSpells.ContainsKey(enemy.ChampionName))
                 {
@@ -333,7 +337,6 @@ namespace jesuisFiora
                         continue;
                     }
 
-                    Console.WriteLine("CAST W");
                     Program.CastW(skillshot.Unit);
                 }
             }
@@ -415,7 +418,7 @@ namespace jesuisFiora
                     continue;
                 }
 
-                Console.WriteLine("{0} {1}", args.Slot, args.SData.Name);
+                //Console.WriteLine("{0} {1}", args.Slot, args.SData.Name);
                 // is the buff not always applied? =_//
                 if (name.Equals("Riven"))
                 {
