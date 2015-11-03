@@ -18,10 +18,12 @@ namespace TreeLib.Core
 
             _initialized = true;
 
-            Menu = new Menu("TreeLib", "TreeLib", true);
-            Menu.AddToMainMenu();
-            SpellManager.Initialize();
-            CustomEvents.Game.OnGameLoad += args => { Evade.Init(); };
+            CustomEvents.Game.OnGameLoad += args => {
+                Menu = new Menu("TreeLib", "TreeLib", true);
+                Menu.AddToMainMenu();
+                SpellManager.Initialize();
+                Evade.Init();
+            };
         }
     }
 }

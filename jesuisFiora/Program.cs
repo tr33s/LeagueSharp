@@ -72,7 +72,6 @@ namespace jesuisFiora
 
         private static void Main(string[] args)
         {
-            Bootstrap.Initialize();
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
@@ -82,6 +81,8 @@ namespace jesuisFiora
             {
                 return;
             }
+
+            Bootstrap.Initialize();
 
             Menu = new Menu("jesuisFiora", "jesuisFiora", true);
             Menu.SetFontStyle(FontStyle.Regular, ScriptColor);
