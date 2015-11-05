@@ -55,7 +55,7 @@ namespace jesuisFiora
         public static FioraPassive GetNearestPassive(this Obj_AI_Base target)
         {
             return
-                PassiveList.Where(obj => obj.IsValid && obj.Target.Equals(target))
+                PassiveList.Where(obj => obj.Target.Equals(target))
                     .MinOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
         }
 
@@ -94,6 +94,7 @@ namespace jesuisFiora
                 (emitter.Name.Contains("Fiora_Base_R") && emitter.Name.Contains("Timeout")) ||
                 (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains)))
             {
+                Console.WriteLine(emitter.Name);
                 PassiveList.Add(new FioraPassive(emitter, target));
             }
         }
@@ -131,6 +132,8 @@ namespace jesuisFiora
 
             if (emitter.Name.Contains("Base_R"))
             {
+                //PassiveManager.PassiveList.RemoveAll(
+                //    p => p.Target.Equals(Target) && !p.Type.Equals(PassiveType.UltPassive));
                 Passive = PassiveType.UltPassive;
                 Color = Color.White;
             }

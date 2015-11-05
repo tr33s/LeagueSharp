@@ -17,7 +17,7 @@ namespace jesuisFiora
 
         static SpellBlock()
         {
-            const SpellSlot N48 = (SpellSlot) 48;
+            const SpellSlot N48 = (SpellSlot)48;
 
             var q = new BlockedSpell(SpellSlot.Q);
             var w = new BlockedSpell(SpellSlot.W);
@@ -74,7 +74,7 @@ namespace jesuisFiora
                 "Fiora", new List<BlockedSpell> { new BlockedSpell("FioraEAttack", "Empowered First E", true) });
             BlockedSpells.Add("Fizz", new List<BlockedSpell> { q, new BlockedSpell("fizzjumptwo", "Second E") });
             BlockedSpells.Add(
-                "Gangplank", new List<BlockedSpell> { q, new BlockedSpell((SpellSlot) 45) { Name = "Barrel Q" } });
+                "Gangplank", new List<BlockedSpell> { q, new BlockedSpell((SpellSlot)45) { Name = "Barrel Q" } });
             BlockedSpells.Add(
                 "Garen", new List<BlockedSpell> { new BlockedSpell("GarenQAttack", "Empowered Q", true), r });
             BlockedSpells.Add(
@@ -223,9 +223,13 @@ namespace jesuisFiora
             BlockedSpells.Add("Syndra", new List<BlockedSpell> { r });
             BlockedSpells.Add("Swain", new List<BlockedSpell> { q, e });
             BlockedSpells.Add("TahmKench", new List<BlockedSpell> { w });
-            /*BlockedSpells.Add(
+            BlockedSpells.Add(
                 "Talon",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" }, e });*/
+                new List<BlockedSpell>
+                {
+                    new BlockedSpell("TalonNoxianDiplomacyAttack", "Empowered Q") { IsAutoAttack = true },
+                    e
+                });
             BlockedSpells.Add("Taric", new List<BlockedSpell> { e });
             BlockedSpells.Add("Teemo", new List<BlockedSpell> { q });
             BlockedSpells.Add("Tristana", new List<BlockedSpell> { e, r });
@@ -239,26 +243,51 @@ namespace jesuisFiora
                 "Vayne",
                 new List<BlockedSpell>
                 {
-                    //new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Silver Bolts" },
+                    new BlockedSpell("VayneBasicAttack", "Silver Bolts")
+                    {
+                        IsAutoAttack = true,
+                        IsPlayerBuff = true,
+                        BuffName = "vaynesilvereddebuff",
+                        BuffCount = 2
+                    },
                     e
                 });
             BlockedSpells.Add("Veigar", new List<BlockedSpell> { r });
-            /*BlockedSpells.Add(
+            BlockedSpells.Add(
                 "Vi",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered E" }, r });*/
-            /*BlockedSpells.Add(
+                new List<BlockedSpell>
+                {
+                    new BlockedSpell("ViBasicAttack", "Empowered W")
+                    {
+                        IsAutoAttack = true,
+                        BuffName = "viwproc",
+                        IsPlayerBuff = true,
+                        BuffCount = 2
+                    },
+                    new BlockedSpell("ViEAttack", "Empowered E") { IsAutoAttack = true },
+                    r
+                });
+            BlockedSpells.Add(
                 "Viktor",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" } });*/
-            //BlockedSpells.Add("Vladimir", new List<BlockedSpell> { r });
+                new List<BlockedSpell> { q, new BlockedSpell("viktorqbuff", "Empowered Q") { IsAutoAttack = true } });
             BlockedSpells.Add(
                 "Volibear", new List<BlockedSpell> { new BlockedSpell("VolibearQAttack", "Empowered Q", true), w });
             BlockedSpells.Add("Warwick", new List<BlockedSpell> { q });
             BlockedSpells.Add(
                 "XinZhao", new List<BlockedSpell> { new BlockedSpell("XenZhaoThrust3", "Empowered Q", true), e, r });
-            BlockedSpells.Add("Yasuo", new List<BlockedSpell> { e });
-            /* BlockedSpells.Add(
+            BlockedSpells.Add("Yasuo", new List<BlockedSpell> { new BlockedSpell("yasuoq3", "Whirlwind Q"), e });
+            BlockedSpells.Add(
                 "Yorick",
-                new List<BlockedSpell> { new BlockedSpell { AutoAttackName = new[] { "-1" }, Name = "Empowered Q" }, e });*/
+                new List<BlockedSpell>
+                {
+                    new BlockedSpell("yorickbasicattack", "Empowered Q")
+                    {
+                        IsAutoAttack = true,
+                        BuffName = "YorickSpectral",
+                        IsSelfBuff = true
+                    },
+                    e
+                });
             BlockedSpells.Add("Zac", new List<BlockedSpell> { w, r });
             BlockedSpells.Add("Zilean", new List<BlockedSpell> { e });
         }
@@ -301,7 +330,7 @@ namespace jesuisFiora
             }
 
             foreach (var skillshot in
-                Evade.GetSkillshotsAboutToHit(ObjectManager.Player, (int) (SpellManager.W.Delay * 1000f)))
+                Evade.GetSkillshotsAboutToHit(ObjectManager.Player, (int)(SpellManager.W.Delay * 1000f)))
             {
                 if (!SpellManager.W.IsReady())
                 {
@@ -443,6 +472,7 @@ namespace jesuisFiora
 
     public class BlockedSpell
     {
+        public int BuffCount;
         public string BuffName;
         public string DisplayName;
         public bool Enabled;
@@ -455,7 +485,7 @@ namespace jesuisFiora
         public SpellSlot Slot = SpellSlot.Unknown;
         public string SpellName;
         public bool UseContains = true;
-        public BlockedSpell() {}
+        public BlockedSpell() { }
 
         public BlockedSpell(string spellName, string displayName, bool isAutoAttack = false, bool enabled = true)
         {
@@ -544,7 +574,7 @@ namespace jesuisFiora
                     Console.WriteLine(buff.Name + " " + buff.Count);
                 }
             }
-            return unit.HasBuff(BuffName);
+            return BuffCount == 0 ? unit.HasBuff(BuffName) : unit.GetBuffCount(BuffName).Equals(BuffCount);
         }
 
         public bool PassesSlotCondition(SpellSlot slot)

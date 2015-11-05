@@ -458,6 +458,7 @@ namespace jesuisFiora
                 return;
             }
 
+            Console.WriteLine("({0}) {1}", args.Slot, args.SData.Name);
             if (!SpellBlock.Contains(unit, args))
             {
                 return;
@@ -466,7 +467,6 @@ namespace jesuisFiora
             var castUnit = unit;
             var type = args.SData.TargettingType;
 
-            Console.WriteLine("({0}) {1}", args.Slot, args.SData.Name);
             Console.WriteLine("Type: {0} Range: {1} Radius: {2}", type, args.SData.CastRange, args.SData.CastRadius);
             Console.WriteLine("Distance: " + args.End.DistanceToPlayer());
 
@@ -538,7 +538,7 @@ namespace jesuisFiora
             else if (type.Equals(SpellDataTargetType.SelfAoe))
             {
                 var d = args.End.Distance(Player.ServerPosition);
-                var p = args.SData.CastRange;
+                var p = args.SData.CastRadius;
                 Console.WriteLine(d + " " + " " + p);
                 if (d < p)
                 {

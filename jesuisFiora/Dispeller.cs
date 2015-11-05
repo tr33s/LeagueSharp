@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -46,14 +45,6 @@ namespace jesuisFiora
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            const int x = 100;
-            var y = 100;
-            foreach (var buffs in
-                ObjectManager.Player.Buffs.Where(b => !b.SourceName.Equals(ObjectManager.Player.ChampionName)))
-            {
-                Drawing.DrawText(x, y, Color.Blue, buffs.Name + " " + buffs.SourceName);
-                y += 20;
-            }
             var w = SpellManager.W;
 
             if (!w.IsReady())
