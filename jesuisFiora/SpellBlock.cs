@@ -201,7 +201,7 @@ namespace jesuisFiora
                 new List<BlockedSpell>
                 {
                     q,
-                    new BlockedSpell("RekentonExecute", "Empowered W", true),
+                    new BlockedSpell("RenektonExecute", "Empowered W", true),
                     new BlockedSpell("RenektonSuperExecute", "Fury Empowered W", true)
                 });
             BlockedSpells.Add(
