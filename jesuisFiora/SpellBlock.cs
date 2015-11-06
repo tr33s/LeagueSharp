@@ -17,7 +17,7 @@ namespace jesuisFiora
 
         static SpellBlock()
         {
-            const SpellSlot N48 = (SpellSlot)48;
+            const SpellSlot N48 = (SpellSlot) 48;
 
             var q = new BlockedSpell(SpellSlot.Q);
             var w = new BlockedSpell(SpellSlot.W);
@@ -74,7 +74,7 @@ namespace jesuisFiora
                 "Fiora", new List<BlockedSpell> { new BlockedSpell("FioraEAttack", "Empowered First E", true) });
             BlockedSpells.Add("Fizz", new List<BlockedSpell> { q, new BlockedSpell("fizzjumptwo", "Second E") });
             BlockedSpells.Add(
-                "Gangplank", new List<BlockedSpell> { q, new BlockedSpell((SpellSlot)45) { Name = "Barrel Q" } });
+                "Gangplank", new List<BlockedSpell> { q, new BlockedSpell((SpellSlot) 45) { Name = "Barrel Q" } });
             BlockedSpells.Add(
                 "Garen", new List<BlockedSpell> { new BlockedSpell("GarenQAttack", "Empowered Q", true), r });
             BlockedSpells.Add(
@@ -330,7 +330,7 @@ namespace jesuisFiora
             }
 
             foreach (var skillshot in
-                Evade.GetSkillshotsAboutToHit(ObjectManager.Player, (int)(SpellManager.W.Delay * 1000f)))
+                Evade.GetSkillshotsAboutToHit(ObjectManager.Player, (int) (SpellManager.W.Delay * 1000f)))
             {
                 if (!SpellManager.W.IsReady())
                 {
@@ -485,7 +485,6 @@ namespace jesuisFiora
         public SpellSlot Slot = SpellSlot.Unknown;
         public string SpellName;
         public bool UseContains = true;
-        public BlockedSpell() { }
 
         public BlockedSpell(string spellName, string displayName, bool isAutoAttack = false, bool enabled = true)
         {

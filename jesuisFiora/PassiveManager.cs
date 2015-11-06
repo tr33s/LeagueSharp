@@ -32,16 +32,14 @@ namespace jesuisFiora
 
                 foreach (var passive in PassiveList)
                 {
-                    var p1 = passive.Polygon;
-
                     if (Menu.Item("DrawPolygon").IsActive())
                     {
-                        p1.Draw(passive.Color, 5);
+                        passive.SimplePolygon.Draw(passive.Color);
                     }
 
                     if (Menu.Item("DrawCenter").IsActive())
                     {
-                        Render.Circle.DrawCircle(p1.CenterOfPolygone().To3D(), 50, passive.Color);
+                        Render.Circle.DrawCircle(passive.OrbwalkPosition, 50, passive.Color);
                     }
                 }
             };
@@ -94,7 +92,7 @@ namespace jesuisFiora
                 (emitter.Name.Contains("Fiora_Base_R") && emitter.Name.Contains("Timeout")) ||
                 (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains)))
             {
-                Console.WriteLine(emitter.Name);
+                //Console.WriteLine(emitter.Name);
                 PassiveList.Add(new FioraPassive(emitter, target));
             }
         }
@@ -123,6 +121,7 @@ namespace jesuisFiora
         private readonly int PassiveDistance;
         public readonly Obj_AI_Hero Target;
         private Geometry.Polygon _polygon;
+        private Geometry.Polygon.Sector _simplePolygon;
         private Vector3 LastPolygonPosition;
 
         public FioraPassive(Obj_GeneralParticleEmitter emitter, Obj_AI_Hero enemy)
@@ -195,6 +194,31 @@ namespace jesuisFiora
             }
         }
 
+        public Geometry.Polygon.Sector SimplePolygon
+        {
+            get
+            {
+                if (LastPolygonRadius == 0)
+                {
+                    LastPolygonRadius = PolygonRadius;
+                }
+
+                if (LastPolygonAngle == 0)
+                {
+                    LastPolygonAngle = PolygonAngle;
+                }
+
+                if (Target.ServerPosition.Equals(LastPolygonPosition) && PolygonRadius.Equals(LastPolygonRadius) &&
+                    PolygonAngle.Equals(LastPolygonAngle) && _polygon != null)
+                {
+                    return _simplePolygon;
+                }
+
+                _simplePolygon = GetSimplePolygon();
+                return _simplePolygon;
+            }
+        }
+
         public Vector3 OrbwalkPosition
         {
             get { return Polygon.CenterOfPolygone().To3D(); }
@@ -207,10 +231,19 @@ namespace jesuisFiora
                 return
                     Polygon.Points.Where(p => SpellManager.Q.IsInRange(p) && p.DistanceToPlayer() > 150)
                         .OrderByDescending(p => p.DistanceToPlayer())
-                        .ThenBy(p => p.Distance(Target.ServerPosition))
+                        .ThenBy(p => p.Distance(OrbwalkPosition))
                         .FirstOrDefault()
                         .To3D();
             }
+        }
+
+        private Geometry.Polygon.Sector GetSimplePolygon(bool predictPosition = false)
+        {
+            var basePos = predictPosition ? SpellManager.Q.GetPrediction(Target).UnitPosition : Target.ServerPosition;
+            var pos = basePos + GetPassiveOffset();
+            var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(PolygonAngle), PolygonRadius);
+            sector.UpdatePolygon();
+            return sector;
         }
 
         private Geometry.Polygon GetFilledPolygon(bool predictPosition = false)

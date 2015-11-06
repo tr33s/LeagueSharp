@@ -11,6 +11,7 @@ using TreeLib.Extensions;
 using TreeLib.Objects;
 using TreeLib.SpellData;
 using Color = SharpDX.Color;
+using Geometry = LeagueSharp.Common.Geometry;
 
 namespace jesuisFiora
 {
@@ -156,7 +157,7 @@ namespace jesuisFiora
             passive.Item("DrawCenter").SetTooltip("Draw the center of vital polygon. No FPS drops.", ScriptColor);
 
             passive.AddBool("DrawPolygon", "Draw Vital Polygon", false);
-            passive.Item("DrawPolygon").SetTooltip("Draw the vital polygon. May cause FPS drops.", ScriptColor);
+            passive.Item("DrawPolygon").SetTooltip("Draw the vital polygon. Possibly causes FPS drops.", ScriptColor);
 
             passive.AddSlider("SectorMaxRadius", "Vital Polygon Range", 380, 300, 400);
             passive.Item("SectorMaxRadius")
@@ -265,7 +266,17 @@ namespace jesuisFiora
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
 
             var draw = Menu.AddMenu("Drawing", "Drawing");
-            draw.AddCircle("0Draw", "Draw Q", System.Drawing.Color.Purple, Q.Range);
+
+            draw.AddCircle(
+                "QVitalDraw", "Draw Q Vital Range", System.Drawing.Color.Purple, SpellManager.QSkillshotRange);
+            draw.Item("QVitalDraw")
+                .SetTooltip(
+                    "Must be in this range to hit vital. If force vital enabled, then it can only cast Q to target in this range.",
+                    ScriptColor);
+
+            draw.AddCircle("QDraw", "Draw Q Max Range", System.Drawing.Color.Purple, Q.Range);
+            draw.Item("QDraw").SetTooltip("The max range that Q can be cast and hit the target.", ScriptColor);
+
             draw.AddCircle("1Draw", "Draw W", System.Drawing.Color.DeepPink, W.Range);
             draw.AddCircle("3Draw", "Draw R", System.Drawing.Color.White, R.Range);
             draw.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
@@ -359,7 +370,7 @@ namespace jesuisFiora
             DuelistMode();
             Farm();
 
-            if (Player.IsDashing() || Player.IsWindingUp) // || Player.Spellbook.IsCastingSpell)
+            if (Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
             {
                 return;
             }
@@ -555,7 +566,21 @@ namespace jesuisFiora
                 return;
             }
 
-            foreach (var circle in from spell in new[] { 0, 1, 3 }
+            if (Q.IsReady())
+            {
+                var vitalCircle = Menu.Item("QVitalDraw").GetValue<Circle>();
+                if (vitalCircle.Active)
+                {
+                    Render.Circle.DrawCircle(Player.Position, vitalCircle.Radius, vitalCircle.Color);
+                }
+
+                var qCircle = Menu.Item("QDraw").GetValue<Circle>();
+                if (qCircle.Active)
+                {
+                    Render.Circle.DrawCircle(Player.Position, qCircle.Radius, qCircle.Color);
+                }
+            }
+            foreach (var circle in from spell in new[] { 1, 3 }
                 let circle = Menu.Item(spell + "Draw").GetValue<Circle>()
                 where circle.Active && Player.Spellbook.GetSpell((SpellSlot) spell).IsReady()
                 select circle)
@@ -675,6 +700,7 @@ namespace jesuisFiora
             // cast q because we don't care
             if (force)
             {
+                Console.WriteLine("FORCE Q");
                 return Q.Cast(qPos.Position);
             }
 
@@ -694,24 +720,27 @@ namespace jesuisFiora
                 return !forcePassive && Q.Cast(qPos.Position);
             }
 
-            if (Menu.Item("QInVitalBlock").IsActive() && qPos.Polygon.IsInside(Player.ServerPosition))
+            if (!passiveType.Equals("UltPassive") && Menu.Item("QInVitalBlock").IsActive() &&
+                qPos.Polygon.IsInside(Player.ServerPosition))
             {
                 return false;
             }
-            var active = Menu.Item("Q" + passiveType) != null && Menu.Item("Q" + passiveType).IsActive();
 
-            // if forcePassive is false cast q
-            if (forcePassive)
+            var active = Menu.Item("Q" + passiveType) != null && Menu.Item("Q" + passiveType).IsActive();
+            var qPolygon = GetQPolygon(qPos.Position);
+            var vitalPoints = qPos.Polygon.Points;
+
+            if (qPos.Position.DistanceToPlayer() < 730)
             {
-                if (!active)
-                {
-                    Console.WriteLine("NOT ACTIVE " + passiveType);
-                    return false;
-                }
-                return Q.Cast(qPos.Position);
+                return (from point in GetQPolygon(qPos.Position).Points
+                    from vitalPoint in qPos.Polygon.Points.OrderBy(p => p.DistanceToPlayer())
+                    where point.Distance(vitalPoint) < 20
+                    select point).Any() && Q.Cast(qPos.Position);
             }
 
-            return Q.Cast(qPos.Position);
+
+            Console.WriteLine("DEFAULT CAST");
+            return !forcePassive && active && Q.Cast(qPos.Position);
         }
 
         public static QPosition GetBestCastPosition(Obj_AI_Base target)
@@ -723,6 +752,22 @@ namespace jesuisFiora
             }
 
             return new QPosition(passive.CastPosition, passive.Passive, passive.Polygon);
+        }
+
+        public static Geometry.Polygon GetQPolygon(Vector3 destination)
+        {
+            var polygon = new Geometry.Polygon();
+            for (var i = 10; i < SpellManager.QSkillshotRange; i += 10)
+            {
+                if (i > SpellManager.QSkillshotRange)
+                {
+                    break;
+                }
+
+                polygon.Add(Player.ServerPosition.Extend(destination, i));
+            }
+
+            return polygon;
         }
 
         public static bool CastW(Obj_AI_Base target)
