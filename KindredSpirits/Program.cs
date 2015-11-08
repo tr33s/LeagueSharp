@@ -322,11 +322,16 @@ namespace KindredSpirits
                 return;
             }
 
+            if (Menu.Item("WLaneClear").IsActive() && SpellManager.W.IsReady() && (JungleMinions.Count > 0 || LaneMinions.Count > 0))
+            {
+                    SpellManager.W.Cast();
+            }
+
             if (JungleClear())
             {
                 return;
             }
-
+ 
             if (!SpellManager.Q.IsReady() || !Menu.Item("QLaneClear").IsActive() ||
                 Player.ManaPercent < Menu.Item("QFarmMana").GetValue<Slider>().Value)
             {
@@ -348,12 +353,6 @@ namespace KindredSpirits
         public static bool JungleClear()
         {
             var jungleMinions = JungleMinions;
-
-            if (Menu.Item("WLaneClear").IsActive() && SpellManager.W.IsReady() && JungleMinions.Count > 0)
-            {
-                SpellManager.W.Cast();
-            }
-
             var qClear = SpellManager.Q.IsReady() && Menu.Item("QJungleClear").IsActive() &&
                          Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value;
             var eClear = SpellManager.E.IsReady() && Menu.Item("EJungleClear").IsActive();
@@ -492,7 +491,7 @@ namespace KindredSpirits
                 }
             }
 
-            if (Menu.Item("FleeW").IsActive() && SpellManager.W.IsReady() && SpellManager.W.Cast())
+            if (!SpellManager.Q.IsReady() && Menu.Item("FleeW").IsActive() && SpellManager.W.IsReady() && SpellManager.W.Cast())
             {
                 return true;
             }
