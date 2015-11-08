@@ -30,7 +30,7 @@ namespace jesuisFiora
                     return;
                 }
 
-                foreach (var passive in PassiveList)
+                foreach (var passive in PassiveList.Where(p => p.Target.IsVisible))
                 {
                     if (Menu.Item("DrawPolygon").IsActive())
                     {
