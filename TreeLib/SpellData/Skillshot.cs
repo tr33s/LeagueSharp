@@ -264,7 +264,7 @@ namespace TreeLib.SpellData
 
         public void Draw(Color color, Color missileColor, int width = 1)
         {
-            if (
+            /*if (
                 !Config.Menu.SubMenu(SpellData.ChampionName.ToLowerInvariant())
                     .SubMenu(SpellData.SpellName)
                     .Item("Draw")
@@ -279,7 +279,7 @@ namespace TreeLib.SpellData
                 var from = Drawing.WorldToScreen((position + SpellData.Radius * Direction.Perpendicular()).To3D());
                 var to = Drawing.WorldToScreen((position - SpellData.Radius * Direction.Perpendicular()).To3D());
                 Drawing.DrawLine(from[0], from[1], to[0], to[1], 2, missileColor);
-            }
+            }*/
         }
 
         public Vector2 GetMissilePosition(int time)
