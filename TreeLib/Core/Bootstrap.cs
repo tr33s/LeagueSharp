@@ -18,7 +18,8 @@ namespace TreeLib.Core
 
             _initialized = true;
 
-            CustomEvents.Game.OnGameLoad += args => {
+            CustomEvents.Game.OnGameLoad += args =>
+            {
                 Menu = new Menu("TreeLib", "TreeLib", true);
                 Menu.AddToMainMenu();
                 SpellManager.Initialize();

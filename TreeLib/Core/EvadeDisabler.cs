@@ -7,14 +7,19 @@ namespace TreeLib.Core
 {
     public class EvadeDisabler
     {
-        public static int LastEvadeDisableT;
-        public static int DisableDuration;
+        private static int LastEvadeDisableT;
+        private static int DisableDuration;
         private static bool WasEzEvadeActive;
         private static bool WasEvadeActive;
 
         static EvadeDisabler()
         {
             Game.OnUpdate += Game_OnUpdate;
+        }
+
+        public static bool EvadeDisabled
+        {
+            get { return DisableDuration != 0 && LastEvadeDisableT != 0; }
         }
 
         private static Menu EzEvadeMenu
@@ -67,6 +72,11 @@ namespace TreeLib.Core
 
         public static void EnableEvade()
         {
+            if (!EvadeDisabled)
+            {
+                return;
+            }
+
             if (WasEzEvadeActive && EzEvadeMenu != null && EzEvadeEnabled != null)
             {
                 EzEvadeEnabled.SetValue(true);
@@ -85,12 +95,12 @@ namespace TreeLib.Core
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if (DisableDuration == 0 && LastEvadeDisableT == 0)
+            if (!EvadeDisabled)
             {
                 return;
             }
 
-            if (LastEvadeDisableT.TimeSince() >= DisableDuration)
+            if (LastEvadeDisableT.HasTimePassed(DisableDuration))
             {
                 EnableEvade();
             }
