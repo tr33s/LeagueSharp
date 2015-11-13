@@ -142,7 +142,7 @@ namespace Humanizer
                 if (Menu.Item("MovementHumanizeDistance").IsActive())
                 {
                     var wp = ObjectManager.Player.GetWaypoints();
-                    if (wp.Count > 1 && wp.Last().Distance(args.TargetPosition) < 20)
+                   /* if (wp.Count > 1 && wp.Last().Distance(args.TargetPosition) < 20)
                     {
                         //Console.WriteLine("HUMANIZE WAYPOINTS");
                         BlockedMoveCount++;
@@ -157,7 +157,7 @@ namespace Humanizer
                         args.Process = false;
                         return;
                     }
-
+                    */
                     if (args.TargetPosition.Distance(Player.ServerPosition) < 50)
                     {
                         // Console.WriteLine("HUMANIZE CURRENT POSITION");
