@@ -56,14 +56,18 @@ namespace TreeLib.Core
         {
             if (IsEzEvadeEnabled)
             {
+                var bind = EzEvadeEnabled.GetValue<KeyBind>();
+                bind.Active = false;
+                EzEvadeEnabled.SetValue(bind);
                 WasEzEvadeActive = true;
-                EzEvadeEnabled.SetValue(false);
             }
 
             if (IsEvadeEnabled)
             {
+                var evadeBind = EvadeEnabled.GetValue<KeyBind>();
+                evadeBind.Active = false;
+                EvadeEnabled.SetValue(evadeBind);
                 WasEvadeActive = true;
-                EvadeEnabled.SetValue(false);
             }
 
             DisableDuration = duration;
@@ -79,12 +83,16 @@ namespace TreeLib.Core
 
             if (WasEzEvadeActive && EzEvadeMenu != null && EzEvadeEnabled != null)
             {
-                EzEvadeEnabled.SetValue(true);
+                var bind = EzEvadeEnabled.GetValue<KeyBind>();
+                bind.Active = true;
+                EzEvadeEnabled.SetValue(bind);
             }
 
             if (WasEvadeActive && EvadeMenu != null && EvadeEnabled != null)
             {
-                EvadeEnabled.SetValue(true);
+                var evadeBind = EvadeEnabled.GetValue<KeyBind>();
+                evadeBind.Active = true;
+                EvadeEnabled.SetValue(evadeBind);
             }
 
             WasEzEvadeActive = false;
