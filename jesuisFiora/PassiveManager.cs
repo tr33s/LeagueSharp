@@ -177,6 +177,7 @@ namespace jesuisFiora
         private Geometry.Polygon _polygon;
         private Geometry.Polygon.Sector _simplePolygon;
         private Vector3 LastPolygonPosition;
+        private Vector3 LastSimplePolygonPosition;
 
         public FioraPassive(Obj_GeneralParticleEmitter emitter, Obj_AI_Hero enemy)
             : base((ushort) emitter.Index, (uint) emitter.NetworkId)
@@ -262,14 +263,14 @@ namespace jesuisFiora
                     LastPolygonAngle = PolygonAngle;
                 }
 
-                if (Target.ServerPosition.Equals(LastPolygonPosition) && PolygonRadius.Equals(LastPolygonRadius) &&
+                if (Target.ServerPosition.Equals(LastSimplePolygonPosition) && PolygonRadius.Equals(LastPolygonRadius) &&
                     PolygonAngle.Equals(LastPolygonAngle) && _simplePolygon != null)
                 {
                     return _simplePolygon;
                 }
 
                 _simplePolygon = GetSimplePolygon();
-                LastPolygonPosition = Target.ServerPosition;
+                LastSimplePolygonPosition = Target.ServerPosition;
                 LastPolygonAngle = PolygonAngle;
                 LastPolygonRadius = PolygonRadius;
 
