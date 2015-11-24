@@ -269,6 +269,10 @@ namespace jesuisFiora
                 }
 
                 _simplePolygon = GetSimplePolygon();
+                LastPolygonPosition = Target.ServerPosition;
+                LastPolygonAngle = PolygonAngle;
+                LastPolygonRadius = PolygonRadius;
+
                 return _simplePolygon;
             }
         }
