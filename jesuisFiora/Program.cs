@@ -85,7 +85,7 @@ namespace jesuisFiora
 
             Bootstrap.Initialize();
 
-            Menu = new Menu("je suis Fiora", "je suis Fiora", true);
+            Menu = new Menu("jesuisFiora", "je suis Fiora", true);
             Menu.SetFontStyle(FontStyle.Regular, ScriptColor);
 
             Orbwalker = Menu.AddOrbwalker();
