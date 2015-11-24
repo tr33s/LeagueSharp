@@ -85,15 +85,16 @@ namespace jesuisFiora
 
             Bootstrap.Initialize();
 
-            Menu = new Menu("jesuisFiora", "jesuisFiora", true);
+            Menu = new Menu("je suis Fiora", "je suis Fiora", true);
             Menu.SetFontStyle(FontStyle.Regular, ScriptColor);
 
             Orbwalker = Menu.AddOrbwalker();
 
             var hr = Menu.SubMenu("Orbwalker").Item("HoldPosRadius").GetValue<Slider>();
-            if (hr.Value < 80)
+            if (hr.Value < 60)
             {
-                Menu.SubMenu("Orbwalker").Item("HoldPosRadius").SetValue(new Slider(80, hr.MinValue, hr.MaxValue));
+                hr.Value = 60;
+                Menu.SubMenu("Orbwalker").Item("HoldPosRadius").SetValue(hr);
             }
 
             var spells = Menu.AddMenu("Spells", "Spells");
@@ -102,7 +103,7 @@ namespace jesuisFiora
 
             var orbwalker = passive.AddMenu("Orbwalker", "Orbwalk Vital");
 
-            orbwalker.AddKeyBind("OrbwalkPassive", "Orbwalk to Target Vital", 'N', KeyBindType.Toggle);
+            orbwalker.AddKeyBind("OrbwalkPassive", "Orbwalk to Target Vital", 'N', KeyBindType.Toggle, true);
             orbwalker.Item("OrbwalkPassive").SetTooltip("Attempt to orbwalk to AA enemy vital.", ScriptColor);
 
             orbwalker.AddBool("OrbwalkCombo", "In Combo");
@@ -122,21 +123,21 @@ namespace jesuisFiora
             orbwalker.Item("OrbwalkPassiveTimeout")
                 .SetTooltip("Orbwalk to  to vital as it is being timed out.", ScriptColor);
 
-            orbwalker.AddBool("OrbwalkTurret", "Block Under Turret");
+            orbwalker.AddBool("OrbwalkTurret", "Block Under Turret", false);
             orbwalker.Item("OrbwalkTurret").SetTooltip("In order to avoid walking under turrets.", ScriptColor);
 
-            orbwalker.AddBool("OrbwalkQ", "Only if Q Down");
+            orbwalker.AddBool("OrbwalkQ", "Only if Q Down", false);
             orbwalker.Item("OrbwalkQ").SetTooltip("To avoid orbwalking to a vital that will be Q'ed to.", ScriptColor);
 
-            orbwalker.AddBool("OrbwalkAARange", "Only in AA Range");
+            orbwalker.AddBool("OrbwalkAARange", "Only in AA Range", false);
             orbwalker.Item("OrbwalkAARange").SetTooltip("Only orbwalk to vital if it is in AA range.", ScriptColor);
 
-            orbwalker.AddBool("OrbwalkAA", "Only if not able to AA");
+            orbwalker.AddBool("OrbwalkAA", "Only if not able to AA", false);
             orbwalker.Item("OrbwalkAA")
                 .SetTooltip("Only orbwalk to vital if not able to AA, in order to avoid loss of dps.", ScriptColor);
 
             var qVital = passive.AddMenu("QVital", "Q Vital");
-            qVital.AddBool("QPassive", "Only Q to Vitals", false);
+            qVital.AddBool("QPassive", "Only Q to Vitals", true);
             qVital.Item("QPassive").SetTooltip("Attempt to only Q to Fiora's vital passive.", ScriptColor);
 
             qVital.AddBool("QUltPassive", "Q to Ultimate Vital");
@@ -159,11 +160,11 @@ namespace jesuisFiora
             passive.AddBool("DrawPolygon", "Draw Vital Polygon", false);
             passive.Item("DrawPolygon").SetTooltip("Draw the vital polygon. Possibly causes FPS drops.", ScriptColor);
 
-            passive.AddSlider("SectorMaxRadius", "Vital Polygon Range", 380, 300, 400);
+            passive.AddSlider("SectorMaxRadius", "Vital Polygon Range", 310, 300, 400);
             passive.Item("SectorMaxRadius")
                 .SetTooltip("The max range of vital polygon. Draw polygon to understand what this is.", ScriptColor);
 
-            passive.AddSlider("SectorAngle", "Vital Polygon Angle", 80, 60, 90);
+            passive.AddSlider("SectorAngle", "Vital Polygon Angle", 70, 60, 90);
             passive.Item("SectorAngle")
                 .SetTooltip("The angle of vital polygon. Draw polygon to understand what this is.", ScriptColor);
 
@@ -184,7 +185,7 @@ namespace jesuisFiora
                 qDraw.SetValue(new Circle(qCircle.Active, qCircle.Color, Q.Range));
             };
 
-            qMenu.AddBool("QBlockTurret", "Block Q Under Turret");
+            qMenu.AddBool("QBlockTurret", "Block Q Under Turret", false);
             qMenu.Item("QBlockTurret").SetTooltip("Don't Q under turret in combo/harass.", ScriptColor);
 
             qMenu.AddKeyBind("QFlee", "Q Flee", 'T');
@@ -199,7 +200,7 @@ namespace jesuisFiora
             wMenu.AddList("WMode", "W Spellblock to: ", new[] { "Spell Caster", "Target" });
             wMenu.Item("WMode").SetTooltip("TR", ScriptColor);
             wMenu.AddBool("WKillsteal", "Use for Killsteal");
-            wMenu.AddBool("WTurret", "Block W Under Enemy Turret");
+            wMenu.AddBool("WTurret", "Block W Under Enemy Turret", false);
 
             SpellBlock.Initialize(wSpells);
             Dispeller.Initialize(wSpells);
@@ -236,7 +237,7 @@ namespace jesuisFiora
                 mode.SetValue(new StringList(new[] { "Duelist", "Combo" }, index));
             };
 
-            rMenu.AddSlider("RKillVital", "Duelist Mode Min Vitals", 1, 0, 4);
+            rMenu.AddSlider("RKillVital", "Duelist Mode Min Vitals", 2, 0, 4);
             rMenu.Item("RKillVital").SetTooltip("Used for damage calculation in Duelist Mode", ScriptColor);
 
             rMenu.AddBool("RComboSelected", "Use R Selected on Selected Unit Only");
@@ -252,7 +253,7 @@ namespace jesuisFiora
             var farm = Menu.AddMenu("Farm", "Farm");
 
             var qFarm = farm.AddMenu("Farm", "Q");
-            qFarm.AddBool("QLastHit", "Q Last Hit (Only Killable)");
+            qFarm.AddBool("QLastHit", "Q Last Hit (Only Killable)", false);
             qFarm.AddBool("QLaneClear", "Q LaneClear (All)");
             qFarm.AddBool("QFarmAA", "Only Q out of AA Range", false);
             qFarm.AddSlider("QFarmMana", "Q Min Mana Percent", 40);
@@ -260,7 +261,7 @@ namespace jesuisFiora
             var eFarm = farm.AddMenu("E", "E");
             eFarm.AddBool("ELaneClear", "Use in LaneClear");
 
-            farm.AddKeyBind("FarmEnabled", "Farm Enabled", 'J', KeyBindType.Toggle, true);
+            farm.AddKeyBind("FarmEnabled", "Farm Enabled", 'J', KeyBindType.Toggle);
             farm.Item("FarmEnabled").SetTooltip("Enabled in LastHit and LaneClear mode.", ScriptColor);
 
             farm.AddBool("ItemsLaneClear", "Use Items in LaneClear");
@@ -382,16 +383,20 @@ namespace jesuisFiora
 
             var aaTarget = UltTarget.Target != null && UltTarget.Target.IsValidTarget(1000)
                 ? UltTarget.Target
-                : LockedTargetSelector.GetTarget(FioraAutoAttackRange, TargetSelector.DamageType.Physical);
+                : LockedTargetSelector.GetTarget(FioraAutoAttackRange + 200, TargetSelector.DamageType.Physical);
             if (aaTarget != null)
             {
-                Orbwalker.ForceTarget(aaTarget);
-
                 if (Menu.Item("OrbwalkPassive").IsActive() &&
                     Menu.Item("Orbwalk" + Orbwalker.ActiveMode.GetModeString()).IsActive())
                 {
+                    //Console.WriteLine("START ORBWALK TO PASSIVE");
                     OrbwalkToPassive(aaTarget);
                 }
+                Orbwalker.ForceTarget(aaTarget);
+            }
+            else
+            {
+                Console.WriteLine("ORBWALKT TARG NULL");
             }
 
             var target = UltTarget.Target != null && UltTarget.Target.IsValidTarget(Q.Range)
@@ -650,6 +655,7 @@ namespace jesuisFiora
             if (Menu.Item("OrbwalkAA").IsActive() && Orbwalking.CanAttack() &&
                 target.IsValidTarget(FioraAutoAttackRange))
             {
+                Console.WriteLine("RETURN");
                 return;
             }
 
@@ -669,7 +675,10 @@ namespace jesuisFiora
 
             var pos = passive.OrbwalkPosition; //PassivePosition;
             var underTurret = Menu.Item("OrbwalkTurret").IsActive() && pos.UnderTurret(true);
-            var outsideAARange = Menu.Item("OrbwalkAARange").IsActive() && Player.Distance(pos) > FioraAutoAttackRange;
+            var outsideAARange = Menu.Item("OrbwalkAARange").IsActive() &&
+                                 Player.Distance(pos) >
+                                 FioraAutoAttackRange + 250 +
+                                 (passive.Type.Equals(FioraPassive.PassiveType.UltPassive) ? 50 : 0);
             if (underTurret || outsideAARange)
             {
                 return;
@@ -678,11 +687,11 @@ namespace jesuisFiora
             var path = Player.GetPath(pos);
             var point = path.Length < 3 ? pos : path.Skip(path.Length / 2).FirstOrDefault();
             //  Console.WriteLine(path.Length);
-            //Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
+            Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
             Orbwalker.SetOrbwalkingPoint(target.IsMoving ? point : pos);
         }
 
-        public static bool CastQ(Obj_AI_Base target, bool force = false)
+        public static bool CastQ(Obj_AI_Hero target, bool force = false)
         {
             if (!Q.IsReady() || !target.IsValidTarget(Q.Range))
             {
@@ -721,29 +730,33 @@ namespace jesuisFiora
             }
 
             if (!passiveType.Equals("UltPassive") && Menu.Item("QInVitalBlock").IsActive() &&
-                qPos.Polygon.IsInside(Player.ServerPosition))
+                qPos.SimplePolygon.IsInside(Player.ServerPosition))
             {
                 return false;
             }
 
             var active = Menu.Item("Q" + passiveType) != null && Menu.Item("Q" + passiveType).IsActive();
-            var qPolygon = GetQPolygon(qPos.Position);
-            var vitalPoints = qPos.Polygon.Points;
+
+            if (!active)
+            {
+                return false;
+            }
 
             if (qPos.Position.DistanceToPlayer() < 730)
             {
                 return (from point in GetQPolygon(qPos.Position).Points
-                    from vitalPoint in qPos.Polygon.Points.OrderBy(p => p.DistanceToPlayer())
+                    from vitalPoint in
+                        qPos.Polygon.Points.OrderBy(p => p.DistanceToPlayer()).ThenByDescending(p => p.Distance(target))
                     where point.Distance(vitalPoint) < 20
                     select point).Any() && Q.Cast(qPos.Position);
             }
 
 
             Console.WriteLine("DEFAULT CAST");
-            return !forcePassive && active && Q.Cast(qPos.Position);
+            return !forcePassive && Q.Cast(qPos.Position);
         }
 
-        public static QPosition GetBestCastPosition(Obj_AI_Base target)
+        public static QPosition GetBestCastPosition(Obj_AI_Hero target)
         {
             var passive = target.GetNearestPassive();
             if (passive == null)
@@ -751,7 +764,7 @@ namespace jesuisFiora
                 return new QPosition(Q.GetPrediction(target).UnitPosition);
             }
 
-            return new QPosition(passive.CastPosition, passive.Passive, passive.Polygon);
+            return new QPosition(passive.CastPosition, passive.Passive, passive.Polygon, passive.SimplePolygon);
         }
 
         public static Geometry.Polygon GetQPolygon(Vector3 destination)

@@ -59,15 +59,15 @@ namespace jesuisFiora
                          Menu.Item("Dispel" + d.ChampionName + d.BuffName) != null &&
                          Menu.Item("Dispel" + d.ChampionName + d.BuffName).IsActive())))
             {
-                var buff = ObjectManager.Player.Buffs.FirstOrDefault(b => b.Name.ToLower().Equals(dispel.BuffName));
+                var buff = ObjectManager.Player.GetBuff(dispel.BuffName);
                 if (buff == null || !buff.IsValid || !buff.IsActive)
                 {
                     Console.WriteLine("CONTINUE");
                     continue;
                 }
 
-                var t = (buff.EndTime - Game.Time) * 1000f + 500 + dispel.Offset;
-                var wT = w.Delay * 1000f + Game.Ping / 1.85f + 750;
+                var t = (buff.EndTime - Game.Time) * 1000f + dispel.Offset;
+                var wT = w.Delay * 1000f + Game.Ping / 2f + 250;
                 Console.WriteLine("T: {0} WT: {1}", t, wT);
                 if (t < wT)
                 {

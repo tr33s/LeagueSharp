@@ -11,7 +11,9 @@ namespace jesuisFiora
 {
     internal static class PassiveManager
     {
-        public static List<FioraPassive> PassiveList = new List<FioraPassive>();
+        public static Dictionary<Obj_AI_Hero, List<FioraPassive>> PassiveList =
+            new Dictionary<Obj_AI_Hero, List<FioraPassive>>();
+
         private static readonly List<string> DirectionList = new List<string> { "NE", "NW", "SE", "SW" };
 
         public static Menu Menu
@@ -21,18 +23,34 @@ namespace jesuisFiora
 
         public static void Initialize()
         {
+            Game.OnUpdate += Game_OnUpdate;
             GameObject.OnCreate += GameObject_OnCreate;
             GameObject.OnDelete += GameObject_OnDelete;
-            Drawing.OnDraw += args =>
-            {
-                if (!Menu.Item("DrawPolygon").IsActive() && !Menu.Item("DrawCenter").IsActive())
-                {
-                    return;
-                }
+            Drawing.OnDraw += Drawing_OnDraw;
+        }
 
-                foreach (var passive in PassiveList.Where(p => p.Target.IsVisible))
+        private static void Game_OnUpdate(EventArgs args)
+        {
+            foreach (var enemyPassiveList in PassiveList.Values)
+            {
+                enemyPassiveList.RemoveAll(p => !p.IsValid || !p.IsVisible);
+            }
+        }
+
+        private static void Drawing_OnDraw(EventArgs args)
+        {
+            if (!Menu.Item("DrawPolygon").IsActive() && !Menu.Item("DrawCenter").IsActive())
+            {
+                return;
+            }
+
+            try
+            {
+                foreach (var passive in
+                    PassiveList.Where(kvp => kvp.Key.IsValid && kvp.Key.IsVisible && kvp.Key.IsHPBarRendered)
+                        .SelectMany(keyValue => keyValue.Value.Where(p => p.IsValid && p.IsVisible)))
                 {
-                    if (Menu.Item("DrawPolygon").IsActive())
+                    if (Menu.Item("DrawPolygon").IsActive() && passive.SimplePolygon != null)
                     {
                         passive.SimplePolygon.Draw(passive.Color);
                     }
@@ -42,22 +60,45 @@ namespace jesuisFiora
                         Render.Circle.DrawCircle(passive.OrbwalkPosition, 50, passive.Color);
                     }
                 }
-            };
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
-        public static int CountPassive(this Obj_AI_Base target)
+        public static int CountPassive(this Obj_AI_Hero target)
         {
-            return PassiveList.Count(obj => obj.IsValid && obj.Target.Equals(target));
+            List<FioraPassive> list;
+            PassiveList.TryGetValue(target, out list);
+            return list == null ? 0 : list.Count(obj => obj.IsValid && obj.IsVisible);
         }
 
-        public static FioraPassive GetNearestPassive(this Obj_AI_Base target)
+        public static FioraPassive GetNearestPassive(this Obj_AI_Hero target)
         {
-            return
-                PassiveList.Where(obj => obj.Target.Equals(target))
-                    .MinOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
+            List<FioraPassive> list;
+            PassiveList.TryGetValue(target, out list);
+
+            if (list == null || list.Count == 0)
+            {
+                return null;
+            }
+
+            return list.Where(p => p.IsValid && p.IsVisible).MinOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
         }
 
-        public static double GetPassiveDamage(this Obj_AI_Base target, int? passiveCount = null)
+        public static bool HasUltPassive(this Obj_AI_Hero target)
+        {
+            List<FioraPassive> list;
+            PassiveList.TryGetValue(target, out list);
+            return list != null && list.Count > 0 &&
+                   list.Any(
+                       passive =>
+                           passive.IsValid && passive.IsVisible &&
+                           passive.Type.Equals(FioraPassive.PassiveType.UltPassive));
+        }
+
+        public static double GetPassiveDamage(this Obj_AI_Hero target, int? passiveCount = null)
         {
             return passiveCount ??
                    target.CountPassive() *
@@ -93,13 +134,26 @@ namespace jesuisFiora
                 (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains)))
             {
                 //Console.WriteLine(emitter.Name);
-                PassiveList.Add(new FioraPassive(emitter, target));
+                List<FioraPassive> list;
+                PassiveList.TryGetValue(target, out list);
+
+                if (list == null)
+                {
+                    list = new List<FioraPassive> { new FioraPassive(emitter, target) };
+                    PassiveList.Add(target, list);
+                    return;
+                }
+
+                list.Add(new FioraPassive(emitter, target));
             }
         }
 
         private static void GameObject_OnDelete(GameObject sender, EventArgs args)
         {
-            PassiveList.RemoveAll(obj => obj.NetworkId.Equals(sender.NetworkId));
+            foreach (var enemy in PassiveList)
+            {
+                enemy.Value.RemoveAll(passive => passive.NetworkId.Equals(sender.NetworkId));
+            }
         }
     }
 
@@ -143,7 +197,7 @@ namespace jesuisFiora
             }
             else if (emitter.Name.Contains("Timeout"))
             {
-                PassiveManager.PassiveList.RemoveAll(p => p.Target.Equals(Target) && p.Type.Equals(PassiveType.Passive));
+                //PassiveManager.PassiveList.RemoveAll(p => p.Target.Equals(Target) && p.Type.Equals(PassiveType.Passive));
                 Passive = PassiveType.PassiveTimeout;
                 Color = Color.Red;
             }
@@ -153,7 +207,7 @@ namespace jesuisFiora
                 Color = Color.Green;
             }
             //Console.WriteLine("[PASSIVE] Type: {0} Target: {2} Name: {1}", Passive, Name, Target.Name);
-            PassiveDistance = Passive.Equals(PassiveType.UltPassive) ? 320 : 200;
+            PassiveDistance = Passive.Equals(PassiveType.UltPassive) ? 600 : 200;
         }
 
         private static float PolygonAngle
@@ -209,7 +263,7 @@ namespace jesuisFiora
                 }
 
                 if (Target.ServerPosition.Equals(LastPolygonPosition) && PolygonRadius.Equals(LastPolygonRadius) &&
-                    PolygonAngle.Equals(LastPolygonAngle) && _polygon != null)
+                    PolygonAngle.Equals(LastPolygonAngle) && _simplePolygon != null)
                 {
                     return _simplePolygon;
                 }
@@ -229,9 +283,10 @@ namespace jesuisFiora
             get
             {
                 return
-                    Polygon.Points.Where(p => SpellManager.Q.IsInRange(p) && p.DistanceToPlayer() > 150)
-                        .OrderByDescending(p => p.DistanceToPlayer())
-                        .ThenBy(p => p.Distance(OrbwalkPosition))
+                    Polygon.Points.Where(
+                        p => SpellManager.Q.IsInRange(p) && p.DistanceToPlayer() > 100 && p.Distance(Target) > 100)
+                        .OrderBy(p => p.Distance(OrbwalkPosition))
+                        .ThenByDescending(p => p.DistanceToPlayer())
                         .FirstOrDefault()
                         .To3D();
             }
@@ -241,7 +296,8 @@ namespace jesuisFiora
         {
             var basePos = predictPosition ? SpellManager.Q.GetPrediction(Target).UnitPosition : Target.ServerPosition;
             var pos = basePos + GetPassiveOffset();
-            var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(PolygonAngle), PolygonRadius);
+            var r = Passive.Equals(PassiveType.UltPassive) ? 400 : PolygonRadius;
+            var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(PolygonAngle), r);
             sector.UpdatePolygon();
             return sector;
         }
@@ -250,22 +306,25 @@ namespace jesuisFiora
         {
             var basePos = predictPosition ? SpellManager.Q.GetPrediction(Target).UnitPosition : Target.ServerPosition;
             var pos = basePos + GetPassiveOffset();
-            var points = new List<Vector2>();
-            for (var i = 100; i < PolygonRadius; i += 10)
+            //var polygons = new List<Geometry.Polygon>();
+            var list = new List<Vector2>();
+            var r = Passive.Equals(PassiveType.UltPassive) ? 400 : PolygonRadius;
+            for (var i = 100; i < r; i += 10)
             {
-                if (i > PolygonRadius)
+                if (i > r)
                 {
                     break;
                 }
 
-                var calcRads = PolygonAngle; //PolygonRadius - i < 50 ? PolygonAngle - 20 : PolygonAngle;
+                var calcRads = PolygonAngle;
                 var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(calcRads), i, 30);
                 sector.UpdatePolygon();
-                points.AddRange(sector.Points);
+                list.AddRange(sector.Points);
+                //polygons.Add(sector);
             }
 
-            points.RemoveAll(p => p.Distance(basePos) < 100);
-            return new Geometry.Polygon { Points = points.Distinct().ToList() };
+            return new Geometry.Polygon { Points = list.Distinct().ToList() };
+            //return polygons.JoinPolygons().FirstOrDefault();
         }
 
         public Vector3 GetPassiveOffset(bool orbwalk = false)
@@ -275,7 +334,7 @@ namespace jesuisFiora
 
             if (orbwalk)
             {
-                d -= 50;
+                d -= Passive.Equals(PassiveType.UltPassive) ? 450 : 50;
             }
 
             if (Name.Contains("NE"))
@@ -306,15 +365,18 @@ namespace jesuisFiora
     {
         public Geometry.Polygon Polygon;
         public Vector3 Position;
+        public Geometry.Polygon SimplePolygon;
         public FioraPassive.PassiveType Type;
 
         public QPosition(Vector3 position,
             FioraPassive.PassiveType type = FioraPassive.PassiveType.None,
-            Geometry.Polygon polygon = null)
+            Geometry.Polygon polygon = null,
+            Geometry.Polygon simplePolygon = null)
         {
             Position = position;
             Type = type;
             Polygon = polygon;
+            SimplePolygon = simplePolygon;
         }
     }
 }
