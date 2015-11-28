@@ -59,6 +59,7 @@ namespace TentacleBabeIllaoi
 
             Menu.AddToMainMenu();
 
+            TentacleManager.Initialize();
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             Game.OnUpdate += Game_OnUpdate;
             Orbwalking.AfterAttack += Orbwalking_AfterAttack;

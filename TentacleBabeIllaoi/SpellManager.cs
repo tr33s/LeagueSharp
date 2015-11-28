@@ -14,12 +14,12 @@ namespace TentacleBabeIllaoi
         static SpellManager()
         {
             Q = new Spell(SpellSlot.Q, 850);
-            Q.SetSkillshot(.484f, 0, 500, false, SkillshotType.SkillshotLine);
+            Q.SetSkillshot(.75f, 100, float.MaxValue, false, SkillshotType.SkillshotLine);
 
             W = new Spell(SpellSlot.W);
 
-            E = new Spell(SpellSlot.E, 900);
-            E.SetSkillshot(.066f, 50, 1900, true, SkillshotType.SkillshotLine);
+            E = new Spell(SpellSlot.E, 950);
+            E.SetSkillshot(.25f, 50, 1900, true, SkillshotType.SkillshotLine);
 
             R = new Spell(SpellSlot.R, 450);
         }
