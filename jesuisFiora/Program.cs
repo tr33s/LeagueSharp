@@ -206,8 +206,7 @@
                 return !forcePassive && Q.Cast(qPos.Position);
             }
 
-            if (!passiveType.Equals("UltPassive") && Menu.Item("QInVitalBlock").IsActive()
-                && qPos.SimplePolygon.IsInside(Player.ServerPosition))
+            if (Menu.Item("QInVitalBlock").IsActive() && qPos.SimplePolygon.IsInside(Player.ServerPosition))
             {
                 return false;
             }
