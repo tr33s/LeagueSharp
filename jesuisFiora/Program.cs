@@ -870,13 +870,13 @@
 
             if (draw.Item("WPermashow").IsActive())
             {
-                wMenu.Item("WSpells").Permashow(true, null, ScriptColor);
+                wMenu.Item("WSpells").Permashow(true, "W SpellBlock", ScriptColor);
             }
 
             draw.Item("WPermashow").ValueChanged +=
                 (sender, eventArgs) =>
                     {
-                        wMenu.Item("WSpells").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
+                        wMenu.Item("WSpells").Permashow(eventArgs.GetNewValue<bool>(), "W SpellBlock", ScriptColor);
                     };
 
             if (draw.Item("RPermashow").IsActive())
