@@ -353,7 +353,7 @@ namespace jesuisFiora
 
         public static QPosition GetBestCastPosition(Obj_AI_Hero target, FioraPassive passive)
         {
-            if (passive == null)
+            if (passive == null || passive.Target == null)
             {
                 return new QPosition(Q.GetPrediction(target).UnitPosition);
             }
@@ -501,7 +501,7 @@ namespace jesuisFiora
                 return;
             }
 
-            if (passive == null || Menu.Item("Orbwalk" + passive.Passive) == null ||
+            if (passive == null || passive.Target == null || Menu.Item("Orbwalk" + passive.Passive) == null ||
                 !Menu.Item("Orbwalk" + passive.Passive).IsActive())
             {
                 return;
@@ -924,7 +924,7 @@ namespace jesuisFiora
             var aaTarget = UltTarget.Target != null && UltTarget.Target.IsValidTarget(1000)
                 ? UltTarget.Target
                 : LockedTargetSelector.GetTarget(FioraAutoAttackRange + 200, TargetSelector.DamageType.Physical);
-            var passive = new FioraPassive(null, null);
+            var passive = new FioraPassive();
             if (aaTarget != null)
             {
                 passive = aaTarget.GetNearestPassive();
@@ -935,10 +935,6 @@ namespace jesuisFiora
                     OrbwalkToPassive(aaTarget, passive);
                 }
                 Orbwalker.ForceTarget(aaTarget);
-            }
-            else
-            {
-                Console.WriteLine("ORBWALKT TARG NULL");
             }
 
             var target = UltTarget.Target != null && UltTarget.Target.IsValidTarget(Q.Range)

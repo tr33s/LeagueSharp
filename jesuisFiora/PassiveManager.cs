@@ -192,6 +192,7 @@ namespace jesuisFiora
         private Geometry.Polygon.Sector _simplePolygon;
         private Vector3 LastPolygonPosition;
         private Vector3 LastSimplePolygonPosition;
+        public FioraPassive() {}
 
         public FioraPassive(Obj_GeneralParticleEmitter emitter, Obj_AI_Hero enemy)
             : base((ushort) emitter.Index, (uint) emitter.NetworkId)
