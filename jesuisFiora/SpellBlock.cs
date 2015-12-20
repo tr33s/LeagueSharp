@@ -91,6 +91,7 @@ namespace jesuisFiora
                 "Gragas", new List<BlockedSpell> { new BlockedSpell("DrunkenRage", "Drunken Rage", true) });
             BlockedSpells.Add(
                 "Hecarim", new List<BlockedSpell> { new BlockedSpell("hecarimrampattack", "Empowered E", true), r });
+            BlockedSpells.Add("Illaoi", new List<BlockedSpell> {w, new BlockedSpell("illaoiwattack", "Empowered W", true)});
             BlockedSpells.Add("Irelia", new List<BlockedSpell> { q, e });
             BlockedSpells.Add("Janna", new List<BlockedSpell> { w });
             BlockedSpells.Add(
@@ -106,7 +107,7 @@ namespace jesuisFiora
                         IsSelfBuff = true
                     },
                     q,
-                    new BlockedSpell(SpellSlot.E) { BuffName = "jaxpassive", IsSelfBuff = true }
+                    //new BlockedSpell(SpellSlot.E) { BuffName = "jaxpassive", IsSelfBuff = true }
                 });
             BlockedSpells.Add(
                 "Jayce",
@@ -179,9 +180,9 @@ namespace jesuisFiora
                 "Poppy",
                 new List<BlockedSpell>
                 {
-                    new BlockedSpell("PoppyBasicAttack", "Empowered Q", true)
+                    new BlockedSpell("PoppyPassiveAttack", "Passive Attack", true)
                     {
-                        BuffName = "PoppyDevastatingBlow",
+                        BuffName = "poppypassivebuff",
                         IsSelfBuff = true
                     },
                     e

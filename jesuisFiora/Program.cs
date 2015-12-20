@@ -142,7 +142,7 @@ namespace jesuisFiora
 
             var qPos = GetBestCastPosition(target, passive);
 
-            if (!Q.IsInRange(qPos.Position))
+            if (!Q.IsInRange(qPos.Position) || qPos.Position.DistanceToPlayer() < 75)
             {
                 Console.WriteLine("NOT IN RANGE");
                 return false;
@@ -963,6 +963,11 @@ namespace jesuisFiora
             if (Q.IsActive())
             {
                 if (target.IsValidTarget(FioraAutoAttackRange) && !Orbwalking.IsAutoAttack(Player.LastCastedSpellName()))
+                {
+                    return;
+                }
+
+                if (target.ChampionName.Equals("Poppy") && target.HasBuff("poppywzone"))
                 {
                     return;
                 }

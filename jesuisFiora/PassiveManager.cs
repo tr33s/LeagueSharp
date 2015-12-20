@@ -16,6 +16,11 @@ namespace jesuisFiora
 
         private static readonly List<string> DirectionList = new List<string> { "NE", "NW", "SE", "SW" };
 
+        private static IEnumerable<Obj_GeneralParticleEmitter> VitalList
+        {
+            get { return ObjectManager.Get<Obj_GeneralParticleEmitter>().Where(IsFioraPassive); }
+        }
+
         public static Menu Menu
         {
             get { return Program.Menu.SubMenu("Passive"); }
@@ -31,6 +36,7 @@ namespace jesuisFiora
             Game.OnUpdate += Game_OnUpdate;
             GameObject.OnCreate += GameObject_OnCreate;
             GameObject.OnDelete += GameObject_OnDelete;
+            AttackableUnit.OnEnterVisiblityClient += AttackableUnit_OnEnterVisiblityClient;
             Drawing.OnDraw += Drawing_OnDraw;
         }
 
@@ -39,6 +45,14 @@ namespace jesuisFiora
             foreach (var enemyPassiveList in PassiveList.Values)
             {
                 enemyPassiveList.RemoveAll(p => !p.IsValid);
+            }
+        }
+
+        private static void AttackableUnit_OnEnterVisiblityClient(AttackableUnit sender, EventArgs args)
+        {
+            if (sender != null && sender.IsValid<Obj_AI_Hero>() && sender.IsEnemy && sender.DistanceToPlayer() < 1000)
+            {
+                UpdatePassiveList();
             }
         }
 
@@ -86,7 +100,7 @@ namespace jesuisFiora
 
             if (list == null || list.Count == 0)
             {
-                //UpdatePassiveList();
+                UpdatePassiveList();
                 return null;
             }
 
@@ -119,23 +133,24 @@ namespace jesuisFiora
 
         public static void UpdatePassiveList()
         {
-            foreach (var emitter in
-                ObjectManager.Get<Obj_GeneralParticleEmitter>()
-                    .Where(v => !PassiveList.Any(passiveList => passiveList.Value.Any(passive => passive.Equals(v)))))
+            foreach (var vital in
+                VitalList.Where(
+                    v => !PassiveList.Any(passiveList => passiveList.Value.Any(passive => passive.Equals(v)))))
             {
                 var hero = HeroManager.Enemies.Where(h => h.IsValidTarget()).MinOrDefault(h => h.DistanceToPlayer());
-                if (IsFioraPassive(emitter) && hero != null)
+                if (hero != null)
                 {
-                    PassiveList[hero].Add(new FioraPassive(emitter, hero));
+                    PassiveList[hero].Add(new FioraPassive(vital, hero));
                 }
             }
         }
 
         public static bool IsFioraPassive(this Obj_GeneralParticleEmitter emitter)
         {
-            return emitter.Name.Contains("Fiora_Base_R_Mark") ||
-                   (emitter.Name.Contains("Fiora_Base_R") && emitter.Name.Contains("Timeout")) ||
-                   (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains));
+            return emitter.IsValid &&
+                   (emitter.Name.Contains("Fiora_Base_R_Mark") ||
+                    (emitter.Name.Contains("Fiora_Base_R") && emitter.Name.Contains("Timeout")) ||
+                    (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains)));
         }
 
         private static void GameObject_OnCreate(GameObject sender, EventArgs args)
