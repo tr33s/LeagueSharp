@@ -100,7 +100,7 @@ namespace jesuisFiora
 
             if (list == null || list.Count == 0)
             {
-                UpdatePassiveList();
+                //UpdatePassiveList();
                 return null;
             }
 

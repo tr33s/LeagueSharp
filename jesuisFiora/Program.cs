@@ -525,6 +525,32 @@ namespace jesuisFiora
             Orbwalker.SetOrbwalkingPoint(target.IsMoving ? point : pos);
         }
 
+        public static Obj_AI_Hero GetTarget(bool aaTarget = false)
+        {
+            var mode = Menu.Item("TargetSelector").GetValue<StringList>().SelectedIndex;
+
+            if (aaTarget)
+            {
+                if (UltTarget.Target.IsValidTarget(1000))
+                {
+                    return UltTarget.Target;
+                }
+
+                return mode.Equals(0)
+                    ? TargetSelector.GetTarget(FioraAutoAttackRange, TargetSelector.DamageType.Physical)
+                    : LockedTargetSelector.GetTarget(FioraAutoAttackRange, TargetSelector.DamageType.Physical);
+            }
+
+            if (UltTarget.Target.IsValidTarget(Q.Range))
+            {
+                return UltTarget.Target;
+            }
+
+            return mode.Equals(0)
+                ? TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical)
+                : LockedTargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Physical);
+        }
+
         #endregion
 
         #region Methods
@@ -607,6 +633,7 @@ namespace jesuisFiora
                     Render.Circle.DrawCircle(Player.Position, qCircle.Radius, qCircle.Color);
                 }
             }
+
             foreach (var circle in from spell in new[] { 1, 3 }
                 let circle = Menu.Item(spell + "Draw").GetValue<Circle>()
                 where circle.Active && Player.Spellbook.GetSpell((SpellSlot) spell).IsReady()
@@ -809,17 +836,17 @@ namespace jesuisFiora
             var draw = Menu.AddMenu("Drawing", "Drawing");
 
             draw.AddCircle(
-                "QVitalDraw", "Draw Q Vital Range", System.Drawing.Color.Purple, SpellManager.QSkillshotRange);
+                "QVitalDraw", "Draw Q Vital Range", System.Drawing.Color.Purple, SpellManager.QSkillshotRange, false);
             draw.Item("QVitalDraw")
                 .SetTooltip(
                     "Must be in this range to hit vital. If force vital enabled, then it can only cast Q to target in this range.",
                     ScriptColor);
 
-            draw.AddCircle("QDraw", "Draw Q Max Range", System.Drawing.Color.Purple, Q.Range);
+            draw.AddCircle("QDraw", "Draw Q Max Range", System.Drawing.Color.Purple, Q.Range, false);
             draw.Item("QDraw").SetTooltip("The max range that Q can be cast and hit the target.", ScriptColor);
 
-            draw.AddCircle("1Draw", "Draw W", System.Drawing.Color.DeepPink, W.Range);
-            draw.AddCircle("3Draw", "Draw R", System.Drawing.Color.White, R.Range);
+            draw.AddCircle("1Draw", "Draw W", System.Drawing.Color.DeepPink, W.Range, false);
+            draw.AddCircle("3Draw", "Draw R", System.Drawing.Color.White, R.Range, false);
             draw.AddBool("DuelistDraw", "Duelist Mode: Killable Target");
             draw.AddBool("WPermashow", "Permashow W Spellblock");
             draw.AddBool("RPermashow", "Permashow R Mode");
@@ -876,6 +903,9 @@ namespace jesuisFiora
             dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.HotPink);
             dmg.AddBool("Killable", "Killable Text");
 
+            Menu.AddList("TargetSelector", "Target Selector: ", new[] { "Target Selector", "Locked Target Selector" });
+            Menu.Item("TargetSelector").SetTooltip("Locked TS attempts to stick to the same target.", ScriptColor);
+
             Menu.AddBool("Sounds", "Sounds");
             Menu.AddInfo("Info", "By Trees and Lilith!", ScriptColor);
             Menu.AddToMainMenu();
@@ -921,11 +951,9 @@ namespace jesuisFiora
                 return;
             }
 
-            var aaTarget = UltTarget.Target != null && UltTarget.Target.IsValidTarget(1000)
-                ? UltTarget.Target
-                : LockedTargetSelector.GetTarget(FioraAutoAttackRange + 200, TargetSelector.DamageType.Physical);
+            var aaTarget = GetTarget(true);
             var passive = new FioraPassive();
-            if (aaTarget != null)
+            if (aaTarget.IsValidTarget())
             {
                 passive = aaTarget.GetNearestPassive();
                 if (Menu.Item("OrbwalkPassive").IsActive() &&
@@ -937,17 +965,15 @@ namespace jesuisFiora
                 Orbwalker.ForceTarget(aaTarget);
             }
 
-            var target = UltTarget.Target != null && UltTarget.Target.IsValidTarget(Q.Range)
-                ? UltTarget.Target
-                : LockedTargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
-            //TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Physical);
-
-            if (target == null || !target.IsValidTarget(W.Range))
+            var target = GetTarget();
+            if (!target.IsValidTarget(W.Range))
             {
                 return;
             }
 
-            var vital = aaTarget != null && target.Equals(aaTarget) ? passive : target.GetNearestPassive();
+            var vital = aaTarget != null && target.NetworkId.Equals(aaTarget.NetworkId)
+                ? passive
+                : target.GetNearestPassive();
 
             if (Orbwalker.ActiveMode.Equals(Orbwalking.OrbwalkingMode.Mixed) &&
                 Player.ManaPercent < Menu.Item("ManaHarass").GetValue<Slider>().Value)
@@ -1049,11 +1075,16 @@ namespace jesuisFiora
                 }
             }
 
-            if (type.IsSkillShot() && args.End.DistanceToPlayer() < 60)
+            if (type.IsSkillShot())
             {
                 if (unit.ChampionName.Equals("Bard") && args.End.DistanceToPlayer() < 300)
                 {
                     Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(castUnit));
+                }
+                else if (unit.ChampionName.Equals("Riven") && args.End.DistanceToPlayer() < 260)
+                {
+                    Console.WriteLine("RIVEN");
+                    CastW(castUnit);
                 }
                 else if (args.End.DistanceToPlayer() < 60)
                 {
@@ -1100,7 +1131,7 @@ namespace jesuisFiora
             {
                 CastW(castUnit);
             }
-            else if (type.Equals(SpellDataTargetType.SelfAoe))
+            else if (type.Equals(SpellDataTargetType.SelfAoe) || type.Equals(SpellDataTargetType.Self))
             {
                 var d = args.End.Distance(Player.ServerPosition);
                 var p = args.SData.CastRadius;

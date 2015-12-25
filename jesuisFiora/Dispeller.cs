@@ -55,9 +55,9 @@ namespace jesuisFiora
             foreach (var dispel in
                 Dispells.Where(
                     d =>
-                        (ObjectManager.Player.HasBuff(d.BuffName) &&
-                         Menu.Item("Dispel" + d.ChampionName + d.BuffName) != null &&
-                         Menu.Item("Dispel" + d.ChampionName + d.BuffName).IsActive())))
+                        ObjectManager.Player.HasBuff(d.BuffName) &&
+                        Menu.Item("Dispel" + d.ChampionName + d.BuffName) != null &&
+                        Menu.Item("Dispel" + d.ChampionName + d.BuffName).IsActive()))
             {
                 var buff = ObjectManager.Player.GetBuff(dispel.BuffName);
                 if (buff == null || !buff.IsValid || !buff.IsActive)

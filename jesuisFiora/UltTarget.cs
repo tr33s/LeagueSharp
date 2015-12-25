@@ -30,7 +30,7 @@ namespace jesuisFiora
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if ((Target != null && Target.IsValid) && (Target.IsDead || !Target.HasUltPassive()))
+            if (Target != null && Target.IsValid && (Target.IsDead || !Target.HasUltPassive()))
             {
                 Target = null;
             }

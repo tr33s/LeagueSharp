@@ -91,7 +91,8 @@ namespace jesuisFiora
                 "Gragas", new List<BlockedSpell> { new BlockedSpell("DrunkenRage", "Drunken Rage", true) });
             BlockedSpells.Add(
                 "Hecarim", new List<BlockedSpell> { new BlockedSpell("hecarimrampattack", "Empowered E", true), r });
-            BlockedSpells.Add("Illaoi", new List<BlockedSpell> {w, new BlockedSpell("illaoiwattack", "Empowered W", true)});
+            BlockedSpells.Add(
+                "Illaoi", new List<BlockedSpell> { new BlockedSpell("illaoiwattack", "Empowered W", true) });
             BlockedSpells.Add("Irelia", new List<BlockedSpell> { q, e });
             BlockedSpells.Add("Janna", new List<BlockedSpell> { w });
             BlockedSpells.Add(
@@ -106,8 +107,8 @@ namespace jesuisFiora
                         BuffName = "JaxEmpowerTwo",
                         IsSelfBuff = true
                     },
-                    q,
-                    //new BlockedSpell(SpellSlot.E) { BuffName = "jaxpassive", IsSelfBuff = true }
+                    q
+                    //new BlockedSpell(SpellSlot.E) { BuffName = "JaxCounterStrike", IsSelfBuff = true }
                 });
             BlockedSpells.Add(
                 "Jayce",
@@ -211,7 +212,8 @@ namespace jesuisFiora
                 "Riven",
                 new List<BlockedSpell>
                 {
-                    new BlockedSpell(SpellSlot.Q) { Name = "Third Q", BuffName = "RivenTriCleave", IsSelfBuff = true }
+                    new BlockedSpell(SpellSlot.Q) { Name = "Third Q", BuffName = "RivenTriCleave", IsSelfBuff = true },
+                    w
                 });
             BlockedSpells.Add("Ryze", new List<BlockedSpell> { w, e });
             BlockedSpells.Add("Shaco", new List<BlockedSpell> { q, e });
