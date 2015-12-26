@@ -333,7 +333,8 @@ namespace jesuisFiora
             }
 
             foreach (var skillshot in
-                Evade.GetSkillshotsAboutToHit(ObjectManager.Player, (int) (SpellManager.W.Delay * 1000f)))
+                Evade.GetSkillshotsAboutToHit(
+                    ObjectManager.Player, (int) ((SpellManager.W.Delay + Game.Ping / 2f) * 1000f)))
             {
                 if (!SpellManager.W.IsReady())
                 {
@@ -346,7 +347,7 @@ namespace jesuisFiora
                     continue;
                 }
 
-                var spells = new List<BlockedSpell>();
+                List<BlockedSpell> spells;
                 BlockedSpells.TryGetValue(enemy.ChampionName, out spells);
 
                 if (spells == null || spells.Count == 0)
