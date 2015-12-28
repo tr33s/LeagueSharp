@@ -53,8 +53,8 @@ namespace AIOCaster
             {
                 var s = spell.Key.ToString();
                 var menu = spellMenu.AddSubMenu(new Menu(s, s));
-                menu.AddItem(new MenuItem(s + "Combo", "Use in Combo").SetValue(true));
-                menu.AddItem(new MenuItem(s + "Mixed", "Use in Harass").SetValue(true));
+                menu.AddItem(new MenuItem(s + "Combo", "Use in Combo", true).SetValue(true));
+                menu.AddItem(new MenuItem(s + "Mixed", "Use in Harass", true).SetValue(true));
             }
 
             Menu.AddToMainMenu();
@@ -74,7 +74,7 @@ namespace AIOCaster
 
             foreach (var spell in Spells.Where(s => s.Value.IsReady()))
             {
-                var active = Menu.Item(spell.Key + mode) != null && Menu.Item(spell.Key + mode).IsActive();
+                var active = Menu.Item(spell.Key + mode, true) != null && Menu.Item(spell.Key + mode, true).IsActive();
 
                 if (!active)
                 {
