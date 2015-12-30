@@ -4,13 +4,13 @@ using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 using LeagueSharp.SDK.Core.Events;
-using LeagueSharp.SDK.Core.Wrappers.SpellDatabase;
+using LeagueSharp.SDK.Core.Wrappers.Spells.Database;
 
 namespace AIOCaster
 {
     internal class Program
     {
-        public static List<SpellDatabaseEntry> Spells = new List<SpellDatabaseEntry>();
+        public static List<DatabaseEntry> Spells = new List<DatabaseEntry>();
         public static Menu Menu;
         public static Orbwalking.Orbwalker Orbwalker;
 
@@ -19,27 +19,35 @@ namespace AIOCaster
             get { return ObjectManager.Player; }
         }
 
+        public static bool SDKOrbwalker
+        {
+            get { return Menu.Item("SDKOrbwalker").IsActive(); }
+        }
+
         private static void Main(string[] args)
         {
             Load.OnLoad += Game_OnGameLoad;
-            //CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
         private static void Game_OnGameLoad(object sender, EventArgs e)
         {
-            if (!SpellDatabase.Spells.Any(s => s.ChampionName.Equals(Player.ChampionName)))
+            if (!Database.Spells.Any(s => s.ChampionName.Equals(Player.ChampionName)))
             {
                 return;
             }
 
             Menu = new Menu("AIOCaster", "AIOCaster", true);
 
-            var orbMenu = Menu.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
-            Orbwalker = new Orbwalking.Orbwalker(orbMenu);
+            //Menu.AddItem(new MenuItem("SDKOrbwalker", "Use SDK Orbwalker [RELOAD]").SetValue(false));
+
+            //if (!SDKOrbwalker)
+            {
+                var orbMenu = Menu.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
+                Orbwalker = new Orbwalking.Orbwalker(orbMenu);
+            }
 
             foreach (var spell in
-                SpellDatabase.Spells.Where(s => s.ChampionName.Equals(Player.ChampionName) && s.SpellType.IsSkillShot())
-                )
+                Database.Spells.Where(s => s.ChampionName.Equals(Player.ChampionName) && s.SpellType.IsSkillShot()))
             {
                 Spells.Add(spell);
             }
@@ -70,6 +78,7 @@ namespace AIOCaster
                 return;
             }
 
+            //var mode = SDKOrbwalker ? Variables.Orbwalker.GetActiveMode().ToString() : Orbwalker.ActiveMode.ToString();
             var mode = Orbwalker.ActiveMode.ToString();
 
             foreach (var spell in Spells.Where(s => Player.Spellbook.GetSpell(s.Slot).IsReady()))
