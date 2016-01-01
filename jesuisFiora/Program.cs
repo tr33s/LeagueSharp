@@ -149,7 +149,7 @@ namespace jesuisFiora
             }
 
             // cast q because we don't care
-            if (force)
+            if (!Menu.Item("QPassive").IsActive() || force)
             {
                 Console.WriteLine("FORCE Q");
                 return Q.Cast(qPos.Position);
@@ -690,6 +690,10 @@ namespace jesuisFiora
             orbwalker.Item("OrbwalkPassiveTimeout")
                 .SetTooltip("Orbwalk to  to vital as it is being timed out.", ScriptColor);
 
+            orbwalker.AddBool("OrbwalkSelected", "Only Selected Target", true);
+            orbwalker.Item("OrbwalkSelected")
+                .SetTooltip("Target must be manually left clicked to orbwalk to vitals.", ScriptColor);
+
             orbwalker.AddBool("OrbwalkTurret", "Block Under Turret", false);
             orbwalker.Item("OrbwalkTurret").SetTooltip("In order to avoid walking under turrets.", ScriptColor);
 
@@ -959,8 +963,13 @@ namespace jesuisFiora
                 if (Menu.Item("OrbwalkPassive").IsActive() &&
                     Menu.Item("Orbwalk" + Orbwalker.ActiveMode.GetModeString()).IsActive())
                 {
+                    var selTarget = TargetSelector.SelectedTarget;
                     //Console.WriteLine("START ORBWALK TO PASSIVE");
-                    OrbwalkToPassive(aaTarget, passive);
+                    if (!Menu.Item("OrbwalkSelected").IsActive() ||
+                        (selTarget != null && selTarget.NetworkId.Equals(aaTarget.NetworkId)))
+                    {
+                        OrbwalkToPassive(aaTarget, passive);
+                    }
                 }
                 Orbwalker.ForceTarget(aaTarget);
             }
