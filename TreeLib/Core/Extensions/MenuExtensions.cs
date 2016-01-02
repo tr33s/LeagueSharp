@@ -1,35 +1,42 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
+using LeagueSharp;
 using LeagueSharp.Common;
 
 namespace TreeLib.Extensions
 {
     public static class MenuExtensions
     {
-        public static void AddList(this Menu menu, string name, string displayName, string[] list, int selectedIndex = 0)
+        public static MenuItem AddList(this Menu menu,
+            string name,
+            string displayName,
+            string[] list,
+            int selectedIndex = 0)
         {
-            menu.AddItem(new MenuItem(name, displayName).SetValue(new StringList(list, selectedIndex)));
+            return menu.AddItem(new MenuItem(name, displayName).SetValue(new StringList(list, selectedIndex)));
         }
 
-        public static void AddBool(this Menu menu, string name, string displayName, bool value = true)
+        public static MenuItem AddBool(this Menu menu, string name, string displayName, bool value = true)
         {
-            menu.AddItem(new MenuItem(name, displayName).SetValue(value));
+            return menu.AddItem(new MenuItem(name, displayName).SetValue(value));
         }
 
-        public static void AddHitChance(this Menu menu, string name, string displayName, HitChance defaultHitChance)
+        public static MenuItem AddHitChance(this Menu menu, string name, string displayName, HitChance defaultHitChance)
         {
-            menu.AddItem(
-                new MenuItem(name, displayName).SetValue(
-                    new StringList((new[] { "Low", "Medium", "High", "Very High" }), (int) defaultHitChance - 3)));
+            return
+                menu.AddItem(
+                    new MenuItem(name, displayName).SetValue(
+                        new StringList(new[] { "Low", "Medium", "High", "Very High" }, (int) defaultHitChance - 3)));
         }
 
-        public static void AddSlider(this Menu menu,
+        public static MenuItem AddSlider(this Menu menu,
             string name,
             string displayName,
             int value,
             int min = 0,
             int max = 100)
         {
-            menu.AddItem(new MenuItem(name, displayName).SetValue(new Slider(value, min, max)));
+            return menu.AddItem(new MenuItem(name, displayName).SetValue(new Slider(value, min, max)));
         }
 
         public static Orbwalking.Orbwalker AddOrbwalker(this Menu menu)
@@ -38,7 +45,7 @@ namespace TreeLib.Extensions
             return new Orbwalking.Orbwalker(orbwalk);
         }
 
-        public static void AddObject(this Menu menu, string name, string displayName, object value = null)
+        public static MenuItem AddObject(this Menu menu, string name, string displayName, object value = null)
         {
             var i = menu.AddItem(new MenuItem(name, displayName));
 
@@ -46,21 +53,23 @@ namespace TreeLib.Extensions
             {
                 i.SetValue(value);
             }
+
+            return i;
         }
 
-        public static void AddCircle(this Menu menu,
+        public static MenuItem AddCircle(this Menu menu,
             string name,
             string displayName,
             Color color,
             float radius = 0,
             bool enabled = true)
         {
-            menu.AddItem(new MenuItem(name, displayName).SetValue(new Circle(enabled, color, radius)));
+            return menu.AddItem(new MenuItem(name, displayName).SetValue(new Circle(enabled, color, radius)));
         }
 
-        public static void AddInfo(this Menu menu, string name, string text, SharpDX.Color fontColor)
+        public static MenuItem AddInfo(this Menu menu, string name, string text, SharpDX.Color fontColor)
         {
-            menu.AddItem(new MenuItem(name, text).SetFontStyle(FontStyle.Regular, fontColor));
+            return menu.AddItem(new MenuItem(name, text).SetFontStyle(FontStyle.Regular, fontColor));
         }
 
         public static Menu AddMenu(this Menu menu, string name, string displayName)
@@ -68,14 +77,25 @@ namespace TreeLib.Extensions
             return menu.AddSubMenu(new Menu(displayName, name));
         }
 
-        public static void AddKeyBind(this Menu menu,
+        public static MenuItem AddKeyBind(this Menu menu,
             string name,
             string displayName,
             uint key,
             KeyBindType type = KeyBindType.Press,
             bool defaultValue = false)
         {
-            menu.AddItem(new MenuItem(name, displayName).SetValue(new KeyBind(key, type, defaultValue)));
+            return menu.AddItem(new MenuItem(name, displayName).SetValue(new KeyBind(key, type, defaultValue)));
+        }
+
+        public static Menu AddSpell(this Menu menu, SpellSlot spell, List<Orbwalking.OrbwalkingMode> modes)
+        {
+            var spellMenu = menu.AddMenu(spell.ToString(), spell.ToString());
+            foreach (var mode in modes)
+            {
+                spellMenu.AddBool(mode.GetModeString() + spell, "Use in " + mode.GetModeString());
+            }
+
+            return spellMenu;
         }
 
         public static void SetSpellTooltip(this MenuItem item, string mode, string spell, SharpDX.Color color)
@@ -90,7 +110,7 @@ namespace TreeLib.Extensions
 
         public static void SetManaTooltip(this MenuItem item, SharpDX.Color color, string spell = null)
         {
-            var text = spell == null ? "spells" : (spell + ".");
+            var text = spell == null ? "spells" : spell + ".";
             item.SetTooltip("Minimum mana to cast " + text, color);
         }
     }

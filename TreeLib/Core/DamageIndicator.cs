@@ -90,7 +90,7 @@ namespace TreeLib.Core
                 {
                     var differenceInHp = xPosCurrentHp - xPosDamage;
                     DamageBar.Color = DamageColor.ToSharpDXColor();
-                    DamageBar.X = (int) (barPos.X + 9 + (107 * percentHealthAfterDamage));
+                    DamageBar.X = (int) (barPos.X + 9 + 107 * percentHealthAfterDamage);
                     DamageBar.Y = (int) yPos - 1;
                     DamageBar.Width = (int) Math.Round(differenceInHp);
                     DamageBar.Height = Height + 3;

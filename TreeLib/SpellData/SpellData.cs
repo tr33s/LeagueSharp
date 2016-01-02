@@ -94,7 +94,7 @@ namespace TreeLib.SpellData
         {
             get
             {
-                return (!AddHitbox)
+                return !AddHitbox
                     ? RawRadius + Config.SkillShotsExtraRadius
                     : Config.SkillShotsExtraRadius + RawRadius + (int) ObjectManager.Player.BoundingRadius;
             }

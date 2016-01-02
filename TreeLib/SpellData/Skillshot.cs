@@ -327,7 +327,7 @@ namespace TreeLib.SpellData
             if (!IsSafe(unit.ServerPosition.To2D()))
             {
                 var timeToExplode = SpellData.ExtraDuration + SpellData.Delay +
-                                    (int) ((1000 * Start.Distance(End)) / SpellData.MissileSpeed) -
+                                    (int) (1000 * Start.Distance(End) / SpellData.MissileSpeed) -
                                     (Utils.GameTimeTickCount - StartTick);
                 if (timeToExplode <= time)
                 {
@@ -540,27 +540,21 @@ namespace TreeLib.SpellData
                     Polygon = Circle.ToPolygon();
                     DrawingPolygon = Circle.ToPolygon(
                         0,
-                        !SpellData.AddHitbox
-                            ? SpellData.Radius
-                            : (SpellData.Radius - ObjectManager.Player.BoundingRadius));
+                        !SpellData.AddHitbox ? SpellData.Radius : SpellData.Radius - ObjectManager.Player.BoundingRadius);
                     EvadePolygon = Circle.ToPolygon(Config.ExtraEvadeDistance);
                     break;
                 case SkillShotType.SkillshotLine:
                     Polygon = Rectangle.ToPolygon();
                     DrawingPolygon = Rectangle.ToPolygon(
                         0,
-                        !SpellData.AddHitbox
-                            ? SpellData.Radius
-                            : (SpellData.Radius - ObjectManager.Player.BoundingRadius));
+                        !SpellData.AddHitbox ? SpellData.Radius : SpellData.Radius - ObjectManager.Player.BoundingRadius);
                     EvadePolygon = Rectangle.ToPolygon(Config.ExtraEvadeDistance);
                     break;
                 case SkillShotType.SkillshotMissileLine:
                     Polygon = Rectangle.ToPolygon();
                     DrawingPolygon = Rectangle.ToPolygon(
                         0,
-                        !SpellData.AddHitbox
-                            ? SpellData.Radius
-                            : (SpellData.Radius - ObjectManager.Player.BoundingRadius));
+                        !SpellData.AddHitbox ? SpellData.Radius : SpellData.Radius - ObjectManager.Player.BoundingRadius);
                     EvadePolygon = Rectangle.ToPolygon(Config.ExtraEvadeDistance);
                     break;
                 case SkillShotType.SkillshotCone:

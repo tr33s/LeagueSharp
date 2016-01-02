@@ -146,7 +146,7 @@ namespace TreeLib.SpellData
             {
                 for (var i = 0; i <= Points.Count - 1; i++)
                 {
-                    var nextIndex = (Points.Count - 1 == i) ? 0 : (i + 1);
+                    var nextIndex = Points.Count - 1 == i ? 0 : i + 1;
                     var from = Drawing.WorldToScreen(Points[i].To3D());
                     var to = Drawing.WorldToScreen(Points[nextIndex].To3D());
                     Drawing.DrawLine(from[0], from[1], to[0], to[1], width, color);

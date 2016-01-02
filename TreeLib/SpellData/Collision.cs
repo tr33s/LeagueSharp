@@ -61,7 +61,7 @@ namespace TreeLib.SpellData
 
         public static FastPredResult FastPrediction(Vector2 from, Obj_AI_Base unit, int delay, int speed)
         {
-            var tDelay = delay / 1000f + (unit.Distance(from) / speed);
+            var tDelay = delay / 1000f + unit.Distance(@from) / speed;
             var d = tDelay * unit.MoveSpeed;
             var path = unit.GetWaypoints();
             if (path.PathLength() > d)
@@ -114,7 +114,7 @@ namespace TreeLib.SpellData
                                     skillshot.SpellData.MissileSpeed)
                             let pos = pred.PredictedPos
                             let w =
-                                skillshot.SpellData.RawRadius + (!pred.IsMoving ? (minion.BoundingRadius - 15) : 0) -
+                                skillshot.SpellData.RawRadius + (!pred.IsMoving ? minion.BoundingRadius - 15 : 0) -
                                 pos.Distance(@from, skillshot.End, true)
                             where w > 0
                             select
@@ -175,7 +175,7 @@ namespace TreeLib.SpellData
                             break;
                         }
                         var level = wall.Name.Substring(wall.Name.Length - 6, 1);
-                        var wallWidth = (300 + 50 * Convert.ToInt32(level));
+                        var wallWidth = 300 + 50 * Convert.ToInt32(level);
                         var wallDirection = (wall.Position.To2D() - wallCastedPos).Normalized().Perpendicular();
                         var wallStart = wall.Position.To2D() + wallWidth / 2f * wallDirection;
                         var wallEnd = wallStart - wallWidth * wallDirection;
@@ -200,7 +200,7 @@ namespace TreeLib.SpellData
                                                  0,
                                                  skillshot.SpellData.Delay -
                                                  (Utils.GameTimeTickCount - skillshot.StartTick)) + 100 +
-                                             (1000 * intersection.Distance(from)) / skillshot.SpellData.MissileSpeed;
+                                             1000 * intersection.Distance(@from) / skillshot.SpellData.MissileSpeed;
                             if (collisionT - wallCastT < 4000)
                             {
                                 if (skillshot.SpellData.Type != SkillShotType.SkillshotMissileLine)
