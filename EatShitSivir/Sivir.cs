@@ -63,7 +63,7 @@ namespace EatShitSivir
             e.AddBool("AutoE", "Smart E");
             e.AddBool("EatShit", "Eat Shit");
             e.Item("EatShit").SetTooltip("Disable evade scripts in order to cast E and eat a spell.");
-            e.AddSlider("EatShitMana", "Min Mana to Eat Shit", 0);
+            e.AddSlider("EatShitMana", "Min Mana to Eat Shit", 100);
 
             Menu.AddToMainMenu();
         }

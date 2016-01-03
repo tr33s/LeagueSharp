@@ -1,5 +1,6 @@
 ﻿using LeagueSharp;
 using LeagueSharp.Common;
+using TreeLib.Core;
 
 namespace EatShitSivir
 {
@@ -11,6 +12,7 @@ namespace EatShitSivir
             {
                 if (ObjectManager.Player.ChampionName.Equals("Sivir"))
                 {
+                    Bootstrap.Initialize();
                     var s = new Sivir();
                 }
             };
