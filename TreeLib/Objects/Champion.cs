@@ -18,6 +18,9 @@ namespace TreeLib.Objects
             E = new Spell(SpellSlot.E);
             R = new Spell(SpellSlot.R);
 
+            Drawing.OnDraw += Drawing_OnDraw;
+            GameObject.OnCreate += GameObject_OnCreate;
+            GameObject.OnDelete += GameObject_OnDelete;
             Orbwalking.BeforeAttack += Orbwalking_BeforeAttack;
             Orbwalking.AfterAttack += Orbwalking_AfterAttack;
             Interrupter2.OnInterruptableTarget += Interrupter2_OnInterruptableTarget;
@@ -51,6 +54,12 @@ namespace TreeLib.Objects
             get { return Orbwalking.GetRealAutoAttackRange(Player); }
         }
 
+        public virtual void GameObject_OnDelete(GameObject sender, EventArgs args) {}
+
+        public virtual void GameObject_OnCreate(GameObject sender, EventArgs args) {}
+
+        public virtual void Drawing_OnDraw(EventArgs args) {}
+
         public virtual void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args) {}
 
         public virtual void Orbwalking_AfterAttack(AttackableUnit unit, AttackableUnit target) {}
@@ -66,8 +75,8 @@ namespace TreeLib.Objects
                 return;
             }
 
-            if (Player.IsDashing() || Player.IsChannelingImportantSpell() || Player.Spellbook.IsCastingSpell ||
-                Player.Spellbook.IsAutoAttacking || Player.IsWindingUp)
+            if (Player.IsDashing() || Player.IsChannelingImportantSpell()) /*|| Player.Spellbook.IsCastingSpell || 
+                Player.Spellbook.IsAutoAttacking|| Player.IsWindingUp)*/
             {
                 return;
             }
