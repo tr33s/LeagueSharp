@@ -334,7 +334,7 @@ namespace jesuisFiora
 
             foreach (var skillshot in
                 Evade.GetSkillshotsAboutToHit(
-                    ObjectManager.Player, (int) ((SpellManager.W.Delay + Game.Ping / 2f) * 1000f)))
+                    ObjectManager.Player, (int) (SpellManager.W.Delay * 1000f + Game.Ping / 2f)))
             {
                 if (!SpellManager.W.IsReady())
                 {
