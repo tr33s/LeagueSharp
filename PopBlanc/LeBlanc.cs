@@ -65,7 +65,7 @@ namespace PopBlanc
             r.Item("LaneClearR").SetTooltip("Use R(W) in LaneClear");
             r.AddBool("AntiGapcloserR", "AntiGapCloser with R(E)", false);
 
-            var combo = Menu.AddMenu("Combo", "Additional Combos");
+            var combo = Menu.AddMenu("Combo", "Other Combos");
 
             var twoChainz = combo.AddMenu("2Chainz", "2Chainz");
             twoChainz.AddInfo("2ChainzInfo", " --> Cast E and R(E) on target.", Color.Red);
@@ -74,12 +74,15 @@ namespace PopBlanc
             twoChainz.AddBool("2W", "Use W if out of range");
 
             var aoe = combo.AddMenu("AOECombo", "AOE Combo");
+            aoe.AddInfo("AOEInfo", " --> Cast W and R(W) on target(s).", Color.Red);
             aoe.AddKeyBind("AOECombo", "Combo Key", 'N');
             aoe.AddBool("AOEW", "Use W");
             aoe.AddBool("GapcloseW", "Use W to Gapclose");
             aoe.Item("GapcloseW").SetTooltip("Gapclose to cast R(W).");
             aoe.AddBool("AOER", "Use R(W)");
             aoe.AddSlider("AOEEnemies", "Minimum Enemies", 2, 1, 5);
+
+            combo.AddBool("ComboOrbwalk", "Orbwalk when Comboing");
 
             var ks = Menu.AddMenu("Killsteal", "Killsteal");
             ks.AddBool("SmartKS", "Smart Killsteal");
@@ -119,6 +122,8 @@ namespace PopBlanc
                 new SoundObject(Resources.Load).Play();
             }
 
+            Menu.AddInfo("Info", "By Trees and Lilith!", Color.Red);
+
             DamageIndicator.Initialize(damage, GetComboDamage);
             SpellManager.Initialize(Menu, Orbwalker);
             WBackPosition.Initialize();
@@ -157,9 +162,7 @@ namespace PopBlanc
             {
                 return;
             }
-
-            Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
-
+            
             if (Menu.Item("AutoEImmobile").IsActive() && E.IsReady())
             {
                 var target = Enemies.FirstOrDefault(e => e.IsValidTarget(E.Range) && e.IsMovementImpaired());
@@ -168,20 +171,21 @@ namespace PopBlanc
                     return;
                 }
             }
+
             if (Menu.Item("AOECombo").IsActive())
             {
+                ManualOrbwalk();
                 if (AOECombo())
                 {
-                    Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.Combo;
                     return;
                 }
             }
 
             if (Menu.Item("2Key").IsActive())
             {
+                ManualOrbwalk();
                 if (_2Chainz())
                 {
-                    Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.Combo;
                     return;
                 }
             }
@@ -193,6 +197,14 @@ namespace PopBlanc
 
             if (Menu.Item("SmartKS").IsActive() && Player.ManaPercent >= Menu.Item("KSMana").GetValue<Slider>().Value &&
                 AutoKill()) {}
+        }
+
+        private static void ManualOrbwalk()
+        {
+            if (Menu.Item("ComboOrbwalk").IsActive())
+            {
+                Orbwalking.Orbwalk(Orbwalker.GetTarget(), Game.CursorPos);
+            }
         }
 
         public override void OnCombo(Orbwalking.OrbwalkingMode mode)

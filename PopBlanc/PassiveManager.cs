@@ -1,6 +1,7 @@
 ﻿using System;
 using LeagueSharp;
 using LeagueSharp.Common;
+using SharpDX;
 using TreeLib.Extensions;
 
 namespace PopBlanc
@@ -25,6 +26,7 @@ namespace PopBlanc
         public static void Initialize(Menu menu)
         {
             _menu = menu.AddMenu("Passive", "Passive");
+            _menu.AddInfo("CloneInfo", " --> Automatic movement of clone.", Color.Red);
             _menu.AddBool("CloneEnabled", "Control Clone");
             _menu.AddList("CloneMode", "Mode", new[] { "To Player", "To Target", "Away from Player" });
             _menu.AddBool("CloneOverride", "Manual Override");
