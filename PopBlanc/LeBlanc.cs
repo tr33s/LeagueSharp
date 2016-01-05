@@ -162,7 +162,7 @@ namespace PopBlanc
             {
                 return;
             }
-            
+
             if (Menu.Item("AutoEImmobile").IsActive() && E.IsReady())
             {
                 var target = Enemies.FirstOrDefault(e => e.IsValidTarget(E.Range) && e.IsMovementImpaired());
@@ -464,7 +464,7 @@ namespace PopBlanc
             var enemies =
                 HeroManager.Enemies.Where(
                     enemy =>
-                        enemy.IsValidTarget(wRange + E.Range) &&
+                        enemy.IsValidTarget(wRange + E.Range) && !enemy.IsZombie &&
                         enemy.Health < GetComboDamage(enemy, SpellSlot.Q, WCastTime)).ToList();
 
             if (!enemies.Any())
