@@ -4,8 +4,10 @@ using System.Drawing;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.SDK.Core.Enumerations;
 using LeagueSharp.SDK.Core.Events;
 using LeagueSharp.SDK.Core.Wrappers.Spells.Database;
+using LeagueSharp.SDK.MoreLinq;
 
 namespace AIOCaster
 {
@@ -47,29 +49,34 @@ namespace AIOCaster
                 Orbwalker = new Orbwalking.Orbwalker(orbMenu);
             }
 
+
+            var spellMenu = Menu.AddSubMenu(new Menu("Spells", "Spells"));
+            Menu.AddItem(new MenuItem("Dashes", "Load Dashes [RELOAD]").SetValue(false));
+            Menu.AddItem(new MenuItem("KS", "Killsteal").SetValue(true));
+            Menu.AddItem(new MenuItem("Drawings", "Disable Drawings").SetValue(false));
+
             foreach (var spell in
-                Database.Spells.Where(s => s.ChampionName.Equals(Player.ChampionName) && s.SpellType.IsSkillShot()))
+                Database.Spells.Where(
+                    s =>
+                        s.ChampionName.Equals(Player.ChampionName) && s.SpellType.IsSkillShot() &&
+                        (Menu.Item("Dashes").IsActive() || !s.SpellTags.Contains(SpellTags.Dash))))
             {
                 Spells.Add(spell);
             }
 
-            var spellMenu = Menu.AddSubMenu(new Menu("Spells", "Spells"));
-            var addedSpells = new List<SpellSlot>();
-
-            foreach (var spell in Spells.Where(s => !addedSpells.Contains(s.Slot)))
+            foreach (var spell in Spells.DistinctBy(s => s.Slot))
             {
                 var s = spell.Slot.ToString();
-                Console.WriteLine(s);
                 var menu = spellMenu.AddSubMenu(new Menu(s, s));
                 menu.AddItem(new MenuItem(s + "Combo", "Use in Combo", true).SetValue(true));
                 menu.AddItem(new MenuItem(s + "Mixed", "Use in Harass", true).SetValue(true));
-                menu.AddItem(
-                    new MenuItem(s + "Draw", "Draw Range", true).SetValue(new Circle(true, Color.Red, spell.Range)));
-                Console.WriteLine(s + "Draw");
-                addedSpells.Add(spell.Slot);
-            }
 
-            Menu.AddItem(new MenuItem("KS", "Killsteal").SetValue(true));
+                if (spell.Radius < 5000)
+                {
+                    menu.AddItem(
+                        new MenuItem(s + "Draw", "Draw Range", true).SetValue(new Circle(true, Color.Red, spell.Range)));
+                }
+            }
             Menu.AddToMainMenu();
 
             Game.OnUpdate += Game_OnUpdate;
@@ -78,17 +85,14 @@ namespace AIOCaster
 
         private static void Drawing_OnDraw(EventArgs args)
         {
+            if (Menu.Item("Drawings").IsActive())
+            {
+                return;
+            }
+
             foreach (var spell in Spells)
             {
-                Console.WriteLine(spell.Slot + "Draw");
-                var item = Menu.Item(spell.Slot + "Draw");
-                if (item == null)
-                {
-                    Console.WriteLine("BAD " + spell.Slot);
-                    return;
-                }
-                var circle = item.GetValue<Circle>();
-
+                var circle = Menu.Item(spell.Slot + "Draw", true).GetValue<Circle>();
                 if (circle.Active)
                 {
                     Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
