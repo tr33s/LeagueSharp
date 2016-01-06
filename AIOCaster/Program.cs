@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
@@ -62,28 +63,61 @@ namespace AIOCaster
                 var menu = spellMenu.AddSubMenu(new Menu(s, s));
                 menu.AddItem(new MenuItem(s + "Combo", "Use in Combo", true).SetValue(true));
                 menu.AddItem(new MenuItem(s + "Mixed", "Use in Harass", true).SetValue(true));
+                menu.AddItem(
+                    new MenuItem(s + "Draw", "Draw Range", true).SetValue(new Circle(true, Color.Red, spell.Range)));
+                Console.WriteLine(s + "Draw");
                 addedSpells.Add(spell.Slot);
             }
 
+            Menu.AddItem(new MenuItem("KS", "Killsteal").SetValue(true));
             Menu.AddToMainMenu();
 
             Game.OnUpdate += Game_OnUpdate;
+            Drawing.OnDraw += Drawing_OnDraw;
         }
 
+        private static void Drawing_OnDraw(EventArgs args)
+        {
+            foreach (var spell in Spells)
+            {
+                Console.WriteLine(spell.Slot + "Draw");
+                var item = Menu.Item(spell.Slot + "Draw");
+                if (item == null)
+                {
+                    Console.WriteLine("BAD " + spell.Slot);
+                    return;
+                }
+                var circle = item.GetValue<Circle>();
+
+                if (circle.Active)
+                {
+                    Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
+                }
+            }
+        }
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if (Player.IsDead || !Orbwalker.ActiveMode.IsComboMode())
+            if (Player.IsDead)
             {
                 return;
             }
 
-            //var mode = SDKOrbwalker ? Variables.Orbwalker.GetActiveMode().ToString() : Orbwalker.ActiveMode.ToString();
-            var mode = Orbwalker.ActiveMode.ToString();
+            if (Menu.Item("KS").IsActive() && CastSequence("KS"))
+            {
+                return;
+            }
+
+            if (Orbwalker.ActiveMode.IsComboMode() && CastSequence()) {}
+        }
+
+        private static bool CastSequence(string mode = null)
+        {
+            mode = string.IsNullOrEmpty(mode) ? Orbwalker.ActiveMode.ToString() : mode;
 
             foreach (var spell in Spells.Where(s => Player.Spellbook.GetSpell(s.Slot).IsReady()))
             {
-                if (!Menu.Item(spell.Slot + mode, true).IsActive())
+                if (mode != "KS" && !Menu.Item(spell.Slot + mode, true).IsActive())
                 {
                     continue;
                 }
@@ -98,8 +132,20 @@ namespace AIOCaster
                 var type = spell.SpellType.GetSkillshotType();
 
                 s.SetSkillshot(spell.Delay, spell.Width, spell.MissileSpeed, collision, type);
-                s.CastOnBestTarget();
+                var targ = s.GetTarget();
+
+                if (!targ.IsValidTarget())
+                {
+                    continue;
+                }
+
+                if ((mode != "KS" || s.IsKillable(targ)) && s.Cast(targ).IsCasted())
+                {
+                    return true;
+                }
             }
+
+            return false;
         }
     }
 }
