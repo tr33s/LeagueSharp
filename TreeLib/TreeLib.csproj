@@ -62,6 +62,7 @@
     <Compile Include="Core\Bootstrap.cs" />
     <Compile Include="Core\DamageIndicator.cs" />
     <Compile Include="Core\EvadeDisabler.cs" />
+    <Compile Include="Core\ManaIndicator.cs" />
     <Compile Include="Core\Extensions\DrawingExtensions.cs" />
     <Compile Include="Core\Extensions\GameObjectExtensions.cs" />
     <Compile Include="Core\Extensions\GeneralExtensions.cs" />
