@@ -26,6 +26,7 @@ namespace TreeLib.Objects
             Interrupter2.OnInterruptableTarget += Interrupter2_OnInterruptableTarget;
             AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
+            Game.OnWndProc += Game_OnWndProc;
             Game.OnUpdate += Game_OnUpdate;
         }
 
@@ -53,6 +54,8 @@ namespace TreeLib.Objects
         {
             get { return Orbwalking.GetRealAutoAttackRange(Player); }
         }
+
+        public virtual void Game_OnWndProc(WndEventArgs args) {}
 
         public virtual void GameObject_OnDelete(GameObject sender, EventArgs args) {}
 
