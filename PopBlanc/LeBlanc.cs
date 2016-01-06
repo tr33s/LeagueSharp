@@ -14,6 +14,7 @@ namespace PopBlanc
     internal class LeBlanc : Champion
     {
         private static Obj_AI_Hero KSTarget;
+        private static readonly int ERange = 950;
 
         public LeBlanc()
         {
@@ -50,10 +51,29 @@ namespace PopBlanc
             w.AddSlider("FarmWMinions", "Farm Minimum Minions", 3, 1, 5);
             w.AddBool("WBackHarass", "Harass W Back");
             w.Item("WBackHarass").SetTooltip("Cast second W after harassing.");
+            w.AddBool("WBackFarm", "Farm W Back");
+            w.Item("WBackFarm").SetTooltip("Cast second W after farming.");
+            w.AddBool("WBackClick", "Left Click W Back");
+            w.Item("WBackClick").SetTooltip("Cast second W after left clicking.");
 
             var e = spells.AddSpell(
                 SpellSlot.E,
                 new List<Orbwalking.OrbwalkingMode> { Orbwalking.OrbwalkingMode.Combo, Orbwalking.OrbwalkingMode.Mixed });
+
+            e.AddSlider("ERangeDecrease", "Decrease Range", 0, 0, 100);
+            e.Item("ERangeDecrease").ValueChanged += (sender, args) =>
+            {
+                E.Range = ERange - args.GetNewValue<Slider>().Value;
+                var eDraw = Menu.Item("Draw2");
+                if (eDraw == null)
+                {
+                    return;
+                }
+                var eCircle = eDraw.GetValue<Circle>();
+                eDraw.SetValue(new Circle(eCircle.Active, eCircle.Color, E.Range));
+            };
+            E.Range = ERange - e.Item("ERangeDecrease").GetValue<Slider>().Value;
+
             e.AddBool("ComboEFirst", "Combo E First", false);
             e.AddBool("AntiGapcloser", "AntiGapCloser with E");
             e.AddBool("AutoEImmobile", "Auto E Immobile Targets");
@@ -109,6 +129,14 @@ namespace PopBlanc
             draw.AddBool("DrawCD", "Draw on CD");
             draw.AddBool("DrawWBack", "Draw W Back Position");
 
+            var manaCost = new Dictionary<SpellSlot, int[]>
+            {
+                { SpellSlot.Q, new[] { 0, 50, 60, 70, 80, 90 } },
+                { SpellSlot.W, new[] { 0, 80, 85, 90, 95, 100 } },
+                { SpellSlot.E, new[] { 0, 80, 80, 80, 80, 80 } },
+                { SpellSlot.R, new[] { 0, 50, 60, 70, 80, 90 } }
+            };
+
             var damage = draw.AddMenu("Damage Indicator", "Damage Indicator");
             damage.AddBool("DmgEnabled", "Enabled");
             damage.AddCircle("HPColor", "Health Color", System.Drawing.Color.White);
@@ -124,6 +152,7 @@ namespace PopBlanc
 
             Menu.AddInfo("Info", "By Trees and Lilith!", Color.Red);
 
+            ManaBarIndicator.Initialize(draw, manaCost);
             DamageIndicator.Initialize(damage, GetComboDamage);
             SpellManager.Initialize(Menu, Orbwalker);
             WBackPosition.Initialize();
@@ -390,6 +419,11 @@ namespace PopBlanc
                 }
             }
 
+            if (!Q.IsReady() && W.IsReady() && !W.IsFirstW() && Menu.Item("WBackFarm").IsActive() && W.Cast())
+            {
+                return;
+            }
+
             var wReady = W.IsReady() && W.IsActive() && W.IsFirstW();
             var rReady = R.IsReady() && R.IsActive() && R.GetSpellSlot() == SpellSlot.W && R.IsFirstW();
 
@@ -532,6 +566,17 @@ namespace PopBlanc
                     Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
                 }
             }
+        }
+
+        public override void Game_OnWndProc(WndEventArgs args)
+        {
+            if (!Menu.Item("WBackClick").IsActive() || Player.IsDead || args.Msg != 0x202 || !W.IsReady() ||
+                W.IsFirstW())
+            {
+                return;
+            }
+
+            W.Cast();
         }
 
         private static float GetComboDamage(Obj_AI_Base enemy)
