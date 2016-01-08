@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
+using SharpDX;
 using TreeLib.Extensions;
+using Color = System.Drawing.Color;
 
 namespace PopBlanc
 {
@@ -23,6 +24,28 @@ namespace PopBlanc
         public static bool HasQRBuff(this Obj_AI_Base unit)
         {
             return unit.HasBuff("leblancchaosorbm");
+        }
+        public static bool IsValidWPoint(this Vector3 position)
+        {
+            if (!position.IsValid())
+            {
+                return false;
+            }
+
+            for (var i = 10; i < SpellManager.W.Range; i += 10)
+            {
+                if (i > SpellManager.W.Range)
+                {
+                    return false;
+                }
+
+                if (ObjectManager.Player.ServerPosition.Extend(position, i).IsWall())
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 

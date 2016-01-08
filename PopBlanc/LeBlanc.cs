@@ -362,8 +362,13 @@ namespace PopBlanc
             }
 
             var pos = Player.ServerPosition.Extend(target.ServerPosition, W.Range + 10);
-            Console.WriteLine("AOE: Cast Gapclose W");
-            return W.Cast(pos);
+
+            if(pos.IsValidWPoint() && W.Cast(pos)) {
+                Console.WriteLine("AOE: Cast Gapclose W");
+                return true;
+            };
+
+            return false;
         }
 
         private static bool _2Chainz()
@@ -513,14 +518,17 @@ namespace PopBlanc
 
             KSTarget = enemies.MinOrDefault(e => e.Health);
 
-            if (wRange > 0 && !KSTarget.IsValidTarget(wRange))
+            if (!KSTarget.IsValidTarget(E.Range))
             {
                 var pos = Player.ServerPosition.Extend(KSTarget.ServerPosition, W.Range + 10);
-                if (W.Cast(pos))
+
+                if (!pos.IsValidWPoint() || !W.Cast(pos))
                 {
-                    Console.WriteLine("KS: Gapclose W");
-                    return true;
+                    return false;
                 }
+
+                Console.WriteLine("KS: Gapclose W");
+                return true;
             }
 
             Combo(KSTarget, true);
