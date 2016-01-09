@@ -44,6 +44,10 @@
     <Reference Include="SharpDX">
       <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\SharpDX.dll</HintPath>
     </Reference>
+    <Reference Include="SharpDX.Direct3D9, Version=2.6.3.0, Culture=neutral, PublicKeyToken=345b829e6e492981, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\SharpDX.Direct3D9.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -54,6 +58,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ad.cs" />
     <Compile Include="Clone.cs" />
     <Compile Include="Combo.cs" />
     <Compile Include="DamageIndicator.cs" />
@@ -83,6 +88,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\OnLoad.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Upvote.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PopBlanc.gif" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PopBlanc.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PopBlanc1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\logo.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

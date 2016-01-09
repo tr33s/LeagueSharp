@@ -95,6 +95,8 @@ namespace LeBlanc
 
             DamageIndicator.DamageToUnit = GetComboDamage;
 
+            Ad.Initialize();
+
             if (misc.Item("Sounds").GetValue<bool>())
             {
                 var sound = new SoundObject(Resources.OnLoad);
