@@ -32,7 +32,7 @@ namespace jesuisFiora
                     new BlockedSpell("aatroxwonhattackpower", "Blood Price", true),
                     r
                 });
-            BlockedSpells.Add("Akali", new List<BlockedSpell> { q, w, r }); //
+            BlockedSpells.Add("Akali", new List<BlockedSpell> { q, e, r }); //
             BlockedSpells.Add("Alistar", new List<BlockedSpell> { q, w });
             BlockedSpells.Add("Anivia", new List<BlockedSpell> { e }); //
             BlockedSpells.Add("Annie", new List<BlockedSpell> { q, r }); //
