@@ -201,7 +201,7 @@ namespace Staberina
             }
 
             if (Player.IsChannelingImportantSpell() && Menu.Item("RCancelNoEnemies").IsActive() &&
-                Player.CountEnemiesInRange(R.Range).Equals(0))
+                Player.CountEnemiesInRange(RRange) == 0)
             {
                 Player.IssueOrder(GameObjectOrder.Stop, Player.ServerPosition, false);
                 return;
