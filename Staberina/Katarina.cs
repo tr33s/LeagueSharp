@@ -28,7 +28,7 @@ namespace Staberina
             E = SpellManager.E;
             R = SpellManager.R;
 
-            Menu = new Menu("TKatarina", "TKatarina", true);
+            Menu = new Menu("Staberina", "Staberina", true);
             Menu.SetFontStyle(FontStyle.Regular, ScriptColor);
 
             Orbwalker = Menu.AddOrbwalker();
