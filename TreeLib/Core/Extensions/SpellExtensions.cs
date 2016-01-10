@@ -1,4 +1,5 @@
 ﻿using LeagueSharp;
+using LeagueSharp.Common;
 
 namespace TreeLib.Extensions
 {
@@ -27,6 +28,12 @@ namespace TreeLib.Extensions
         public static bool IsTargeted(this SpellDataTargetType type)
         {
             return type.Equals(SpellDataTargetType.Unit) || type.Equals(SpellDataTargetType.SelfAndUnit);
+        }
+
+        public static bool LastCastedDelay(this Spell spell, int delay)
+        {
+            var casted = ObjectManager.Player.LastCastedspell();
+            return casted != null && casted.Name == spell.Instance.Name && Utils.TickCount - casted.Tick < delay;
         }
     }
 }
