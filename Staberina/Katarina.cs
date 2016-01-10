@@ -14,11 +14,12 @@ namespace Staberina
 {
     internal class Katarina : Champion
     {
-        public static bool CastWAfterE;
-        public static ColorBGRA ScriptColor = new ColorBGRA(215, 40, 242, 255);
-        public static int LastWardPlacement;
-        public static bool WardJumping;
-        private static readonly int RRange = 550;
+        private const int RRange = 550;
+        private static bool CastWAfterE;
+        private static readonly ColorBGRA ScriptColor = new ColorBGRA(215, 40, 242, 255);
+        private static int LastWardPlacement;
+        private static bool WardJumping;
+        private static readonly Random Random = new Random(Utils.TickCount);
 
         public Katarina()
         {
@@ -41,7 +42,7 @@ namespace Staberina
             var wMenu = spells.AddMenu("W", "W");
             wMenu.AddBool("WCombo", "Use in Combo");
             wMenu.AddBool("WHarass", "Use in Harass");
-            wMenu.AddBool("WAuto", "Auto W");
+            wMenu.AddBool("WAuto", "Auto W", false);
 
             var eMenu = spells.AddMenu("E", "E");
             eMenu.AddBool("ECombo", "Use in Combo");
@@ -66,7 +67,7 @@ namespace Staberina
                     return;
                 }
                 var rCircle = rDraw.GetValue<Circle>();
-                rDraw.SetValue(new Circle(rCircle.Active, rCircle.Color, E.Range));
+                rDraw.SetValue(new Circle(rCircle.Active, rCircle.Color, R.Range));
             };
             R.Range = RRange - rMenu.Item("RRangeDecrease").GetValue<Slider>().Value;
 
@@ -74,23 +75,29 @@ namespace Staberina
             rMenu.AddBool("REvade", "Disable Evade while casting R");
             rMenu.AddBool("RCancelNoEnemies", "Cancel R if no enemies", false);
 
-            var items = spells.AddMenu("Items", "Items");
-            items.AddBool("ItemsCombo", "Use in Combo");
-            items.AddBool("ItemsHarass", "Use in Harass");
-
             var ks = Menu.AddMenu("Killsteal", "Killsteal");
             ks.AddBool("KSEnabled", "Use Smart KS");
-            ks.AddSlider("KSEnemies", "Max Enemies", 5, 1, 5);
-            ks.Item("KSEnemies").SetTooltip("Maximum enemies to E in to KS.");
-            ks.AddSlider("KSHealth", "Min Health", 10);
-            ks.Item("KSHealth").SetTooltip("Minimum health to E in to KS.");
-            ks.AddBool("KSTurret", "Block E Under Turret");
-            ks.AddBool("KSRCancel", "Cancel R to KS");
 
             ks.AddInfo("KSInfo", "-- Spells --", ScriptColor);
             ks.AddBool("KSQ", "Use Q");
             ks.AddBool("KSW", "Use W");
             ks.AddBool("KSE", "Use E");
+            ks.AddBool("KSR", "Use Smart R");
+            ks.Item("KSR").SetTooltip("Uses ultimate tick amount from Spells > R.");
+
+            ks.AddInfo("KSInfo2", "-- Misc --", ScriptColor);
+            ks.AddBool("KSRCancel", "Cancel R to KS");
+            ks.Item("KSRCancel").SetTooltip("Cancel ultimate channel to KS with other spells.");
+            ks.AddSlider("KSEnemies", "Max Enemies", 5, 1, 5);
+            ks.Item("KSEnemies").SetTooltip("Maximum enemies to E in to KS.");
+            ks.AddSlider("KSHealth", "Min Health", 10);
+            ks.Item("KSHealth").SetTooltip("Minimum health to E in to KS.");
+            ks.AddBool("KSGapclose", "Gapclose with E", false);
+            ks.Item("KSGapclose").SetTooltip("Cast E to units in range of killable target.");
+            ks.AddBool("KSWardJump", "Ward Jump", false);
+            ks.Item("KSWardJump").SetTooltip("Ward jump with e to killable target.");
+            ks.AddBool("KSTurret", "Block E Under Turret");
+            ks.Item("KSTurret").SetTooltip("Don't attempt to KS units (with E) under turret.");
 
             var farm = Menu.AddMenu("Farm", "Farm");
 
@@ -119,19 +126,19 @@ namespace Staberina
             draw.AddCircle("1Draw", "Draw W", Color.DeepPink, W.Range);
             draw.AddCircle("2Draw", "Draw E", Color.DeepPink, E.Range);
             draw.AddCircle("3Draw", "Draw R", Color.White, R.Range);
+            draw.AddBool("ComboKillablePermashow", "Permashow Combo Killable");
             draw.AddBool("FarmPermashow", "Permashow Farm Enabled");
-
-
-            if (draw.Item("FarmPermashow").IsActive())
-            {
-                farm.Item("FarmEnabled").Permashow(true, null, ScriptColor);
-            }
 
             draw.Item("FarmPermashow").ValueChanged +=
                 (sender, eventArgs) =>
                 {
                     farm.Item("FarmEnabled").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
                 };
+
+            if (draw.Item("FarmPermashow").IsActive())
+            {
+                farm.Item("FarmEnabled").Permashow(true, null, ScriptColor);
+            }
 
             var dmg = draw.AddMenu("DamageIndicator", "Damage Indicator");
             dmg.AddBool("DmgEnabled", "Draw Damage Indicator");
@@ -140,7 +147,21 @@ namespace Staberina
             dmg.AddBool("Killable", "Killable Text");
             DamageIndicator.Initialize(dmg, Utility.GetComboDamage);
 
+            Menu.AddInfo("MenuInfo", "-- Misc --", ScriptColor);
             Menu.AddList("ComboMode", "Combo Mode", new[] { "E->Q->W", "Q->E->W" });
+
+            Menu.AddKeyBind("ComboKillable", "Only Combo Killable", 'K', KeyBindType.Toggle);
+
+            draw.Item("ComboKillablePermashow").ValueChanged +=
+                (sender, eventArgs) =>
+                {
+                    Menu.Item("ComboKillable").Permashow(eventArgs.GetNewValue<bool>(), null, ScriptColor);
+                };
+
+            if (draw.Item("ComboKillablePermashow").IsActive())
+            {
+                Menu.Item("ComboKillable").Permashow(true, null, ScriptColor);
+            }
 
             Menu.AddBool("Sounds", "Sounds");
             if (Menu.Item("Sounds").IsActive())
@@ -242,7 +263,17 @@ namespace Staberina
                     target.CountEnemiesInRange(200) <= Menu.Item("EEnemies").GetValue<Slider>().Value;
             var r = Utility.IsRReady() && target.IsValidTarget(R.Range);
 
-            if (Q.LastCastedDelay((int) (200 + Game.Ping / 2f)))
+            if (mode == Orbwalking.OrbwalkingMode.Combo && Menu.Item("ComboKillable").IsActive())
+            {
+                var damage = target.GetComboDamage(q, w, e, r, true);
+                if (target.Health > damage)
+                {
+                    return;
+                }
+            }
+
+            var delay = (int) (200 + Game.Ping / 2f + Random.Next(100, 300));
+            if (Q.LastCastedDelay(delay) || E.LastCastedDelay(delay))
             {
                 return;
             }
@@ -300,7 +331,8 @@ namespace Staberina
             var q = Menu.Item("KSQ").IsActive() && Q.IsReady();
             var w = Menu.Item("KSW").IsActive() && W.IsReady();
             var e = Menu.Item("KSE").IsActive() && E.IsReady();
-            var r = Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && Menu.Item("RCombo").IsActive() &&
+            var r = (Menu.Item("KSR").IsActive() ||
+                     Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && Menu.Item("RCombo").IsActive()) &&
                     Utility.IsRReady();
 
             var target =
@@ -313,15 +345,21 @@ namespace Staberina
             // killable enemies in q range
             if (target.IsValidTarget())
             {
-                if (q && Q.CastOnUnit(target))
+                if (q && Q.CanCast(target) && Q.CastOnUnit(target))
                 {
                     Console.WriteLine("Q KS");
                     return true;
                 }
 
-                if (w && W.Cast())
+                if (w && W.CanCast(target) && W.Cast())
                 {
                     Console.WriteLine("W KS");
+                    return true;
+                }
+
+                if (r && target.IsValidTarget(R.Range) && R.Cast())
+                {
+                    Console.WriteLine("R KS");
                     return true;
                 }
             }
@@ -337,31 +375,39 @@ namespace Staberina
             if (
                 Enemies.Any(
                     enemy =>
-                        enemy.IsValidTarget(E.Range) && enemy.CountEnemiesInRange(200) < maxEnemies &&
+                        enemy.IsValidTarget(E.Range) && enemy.CountEnemiesInRange(200) <= maxEnemies &&
                         enemy.GetComboDamage(q, w, true, r, true) > enemy.Health &&
-                        (!Menu.Item("KSTurret").IsActive() || !enemy.UnderTurret(true) && E.CastOnUnit(enemy))))
+                        (!Menu.Item("KSTurret").IsActive() || !enemy.UnderTurret(true)) && E.CastOnUnit(enemy)))
             {
                 return true;
             }
 
-            // killable enemies in range of valid e targets
-            foreach (var unit in Utility.GetETargets())
+            if (Menu.Item("KSGapclose").IsActive())
             {
-                foreach (var enemy in
-                    Enemies.Where(
-                        h =>
-                            h.NetworkId != unit.NetworkId && h.IsValidTarget(Q.Range, true, unit.ServerPosition) &&
-                            h.CountEnemiesInRange(200) < maxEnemies &&
-                            (!Menu.Item("KSTurret").IsActive() || !h.UnderTurret(true))))
+                // killable enemies in range of valid e targets
+                foreach (var unit in Utility.GetETargets())
                 {
-                    var d = enemy.GetComboDamage(
-                        q, w && enemy.IsValidTarget(W.Range, true, unit.ServerPosition), false,
-                        r && enemy.IsValidTarget(R.Range, true, unit.ServerPosition), true);
-                    if (d > enemy.Health && E.CastOnUnit(unit))
+                    foreach (var enemy in
+                        Enemies.Where(
+                            h =>
+                                h.NetworkId != unit.NetworkId && h.IsValidTarget(Q.Range, true, unit.ServerPosition) &&
+                                h.CountEnemiesInRange(200) <= maxEnemies &&
+                                (!Menu.Item("KSTurret").IsActive() || !h.UnderTurret(true))))
                     {
-                        return true;
+                        var d = enemy.GetComboDamage(
+                            q, w && enemy.IsValidTarget(W.Range, true, unit.ServerPosition), false,
+                            r && enemy.IsValidTarget(R.Range, true, unit.ServerPosition), true);
+                        if (d > enemy.Health && E.CastOnUnit(unit))
+                        {
+                            return true;
+                        }
                     }
                 }
+            }
+
+            if (!Menu.Item("KSWardJump").IsActive())
+            {
+                return false;
             }
 
             var wardSlot = Utility.GetReadyWard();
@@ -412,24 +458,18 @@ namespace Staberina
                 }
 
                 var ward = Utility.GetReadyWard();
-
-                if (!Menu.Item("FleeWard").IsActive() || ward.Equals(SpellSlot.Unknown) ||
-                    !LastWardPlacement.HasTimePassed(2000))
+                if (Menu.Item("FleeWard").IsActive() && ward != SpellSlot.Unknown &&
+                    LastWardPlacement.HasTimePassed(2000))
                 {
-                    return false;
+                    var range = Player.Spellbook.GetSpell(ward).SData.CastRange;
+                    if (Player.Spellbook.CastSpell(ward, Player.ServerPosition.Extend(Game.CursorPos, range)))
+                    {
+                        Console.WriteLine("PLACE WARD");
+                        LastWardPlacement = Utils.TickCount;
+                        WardJumping = true;
+                        return true;
+                    }
                 }
-
-                Console.WriteLine("PLACE WARD");
-                var range = Player.Spellbook.GetSpell(ward).SData.CastRange;
-
-                if (!Player.Spellbook.CastSpell(ward, Player.ServerPosition.Extend(Game.CursorPos, range)))
-                {
-                    return false;
-                }
-
-                LastWardPlacement = Utils.TickCount;
-                WardJumping = true;
-                return true;
             }
 
             if (!Player.IsDashing() && Player.GetWaypoints().Last().Distance(Game.CursorPos) > 100)

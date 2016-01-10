@@ -73,7 +73,7 @@ namespace Staberina
 
                 if (unit.HasBuff("katarinaqmark"))
                 {
-                    d += (float) ObjectManager.Player.GetDamageSpell(unit, SpellSlot.Q, 1).CalculatedDamage;
+                    d += SpellManager.Q.GetDamage(unit, 1);
                 }
             }
 
@@ -105,7 +105,6 @@ namespace Staberina
                 d += (float) ObjectManager.Player.GetSummonerSpellDamage(unit, Damage.SummonerSpell.Ignite);
             }
 
-            d += (float) ObjectManager.Player.GetAutoAttackDamage(unit);
             d += (float) ObjectManager.Player.GetAutoAttackDamage(unit, true);
 
             return d;
@@ -114,7 +113,7 @@ namespace Staberina
         public static float GetComboDamage(Obj_AI_Base unit)
         {
             return unit.GetComboDamage(
-                SpellManager.Q.IsReady(), SpellManager.W.IsReady(), SpellManager.E.IsReady(), IsRReady());
+                SpellManager.Q.IsReady(), SpellManager.W.IsReady(), SpellManager.E.IsReady(), IsRReady(), true);
         }
 
         public static float GetTimeToUnit(Obj_AI_Base unit)
