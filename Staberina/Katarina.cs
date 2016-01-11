@@ -370,10 +370,10 @@ namespace Staberina
             // killable enemies in q range
             if (target.IsValidTarget())
             {
-                if (channeling && Utility.MoveRandomly())
+                /*if (channeling && Utility.MoveRandomly())
                 {
                     return true;
-                }
+                }*/
 
                 if (q && Q.CanCast(target) && Q.CastOnUnit(target))
                 {
