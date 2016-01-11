@@ -61,7 +61,7 @@ namespace Staberina
             rMenu.Item("RRangeDecrease").ValueChanged += (sender, args) =>
             {
                 R.Range = RRange - args.GetNewValue<Slider>().Value;
-                var rDraw = Menu.Item("Draw3");
+                var rDraw = Menu.Item("3Draw");
                 if (rDraw == null)
                 {
                     return;
@@ -72,8 +72,10 @@ namespace Staberina
             R.Range = RRange - rMenu.Item("RRangeDecrease").GetValue<Slider>().Value;
 
             rMenu.AddBool("RInCombo", "Always R in Combo", false);
+            rMenu.AddBool("RMovement", "Disable Movement while casting R");
             rMenu.AddBool("REvade", "Disable Evade while casting R");
             rMenu.AddBool("RCancelNoEnemies", "Cancel R if no enemies", false);
+            rMenu.AddKeyBind("RCancelUlt", "Cancel R Key", 'J');
 
             var ks = Menu.AddMenu("Killsteal", "Killsteal");
             ks.AddBool("KSEnabled", "Use Smart KS");
@@ -173,12 +175,21 @@ namespace Staberina
 
             SpellManager.Initialize(Menu, Orbwalker);
 
+            Obj_AI_Base.OnIssueOrder += Obj_AI_Base_OnIssueOrder;
             Menu.AddToMainMenu();
         }
 
         public static int UltTicks
         {
             get { return Menu.Item("RUltTicks").GetValue<Slider>().Value; }
+        }
+
+        private static void Obj_AI_Base_OnIssueOrder(Obj_AI_Base sender, GameObjectIssueOrderEventArgs args)
+        {
+            if (Menu.Item("RMovement").IsActive() && sender.IsMe && Player.IsChannelingImportantSpell())
+            {
+                args.Process = false;
+            }
         }
 
         public override void OnUpdate()
@@ -221,29 +232,36 @@ namespace Staberina
                 return;
             }
 
-            if (Player.IsChannelingImportantSpell() && Menu.Item("RCancelNoEnemies").IsActive() &&
-                Player.CountEnemiesInRange(RRange) == 0)
+            if (AutoKill())
             {
-                Player.IssueOrder(GameObjectOrder.Stop, Player.ServerPosition, false);
                 return;
             }
 
-            if (!Player.IsChannelingImportantSpell())
+            if (Player.IsChannelingImportantSpell())
             {
-                if (Menu.Item("REvade").IsActive() && EvadeDisabler.EvadeDisabled)
+                if (Menu.Item("RCancelUlt").IsActive() && Utility.MoveRandomly())
                 {
-                    EvadeDisabler.EnableEvade();
-                }
-
-                if (Menu.Item("WAuto").IsActive() && W.IsReady() && Enemies.Any(h => h.IsValidTarget(W.Range)) &&
-                    W.Cast())
-                {
-                    Console.WriteLine("AUTO W");
                     return;
                 }
+
+                if (Menu.Item("RCancelNoEnemies").IsActive() && Player.CountEnemiesInRange(RRange) == 0 &&
+                    Utility.MoveRandomly())
+                {
+                    return;
+                }
+
+                return;
             }
 
-            if (AutoKill()) {}
+            if (Menu.Item("REvade").IsActive() && EvadeDisabler.EvadeDisabled)
+            {
+                EvadeDisabler.EnableEvade();
+            }
+
+            if (Menu.Item("WAuto").IsActive() && W.IsReady() && Enemies.Any(h => h.IsValidTarget(W.Range)) && W.Cast())
+            {
+                Console.WriteLine("AUTO W");
+            }
         }
 
         public override void OnCombo(Orbwalking.OrbwalkingMode mode)
@@ -323,7 +341,9 @@ namespace Staberina
                 return false;
             }
 
-            if (Player.IsChannelingImportantSpell() && !Menu.Item("RCancelKS").IsActive())
+            var channeling = Player.IsChannelingImportantSpell();
+
+            if (channeling && !Menu.Item("RCancelKS").IsActive())
             {
                 return false;
             }
@@ -345,6 +365,11 @@ namespace Staberina
             // killable enemies in q range
             if (target.IsValidTarget())
             {
+                if (channeling && Utility.MoveRandomly())
+                {
+                    return true;
+                }
+
                 if (q && Q.CanCast(target) && Q.CastOnUnit(target))
                 {
                     Console.WriteLine("Q KS");

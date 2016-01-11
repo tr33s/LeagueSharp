@@ -2,6 +2,7 @@
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
+using LeagueSharp.Common.Data;
 using SharpDX;
 using TreeLib.Extensions;
 
@@ -15,6 +16,12 @@ namespace Staberina
             ItemId.Greater_Vision_Totem_Trinket, ItemId.Sightstone, ItemId.Ruby_Sightstone, ItemId.Vision_Ward,
             (ItemId) 3711, (ItemId) 1411, (ItemId) 1410, (ItemId) 1408, (ItemId) 1409
         };
+
+        public static bool MoveRandomly()
+        {
+            var pos = ObjectManager.Player.ServerPosition.Randomize(10, 20);
+            return ObjectManager.Player.IssueOrder(GameObjectOrder.MoveTo, pos, false);
+        }
 
         public static Obj_AI_Base GetClosestETarget(Vector3 position)
         {
@@ -99,13 +106,29 @@ namespace Staberina
                 }
             }
 
+            d += (float) ObjectManager.Player.GetAutoAttackDamage(unit, true);
+
+            var dl = ObjectManager.Player.GetMastery(MasteryData.Ferocity.DoubleEdgedSword);
+            if (dl.IsActive())
+            {
+                d *= 1.03f;
+            }
+
+            var assasin = ObjectManager.Player.GetMastery((MasteryData.Cunning) 83);
+            if (assasin.IsActive() && ObjectManager.Player.CountAlliesInRange(800) == 0)
+            {
+                d *= 1.015f;
+            }
+
             var ignite = TreeLib.Managers.SpellManager.Ignite;
             if (ignite != null && ignite.IsReady())
             {
                 d += (float) ObjectManager.Player.GetSummonerSpellDamage(unit, Damage.SummonerSpell.Ignite);
             }
 
-            d += (float) ObjectManager.Player.GetAutoAttackDamage(unit, true);
+            var tl = ObjectManager.Player.GetMastery(MasteryData.Cunning.ThunderlordsDecree);
+            if (tl.IsActive()) {}
+            if (ItemManager.LudensEcho != null) {}
 
             return d;
         }
