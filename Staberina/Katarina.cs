@@ -562,54 +562,53 @@ namespace Staberina
             var minions = MinionManager.GetMinions(E.Range);
 
             if (Menu.Item("WFarm").IsActive() && W.IsReady())
-
             {
                 var wKillableMinions = minions.Count(m => m.IsValidTarget(W.Range) && W.IsKillable(m));
                 if (wKillableMinions < Menu.Item("WMinionsHit").GetValue<Slider>().Value)
                 {
-                    if (!Menu.Item("EFarm").IsActive() || !E.IsReady()) // e->w
+                    if (Menu.Item("EFarm").IsActive() && E.IsReady()) // e->w
                     {
-                        return;
-                    }
-
-                    foreach (var target in from target in Utility.GetETargets()
-                        let killableMinions =
-                            MinionManager.GetMinions(target.ServerPosition, W.Range + E.Range)
-                                .Count(m => W.IsKillable(m))
-                        where killableMinions >= Menu.Item("EMinionsHit").GetValue<Slider>().Value
-                        select target)
-                    {
-                        CastWAfterE = true;
-                        if (E.CastOnUnit(target))
+                        foreach (var target in from target in Utility.GetETargets()
+                            let killableMinions =
+                                MinionManager.GetMinions(target.ServerPosition, W.Range + E.Range)
+                                    .Count(m => W.IsKillable(m))
+                            where killableMinions >= Menu.Item("EMinionsHit").GetValue<Slider>().Value
+                            select target)
                         {
-                            return;
+                            CastWAfterE = true;
+                            if (E.CastOnUnit(target))
+                            {
+                                return;
+                            }
                         }
                     }
                 }
-                else
+                else if (W.Cast())
                 {
-                    W.Cast();
+                    return;
                 }
             }
 
-            if (Menu.Item("QFarm").IsActive() && Q.IsReady())
+            if (!Menu.Item("QFarm").IsActive() || !Q.IsReady())
             {
-                var qKillableMinion = minions.FirstOrDefault(m => m.IsValidTarget(Q.Range) && Q.IsKillable(m));
-                var qMinion = minions.Where(m => m.IsValidTarget(Q.Range)).MinOrDefault(m => m.Health);
+                return;
+            }
 
-                if (qKillableMinion == null)
+            var qKillableMinion = minions.FirstOrDefault(m => m.IsValidTarget(Q.Range) && Q.IsKillable(m));
+            var qMinion = minions.Where(m => m.IsValidTarget(Q.Range)).MinOrDefault(m => m.Health);
+
+            if (qKillableMinion == null)
+            {
+                if (Menu.Item("QLastHit").IsActive() || qMinion == null)
                 {
-                    if (Menu.Item("QLastHit").IsActive() || qMinion == null)
-                    {
-                        return;
-                    }
-
-                    Q.CastOnUnit(qMinion);
                     return;
                 }
 
-                Q.CastOnUnit(qKillableMinion);
+                Q.CastOnUnit(qMinion);
+                return;
             }
+
+            Q.CastOnUnit(qKillableMinion);
         }
     }
 }
