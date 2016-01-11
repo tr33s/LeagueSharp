@@ -52,13 +52,17 @@ namespace PopBlanc
     public class WBackPosition
     {
         public static List<WBackPosition> Positions = new List<WBackPosition>();
-        private readonly GameObject obj;
+        public GameObject Obj;
         private readonly int spawnTime;
         public int EndTime;
 
+        public bool IsR
+        {
+            get { return Obj.Name.Contains("RW"); }
+        }
         public WBackPosition(GameObject obj)
         {
-            this.obj = obj;
+            this.Obj = obj;
             spawnTime = Utils.TickCount;
             EndTime = spawnTime + 4200;
             Positions.Add(this);
@@ -73,12 +77,12 @@ namespace PopBlanc
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            foreach (var w in Positions.Where(p => p.obj.IsValid))
+            foreach (var w in Positions.Where(p => p.Obj.IsValid))
             {
-                var pos = Drawing.WorldToScreen(w.obj.Position);
+                var pos = Drawing.WorldToScreen(w.Obj.Position);
                 var time = (w.EndTime - Utils.TickCount) / 1000f;
                 Drawing.DrawText(pos.X - 10, pos.Y - 100, Color.Red, string.Format("{0:0.0}", time));
-                Render.Circle.DrawCircle(w.obj.Position, 150, Color.Red);
+                Render.Circle.DrawCircle(w.Obj.Position, 150, Color.Red);
             }
         }
 
@@ -96,7 +100,7 @@ namespace PopBlanc
 
         private static void GameObject_OnDelete(GameObject sender, EventArgs args)
         {
-            Positions.RemoveAll(p => p.obj.NetworkId == sender.NetworkId);
+            Positions.RemoveAll(p => p.Obj.NetworkId == sender.NetworkId);
         }
     }
 }

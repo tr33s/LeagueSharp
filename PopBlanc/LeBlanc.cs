@@ -53,7 +53,7 @@ namespace PopBlanc
             w.Item("WBackHarass").SetTooltip("Cast second W after harassing.");
             w.AddBool("WBackFarm", "Farm W Back");
             w.Item("WBackFarm").SetTooltip("Cast second W after farming.");
-            w.AddBool("WBackClick", "Left Click W Back");
+            w.AddBool("WBackClick", "Left Click W Back", false);
             w.Item("WBackClick").SetTooltip("Cast second W after left clicking.");
 
             var e = spells.AddSpell(
@@ -84,7 +84,8 @@ namespace PopBlanc
             r.AddBool("LaneClearR", "Use in LaneClear", false);
             r.Item("LaneClearR").SetTooltip("Use R(W) in LaneClear");
             r.AddBool("AntiGapcloserR", "AntiGapCloser with R(E)", false);
-
+            w.AddBool("RBackClick", "Left Click R(W) Back", false);
+            w.Item("RBackClick").SetTooltip("Cast second R(W) after left clicking.");
             var combo = Menu.AddMenu("Combo", "Other Combos");
 
             var twoChainz = combo.AddMenu("2Chainz", "2Chainz");
@@ -418,7 +419,7 @@ namespace PopBlanc
             {
                 var killable = MinionManager.GetMinions(Q.Range).FirstOrDefault(m => Q.IsKillable(m));
 
-                if (killable.IsValidTarget() && Q.Cast(killable).IsCasted())
+                if (killable.IsValidTarget() && killable.Health > Player.GetAutoAttackDamage(killable, true) && Q.Cast(killable).IsCasted())
                 {
                     return;
                 }
@@ -578,13 +579,15 @@ namespace PopBlanc
 
         public override void Game_OnWndProc(WndEventArgs args)
         {
-            if (!Menu.Item("WBackClick").IsActive() || Player.IsDead || args.Msg != 0x202 || !W.IsReady() ||
-                W.IsFirstW())
+            if ((!Menu.Item("WBackClick").IsActive() && !Menu.Item("RBackClick").IsActive()) || Player.IsDead || args.Msg != 0x202)
             {
                 return;
             }
 
-            W.Cast();
+            var wPos = WBackPosition.Positions.Where(p => p.Obj.Position.Distance(Game.CursorPos) < 2000).OrderBy(p => p.Obj.Position.Distance(Game.CursorPos));
+            if (wPos.Select(w => w.IsR ? R : W).Any(spell => Menu.Item(spell.Slot + "BackClick").IsActive() && spell.IsReady() && !spell.IsFirstW() && spell.Cast())) {
+                return;
+            }
         }
 
         private static float GetComboDamage(Obj_AI_Base enemy)
