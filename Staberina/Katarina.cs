@@ -199,6 +199,22 @@ namespace Staberina
                 return;
             }
 
+            var c = Player.IsChannelingImportantSpell();
+
+            if (c)
+            {
+                if (Menu.Item("RCancelUlt").IsActive() && Utility.MoveRandomly())
+                {
+                    return;
+                }
+
+                if (Menu.Item("RCancelNoEnemies").IsActive() && Player.CountEnemiesInRange(RRange) == 0 &&
+                    Utility.MoveRandomly())
+                {
+                    return;
+                }
+            }
+
             if (WardJumping)
             {
                 if (!E.IsReady())
@@ -237,19 +253,8 @@ namespace Staberina
                 return;
             }
 
-            if (Player.IsChannelingImportantSpell())
+            if (c)
             {
-                if (Menu.Item("RCancelUlt").IsActive() && Utility.MoveRandomly())
-                {
-                    return;
-                }
-
-                if (Menu.Item("RCancelNoEnemies").IsActive() && Player.CountEnemiesInRange(RRange) == 0 &&
-                    Utility.MoveRandomly())
-                {
-                    return;
-                }
-
                 return;
             }
 
@@ -343,7 +348,7 @@ namespace Staberina
 
             var channeling = Player.IsChannelingImportantSpell();
 
-            if (channeling && !Menu.Item("RCancelKS").IsActive())
+            if (channeling && !Menu.Item("KSRCancel").IsActive())
             {
                 return false;
             }
@@ -499,7 +504,7 @@ namespace Staberina
 
             if (!Player.IsDashing() && Player.GetWaypoints().Last().Distance(Game.CursorPos) > 100)
             {
-                Player.IssueOrder(GameObjectOrder.MoveTo, Player.ServerPosition.Extend(Game.CursorPos, 250));
+                Player.IssueOrder(GameObjectOrder.MoveTo, Player.ServerPosition.Extend(Game.CursorPos, 250), false);
             }
 
             return false;

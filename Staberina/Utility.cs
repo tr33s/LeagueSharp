@@ -65,7 +65,8 @@ namespace Staberina
             bool w,
             bool e,
             bool r,
-            bool calculateUltTick = false)
+            bool calculateUltTick = false,
+            bool damageIndicator = false)
         {
             if (!unit.IsValidTarget())
             {
@@ -109,13 +110,13 @@ namespace Staberina
             d += (float) ObjectManager.Player.GetAutoAttackDamage(unit, true);
 
             var dl = ObjectManager.Player.GetMastery(MasteryData.Ferocity.DoubleEdgedSword);
-            if (dl.IsActive())
+            if (dl != null && dl.IsActive())
             {
                 d *= 1.03f;
             }
 
             var assasin = ObjectManager.Player.GetMastery((MasteryData.Cunning) 83);
-            if (assasin.IsActive() && ObjectManager.Player.CountAlliesInRange(800) == 0)
+            if (assasin != null && assasin.IsActive() && ObjectManager.Player.CountAlliesInRange(800) == 0)
             {
                 d *= 1.015f;
             }
@@ -126,9 +127,24 @@ namespace Staberina
                 d += (float) ObjectManager.Player.GetSummonerSpellDamage(unit, Damage.SummonerSpell.Ignite);
             }
 
-            var tl = ObjectManager.Player.GetMastery(MasteryData.Cunning.ThunderlordsDecree);
-            if (tl.IsActive()) {}
-            if (ItemManager.LudensEcho != null) {}
+            if (damageIndicator)
+            {
+                var tl = ObjectManager.Player.GetMastery(MasteryData.Cunning.ThunderlordsDecree);
+                if (tl != null && tl.IsActive() && !ObjectManager.Player.HasBuff("masterylordsdecreecooldown"))
+                {
+                    d += 10 * ObjectManager.Player.Level + .3f * ObjectManager.Player.FlatPhysicalDamageMod +
+                         .1f * ObjectManager.Player.AbilityPower();
+                }
+            }
+
+            if (ItemManager.LudensEcho != null)
+            {
+                var b = ObjectManager.Player.GetBuff("itemmagicshankcharge");
+                if (b != null && b.IsActive && b.Count >= (damageIndicator ? 70 : 100))
+                {
+                    d += 100 + ObjectManager.Player.AbilityPower() * .1f;
+                }
+            }
 
             return d;
         }
@@ -136,7 +152,7 @@ namespace Staberina
         public static float GetComboDamage(Obj_AI_Base unit)
         {
             return unit.GetComboDamage(
-                SpellManager.Q.IsReady(), SpellManager.W.IsReady(), SpellManager.E.IsReady(), IsRReady(), true);
+                SpellManager.Q.IsReady(), SpellManager.W.IsReady(), SpellManager.E.IsReady(), IsRReady(), true, true);
         }
 
         public static float GetTimeToUnit(Obj_AI_Base unit)
