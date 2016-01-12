@@ -364,10 +364,12 @@ namespace PopBlanc
 
             var pos = Player.ServerPosition.Extend(target.ServerPosition, W.Range + 10);
 
-            if(pos.IsValidWPoint() && W.Cast(pos)) {
+            if (pos.IsValidWPoint() && W.Cast(pos))
+            {
                 Console.WriteLine("AOE: Cast Gapclose W");
                 return true;
-            };
+            }
+            ;
 
             return false;
         }
@@ -417,9 +419,12 @@ namespace PopBlanc
         {
             if (Q.IsReady() && Q.IsActive() && Player.ManaPercent >= Menu.Item("FarmQMana").GetValue<Slider>().Value)
             {
-                var killable = MinionManager.GetMinions(Q.Range).FirstOrDefault(m => Q.IsKillable(m));
+                var killable =
+                    MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.NotAlly)
+                        .FirstOrDefault(m => Q.IsKillable(m));
 
-                if (killable.IsValidTarget() && killable.Health > Player.GetAutoAttackDamage(killable, true) && Q.Cast(killable).IsCasted())
+                if (killable.IsValidTarget() && killable.Health > Player.GetAutoAttackDamage(killable, true) &&
+                    Q.Cast(killable).IsCasted())
                 {
                     return;
                 }
@@ -439,7 +444,7 @@ namespace PopBlanc
             }
 
             var min = Menu.Item("FarmWMinions").GetValue<Slider>().Value;
-            var minions = MinionManager.GetMinions(W.Range);
+            var minions = MinionManager.GetMinions(W.Range, MinionTypes.All, MinionTeam.NotAlly);
 
             if (minions.Count < min)
             {
@@ -579,15 +584,21 @@ namespace PopBlanc
 
         public override void Game_OnWndProc(WndEventArgs args)
         {
-            if ((!Menu.Item("WBackClick").IsActive() && !Menu.Item("RBackClick").IsActive()) || Player.IsDead || args.Msg != 0x202)
+            if ((!Menu.Item("WBackClick").IsActive() && !Menu.Item("RBackClick").IsActive()) || Player.IsDead ||
+                args.Msg != 0x202)
             {
                 return;
             }
 
-            var wPos = WBackPosition.Positions.Where(p => p.Obj.Position.Distance(Game.CursorPos) < 2000).OrderBy(p => p.Obj.Position.Distance(Game.CursorPos));
-            if (wPos.Select(w => w.IsR ? R : W).Any(spell => Menu.Item(spell.Slot + "BackClick").IsActive() && spell.IsReady() && !spell.IsFirstW() && spell.Cast())) {
-                return;
-            }
+            var wPos =
+                WBackPosition.Positions.Where(p => p.Obj.Position.Distance(Game.CursorPos) < 2000)
+                    .OrderBy(p => p.Obj.Position.Distance(Game.CursorPos));
+            if (
+                wPos.Select(w => w.IsR ? R : W)
+                    .Any(
+                        spell =>
+                            Menu.Item(spell.Slot + "BackClick").IsActive() && spell.IsReady() && !spell.IsFirstW() &&
+                            spell.Cast())) {}
         }
 
         private static float GetComboDamage(Obj_AI_Base enemy)

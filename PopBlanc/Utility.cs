@@ -25,6 +25,7 @@ namespace PopBlanc
         {
             return unit.HasBuff("leblancchaosorbm");
         }
+
         public static bool IsValidWPoint(this Vector3 position)
         {
             if (!position.IsValid())
@@ -52,20 +53,21 @@ namespace PopBlanc
     public class WBackPosition
     {
         public static List<WBackPosition> Positions = new List<WBackPosition>();
-        public GameObject Obj;
         private readonly int spawnTime;
         public int EndTime;
+        public GameObject Obj;
+
+        public WBackPosition(GameObject obj)
+        {
+            Obj = obj;
+            spawnTime = Utils.TickCount;
+            EndTime = spawnTime + 4200;
+            Positions.Add(this);
+        }
 
         public bool IsR
         {
             get { return Obj.Name.Contains("RW"); }
-        }
-        public WBackPosition(GameObject obj)
-        {
-            this.Obj = obj;
-            spawnTime = Utils.TickCount;
-            EndTime = spawnTime + 4200;
-            Positions.Add(this);
         }
 
         public static void Initialize()
