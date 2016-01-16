@@ -23,7 +23,7 @@ namespace PopBlanc
             W.SetSkillshot(.5f, 100, 2000, false, SkillshotType.SkillshotCircle);
 
             E = new Spell(SpellSlot.E, 950);
-            E.SetSkillshot(.25f, 70, 1600, true, SkillshotType.SkillshotLine);
+            E.SetSkillshot(.25f, 70, 1750, true, SkillshotType.SkillshotLine);
 
             R = new Spell(SpellSlot.R);
         }

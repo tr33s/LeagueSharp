@@ -524,7 +524,7 @@ namespace PopBlanc
 
             KSTarget = enemies.MinOrDefault(e => e.Health);
 
-            if (!KSTarget.IsValidTarget(E.Range))
+            if (!E.IsInRange(KSTarget) && W.IsInRange(KSTarget))
             {
                 var pos = Player.ServerPosition.Extend(KSTarget.ServerPosition, W.Range + 10);
 
