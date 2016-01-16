@@ -15,6 +15,12 @@ namespace SkinHack
         private static readonly string GameVersion;
         private static readonly Dictionary<int, Model> ObjectList = new Dictionary<int, Model>();
 
+        public static readonly Dictionary<string, int> MinionSkins = new Dictionary<string, int>
+        {
+            { "Pool Party", 2 },
+            { "Snowdown", 6 }
+        };
+
         #region ModelList
 
         public static List<string> ModelList = new List<string>
@@ -673,7 +679,8 @@ namespace SkinHack
 
             if (Program.Config.Item("Minions").IsActive() && MinionManager.IsMinion(unit))
             {
-                unit.SetSkin(unit.CharData.BaseSkinName, 2, 100);
+                var index = MinionSkins[Program.Config.Item("MinionType").GetValue<StringList>().SelectedValue];
+                unit.SetSkin(unit.CharData.BaseSkinName, index, 100);
                 return;
             }
 
@@ -703,6 +710,17 @@ namespace SkinHack
             ObjectList.Add(unit.NetworkId, new Model(unit.CharData.BaseSkinName, unit.BaseSkinId));
         
              */
+        }
+
+        public static void ChangeMinionModels(string skin, bool defaultSkin = false)
+        {
+            var skinId = defaultSkin ? 0 : MinionSkins[skin];
+            Console.WriteLine("SKIN " + skin + " ID" + skinId);
+            foreach (var minion in ObjectManager.Get<Obj_AI_Minion>().Where(m => m.IsValid && MinionManager.IsMinion(m))
+                )
+            {
+                minion.SetSkin(minion.CharData.BaseSkinName, skinId);
+            }
         }
 
         public static bool IsValidModel(this string model)

@@ -19,7 +19,7 @@ namespace SkinHack
 
         private static void Game_OnGameLoad(EventArgs args)
         {
-            var skins = Enumerable.Range(0, 44).Select(n => n.ToString()).ToArray();
+            var skins = Enumerable.Range(0, 53).Select(n => n.ToString()).ToArray();
 
 
             Config = new Menu("SkinHack", "SkinHack", true);
@@ -27,6 +27,8 @@ namespace SkinHack
 
             var champs = Config.AddSubMenu(new Menu("Champions", "Champions"));
             champs.AddItem(new MenuItem("Champions", "Reskin Champions").SetValue(true));
+            var allies = champs.AddSubMenu(new Menu("Allies", "Allies"));
+            var enemies = champs.AddSubMenu(new Menu("Enemies", "Enemies"));
 
             foreach (var hero in HeroManager.AllHeroes.Where(h => !h.ChampionName.Equals("Ezreal")))
             {
@@ -73,7 +75,8 @@ namespace SkinHack
                         }
                     };
                 }
-                champs.AddSubMenu(champMenu);
+                var rootMenu = hero.IsAlly ? allies : enemies;
+                rootMenu.AddSubMenu(champMenu);
             }
             Config.AddToMainMenu();
 
@@ -85,7 +88,22 @@ namespace SkinHack
 
             var minions = Config.AddSubMenu(new Menu("Minions", "Minions"));
             //settings.AddItem(new MenuItem("Pets", "Reskin Pets").SetValue(true));
-            minions.AddItem(new MenuItem("Minions", "Pool Party Minions").SetValue(false));
+            minions.AddItem(new MenuItem("Minions", "Reskin Minions").SetValue(false));
+            var mSkin =
+                minions.AddItem(
+                    new MenuItem("MinionType", "Minion Skin").SetValue(
+                        new StringList(ModelManager.MinionSkins.Keys.ToArray())));
+            minions.Item("Minions").ValueChanged +=
+                delegate(object sender, OnValueChangeEventArgs eventArgs)
+                {
+                    ModelManager.ChangeMinionModels(
+                        mSkin.GetValue<StringList>().SelectedValue, !eventArgs.GetNewValue<bool>());
+                };
+            mSkin.ValueChanged +=
+                (sender, eventArgs) =>
+                {
+                    ModelManager.ChangeMinionModels(eventArgs.GetNewValue<StringList>().SelectedValue);
+                };
 
             Game.OnInput += Game_OnInput;
         }
