@@ -20,6 +20,9 @@ namespace Staberina
         private static int LastWardPlacement;
         private static bool WardJumping;
         private static readonly Random Random = new Random(Utils.TickCount);
+        private static Obj_AI_Hero KSTarget;
+        private static bool CancellingUlt;
+        private static int LastStealthedUlt;
 
         public Katarina()
         {
@@ -47,6 +50,7 @@ namespace Staberina
             var eMenu = spells.AddMenu("E", "E");
             eMenu.AddBool("ECombo", "Use in Combo");
             eMenu.AddBool("EHarass", "Use in Harass");
+            eMenu.AddBool("ETurret", "Block E Under Turret");
             eMenu.AddSlider("EEnemies", "Max Enemies", 5, 1, 5);
             eMenu.Item("EEnemies").SetTooltip("Maximum enemies to E into in Combo.");
 
@@ -76,6 +80,7 @@ namespace Staberina
             rMenu.AddBool("REvade", "Disable Evade while casting R");
             rMenu.AddBool("RCancelNoEnemies", "Cancel R if no enemies", false);
             rMenu.AddKeyBind("RCancelUlt", "Cancel R Key", 'J');
+            rMenu.AddBool("RStealth", "R Stealthed Units", false);
 
             var ks = Menu.AddMenu("Killsteal", "Killsteal");
             ks.AddBool("KSEnabled", "Use Smart KS");
@@ -199,6 +204,12 @@ namespace Staberina
                 return;
             }
 
+            if (Menu.Item("RStealth").IsActive() && R.IsReady() && Player.CountEnemiesInRange(RRange) == 0 && R.Cast())
+            {
+                LastStealthedUlt = Utils.TickCount;
+                return;
+            }
+
             var c = Player.IsChannelingImportantSpell();
 
             if (c)
@@ -209,14 +220,25 @@ namespace Staberina
                 }
 
                 if (Menu.Item("RCancelNoEnemies").IsActive() && Player.CountEnemiesInRange(RRange) == 0 &&
-                    Utility.MoveRandomly())
+                    !CancellingUlt && Utils.TickCount - LastStealthedUlt > 2500)
                 {
-                    return;
+                    CancellingUlt = true;
+                    LeagueSharp.Common.Utility.DelayAction.Add(
+                        300, () =>
+                        {
+                            CancellingUlt = false;
+                            if (Player.CountEnemiesInRange(RRange) == 0 && Utility.MoveRandomly()) {}
+                        });
                 }
             }
 
             if (WardJumping)
             {
+                if (Utils.TickCount - LastWardPlacement < Game.Ping + 100 || E.LastCastedDelay(200))
+                {
+                    return;
+                }
+
                 if (!E.IsReady())
                 {
                     WardJumping = false;
@@ -225,7 +247,7 @@ namespace Staberina
 
                 var ward =
                     ObjectManager.Get<Obj_AI_Minion>()
-                        .Where(o => o.Distance(Game.CursorPos) < 200 && E.IsInRange(o) && MinionManager.IsWard(o))
+                        .Where(o => E.IsInRange(o) && MinionManager.IsWard(o) && o.Buffs.Any(b => b.Caster.IsMe))
                         .OrderBy(o => o.Distance(Game.CursorPos))
                         .ThenByDescending(o => o.DistanceToPlayer())
                         .FirstOrDefault();
@@ -236,7 +258,8 @@ namespace Staberina
                     return;
                 }
 
-                if (E.CastOnUnit(ward))
+                // stop movement to prevent turning around after e
+                if (Player.IssueOrder(GameObjectOrder.Stop, Player.ServerPosition) && E.CastOnUnit(ward))
                 {
                     Console.WriteLine("WARD JUMP");
                     return;
@@ -271,72 +294,88 @@ namespace Staberina
 
         public override void OnCombo(Orbwalking.OrbwalkingMode mode)
         {
+            Combo();
+        }
+
+        private static bool Combo(Obj_AI_Hero forcedTarget = null)
+        {
+            var mode = Orbwalker.ActiveMode;
             var comboMode = Menu.Item("ComboMode").GetValue<StringList>().SelectedIndex;
             var d = comboMode == 0 ? E.Range : Q.Range;
-            var target = TargetSelector.GetTarget(d, TargetSelector.DamageType.Magical);
+            var forceTarget = forcedTarget.IsValidTarget();
+            var target = forceTarget ? forcedTarget : TargetSelector.GetTarget(d, TargetSelector.DamageType.Magical);
 
             if (!target.IsValidTarget())
             {
-                return;
+                return false;
             }
 
-            var q = Q.CanCast(target) && Q.IsActive();
-            var w = W.CanCast(target) && W.IsActive();
-            var e = E.CanCast(target) && E.IsActive() &&
+            var q = Q.CanCast(target) && Q.IsActive(forceTarget);
+            var w = W.CanCast(target) && W.IsActive(forceTarget);
+            var e = E.CanCast(target) && E.IsActive(forceTarget) &&
                     target.CountEnemiesInRange(200) <= Menu.Item("EEnemies").GetValue<Slider>().Value;
-            var r = Utility.IsRReady() && target.IsValidTarget(R.Range);
 
-            if (mode == Orbwalking.OrbwalkingMode.Combo && Menu.Item("ComboKillable").IsActive())
+            if (!forceTarget && Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo &&
+                Menu.Item("ComboKillable").IsActive())
             {
-                var damage = target.GetComboDamage(q, w, e, r, true);
+                var damage = target.GetComboDamage(q, w, e, Utility.IsRReady(), true);
                 if (target.Health > damage)
                 {
-                    return;
+                    return false;
                 }
             }
 
-            var delay = (int) (200 + Game.Ping / 2f + Random.Next(100, 300));
-            if (Q.LastCastedDelay(delay) || E.LastCastedDelay(delay))
+            var delay = (int) (100 + Game.Ping / 2f + Random.Next(150));
+            if (Q.LastCastedDelay(delay) || E.LastCastedDelay(delay) || R.LastCastedDelay(delay))
             {
-                return;
+                return false;
             }
 
-            if (comboMode == 0 && q && e && E.CastOnUnit(target))
+            if (comboMode == 0 && q && e && CastE(target, forceTarget))
             {
-                return;
+                return true;
             }
 
             if (q && Q.CastOnUnit(target))
             {
-                return;
+                return true;
             }
 
-            if (e && E.CastOnUnit(target))
+            if (e && CastE(target, forceTarget))
             {
-                return;
+                return true;
             }
 
             if (w && W.Cast())
             {
-                return;
+                return true;
             }
 
-            if (r && mode == Orbwalking.OrbwalkingMode.Combo)
+            if (Utility.IsRReady() && (forceTarget || mode == Orbwalking.OrbwalkingMode.Combo))
             {
-                if (Menu.Item("RInCombo").IsActive() && R.Cast())
+                if (!forceTarget && Menu.Item("RInCombo").IsActive() && target.IsValidTarget(R.Range) && R.Cast())
                 {
-                    return;
+                    return true;
                 }
 
-                if (!Menu.Item("RCombo").IsActive())
+                if (!forceTarget && !Menu.Item("RCombo").IsActive())
                 {
-                    return;
+                    return false;
                 }
 
                 var enemy =
                     Enemies.FirstOrDefault(h => h.IsValidTarget(R.Range) && h.GetCalculatedRDamage(UltTicks) > h.Health);
-                if (enemy != null && R.Cast()) {}
+                if (enemy != null && R.Cast())
+                {
+                    return true;
+                }
             }
+            return false;
+        }
+
+        private static bool CastE(Obj_AI_Base target, bool skipCheck = false)
+        {
+            return (skipCheck || !Menu.Item("ETurret").IsActive() || !target.UnderTurret(true)) && E.CastOnUnit(target);
         }
 
         private static bool AutoKill()
@@ -353,113 +392,109 @@ namespace Staberina
                 return false;
             }
 
-            var q = Menu.Item("KSQ").IsActive() && Q.IsReady();
-            var w = Menu.Item("KSW").IsActive() && W.IsReady();
-            var e = Menu.Item("KSE").IsActive() && E.IsReady();
-            var r = (Menu.Item("KSR").IsActive() ||
-                     Orbwalker.ActiveMode == Orbwalking.OrbwalkingMode.Combo && Menu.Item("RCombo").IsActive()) &&
-                    Utility.IsRReady();
-
-            var target =
-                Enemies.Where(
-                    h =>
-                        h.IsValidTarget(Q.Range) &&
-                        h.GetComboDamage(q, w && h.IsValidTarget(W.Range), false, r && h.IsValidTarget(R.Range), true) >
-                        h.Health).MinOrDefault(h => h.Health);
-
-            // killable enemies in q range
-            if (target.IsValidTarget())
-            {
-                if (channeling && Utility.MoveRandomly())
-                {
-                    return true;
-                }
-
-                if (q && Q.CanCast(target) && Q.CastOnUnit(target))
-                {
-                    Console.WriteLine("Q KS");
-                    return true;
-                }
-
-                if (w && W.CanCast(target) && W.Cast())
-                {
-                    Console.WriteLine("W KS");
-                    return true;
-                }
-
-                if (r && target.IsValidTarget(R.Range) && R.Cast())
-                {
-                    Console.WriteLine("R KS");
-                    return true;
-                }
-            }
-
-            if (!e || Player.HealthPercent < Menu.Item("KSHealth").GetValue<Slider>().Value)
+            var delay = (int) (150 + Game.Ping / 2f + Random.Next(150));
+            if (Q.LastCastedDelay(delay) || E.LastCastedDelay(delay) || R.LastCastedDelay(delay))
             {
                 return false;
             }
 
-            var maxEnemies = Menu.Item("KSEnemies").GetValue<Slider>().Value;
-
-            // killable enemies in e range
-            if (
-                Enemies.Any(
-                    enemy =>
-                        enemy.IsValidTarget(E.Range) && enemy.CountEnemiesInRange(200) <= maxEnemies &&
-                        enemy.GetComboDamage(q, w, true, r, true) > enemy.Health &&
-                        (!Menu.Item("KSTurret").IsActive() || !enemy.UnderTurret(true)) && E.CastOnUnit(enemy)))
+            if (KSTarget != null && !KSTarget.IsValidTarget(E.Range))
             {
-                return true;
+                KSTarget = null;
             }
 
-            if (Menu.Item("KSGapclose").IsActive())
-            {
-                // killable enemies in range of valid e targets
-                foreach (var unit in Utility.GetETargets())
-                {
-                    foreach (var enemy in
-                        Enemies.Where(
-                            h =>
-                                h.NetworkId != unit.NetworkId && h.IsValidTarget(Q.Range, true, unit.ServerPosition) &&
-                                h.CountEnemiesInRange(200) <= maxEnemies &&
-                                (!Menu.Item("KSTurret").IsActive() || !h.UnderTurret(true))))
-                    {
-                        var d = enemy.GetComboDamage(
-                            q, w && enemy.IsValidTarget(W.Range, true, unit.ServerPosition), false,
-                            r && enemy.IsValidTarget(R.Range, true, unit.ServerPosition), true);
-                        if (d > enemy.Health && E.CastOnUnit(unit))
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            if (!Menu.Item("KSWardJump").IsActive())
-            {
-                return false;
-            }
-
-            var wardSlot = Utility.GetReadyWard();
-
-            if (wardSlot.Equals(SpellSlot.Unknown) || !LastWardPlacement.HasTimePassed(2000))
-            {
-                return false;
-            }
-
-            var range = Player.Spellbook.GetSpell(wardSlot).SData.CastRange;
-
-            // killable enemies that we can ward hop to
             foreach (var enemy in
                 Enemies.Where(
-                    h => h.IsValidTarget(range + Q.Range) && (!Menu.Item("KSTurret").IsActive() || !h.UnderTurret(true)))
-                )
+                    h =>
+                        h.IsValidTarget(E.Range + Q.Range) && !h.IsZombie &&
+                        (KSTarget == null || KSTarget.NetworkId == h.NetworkId)).OrderBy(h => h.Health))
             {
+                if (E.IsInRange(enemy))
+                {
+                    if (W.IsCastable(enemy, true) && W.Cast())
+                    {
+                        KSTarget = enemy;
+                        return true;
+                    }
+
+                    if (Q.IsCastable(enemy, true) && Q.CastOnUnit(enemy))
+                    {
+                        KSTarget = enemy;
+                        return true;
+                    }
+
+                    if (Q.IsCastable(enemy, true, false) && W.IsCastable(enemy, true, false) &&
+                        enemy.GetComboDamage(Q, W) > enemy.Health && Q.CastOnUnit(enemy))
+                    {
+                        KSTarget = enemy;
+                        return true;
+                    }
+
+                    if (E.IsCastable(enemy, true) && E.CastOnUnit(enemy))
+                    {
+                        KSTarget = enemy;
+                        return true;
+                    }
+
+                    if (enemy.GetKSDamage() > enemy.Health && Combo(enemy))
+                    {
+                        KSTarget = enemy;
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                // doing some gapclosers and hops here
+                if (!E.IsActive(true) || !E.IsReady())
+                {
+                    continue;
+                }
+
+                var closestTarget = Utility.GetClosestETarget(enemy);
+                if (Menu.Item("KSGapclose").IsActive() && closestTarget != null)
+                {
+                    var gapcloseDmg = enemy.GetGapcloseDamage(closestTarget);
+                    if (enemy.Health < gapcloseDmg &&
+                        enemy.CountEnemiesInRange(300) <= Menu.Item("KSEnemies").GetValue<Slider>().Value &&
+                        (!Menu.Item("KSTurret").IsActive() || !closestTarget.UnderTurret(true)) &&
+                        E.CastOnUnit(closestTarget))
+                    {
+                        return true;
+                    }
+                }
+                if (!Menu.Item("KSWardJump").IsActive())
+                {
+                    continue;
+                }
+
+                var wardSlot = Utility.GetReadyWard();
+
+                if (wardSlot.Equals(SpellSlot.Unknown) || !LastWardPlacement.HasTimePassed(2000))
+                {
+                    continue;
+                }
+
+                var range = Player.Spellbook.GetSpell(wardSlot).SData.CastRange;
+
+                if (!enemy.IsValidTarget(Q.Range + range))
+                {
+                    continue;
+                }
+
                 var pos = Player.ServerPosition.Extend(enemy.ServerPosition, range);
-                var d = enemy.GetComboDamage(
-                    q, w && enemy.IsValidTarget(W.Range, true, pos), false, r && enemy.IsValidTarget(R.Range, true, pos),
-                    true);
-                if (d > enemy.Health && Player.Spellbook.CastSpell(wardSlot, pos))
+
+                if (Menu.Item("KSTurret").IsActive() && pos.UnderTurret(true))
+                {
+                    continue;
+                }
+
+                if (pos.CountEnemiesInRange(300) - 1 > 2)
+                {
+                    continue;
+                }
+
+                if (enemy.Health < enemy.GetGapcloseDamage(pos) && Player.Spellbook.CastSpell(wardSlot, pos))
                 {
                     LastWardPlacement = Utils.TickCount;
                     WardJumping = true;
@@ -545,41 +580,6 @@ namespace Staberina
                 CastWAfterE = false;
                 W.Cast();
             }
-        }
-
-        public override void GameObject_OnCreate(GameObject sender, EventArgs args)
-        {
-            if (!Menu.Item("FleeEnabled").IsActive() || !Menu.Item("FleeE").IsActive() || !E.IsReady())
-            {
-                return;
-            }
-
-            var unit = sender as Obj_AI_Minion;
-            if (unit == null || !unit.IsValid || unit.DistanceToPlayer() > E.Range)
-            {
-                return;
-            }
-
-            Console.WriteLine(unit.Name);
-            if (unit.Name.ToLower().Contains("ward") && !unit.Name.ToLower().Equals("wardcorpse"))
-            {
-                LeagueSharp.Common.Utility.DelayAction.Add(
-                    50, () =>
-                    {
-                        if (unit.Buffs.Any(b => b.SourceName.Equals(Player.ChampionName)))
-                        {
-                            E.CastOnUnit(unit);
-                        }
-                    });
-                return;
-            }
-
-            if (unit.Distance(Game.CursorPos) > 200) // random ass object
-            {
-                return;
-            }
-
-            E.CastOnUnit(unit);
         }
 
         public override void OnFarm(Orbwalking.OrbwalkingMode mode)

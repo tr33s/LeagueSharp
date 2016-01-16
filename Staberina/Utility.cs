@@ -23,6 +23,14 @@ namespace Staberina
             return ObjectManager.Player.IssueOrder(GameObjectOrder.MoveTo, pos, false);
         }
 
+        public static Obj_AI_Base GetClosestETarget(Obj_AI_Base unit)
+        {
+            return
+                GetETargets(unit.ServerPosition)
+                    .Where(o => o.NetworkId != unit.NetworkId && unit.Distance(o) < SpellManager.Q.Range)
+                    .MinOrDefault(o => o.Distance(unit));
+        }
+
         public static Obj_AI_Base GetClosestETarget(Vector3 position)
         {
             return
@@ -36,7 +44,10 @@ namespace Staberina
         {
             return
                 ObjectManager.Get<Obj_AI_Base>()
-                    .Where(o => o.IsValidTarget(SpellManager.E.Range, false, position) && !o.IsMe);
+                    .Where(
+                        o =>
+                            o.IsValidTarget(SpellManager.E.Range, false, position) && !o.IsMe &&
+                            SpellManager.E.IsInRange(o));
         }
 
         public static bool IsRReady()
@@ -58,6 +69,41 @@ namespace Staberina
             }
 
             return ward.Contains(SpellSlot.Trinket) ? SpellSlot.Trinket : ward.FirstOrDefault();
+        }
+
+        public static float GetGapcloseDamage(this Obj_AI_Base target, Obj_AI_Base gapclose)
+        {
+            var q = SpellManager.Q.IsReady() && gapclose.Distance(target) < SpellManager.Q.Range &&
+                    SpellManager.Q.IsActive(true);
+            var w = SpellManager.W.IsReady() && gapclose.Distance(target) < SpellManager.W.Range &&
+                    SpellManager.W.IsActive(true);
+            var r = IsRReady() && gapclose.Distance(target) < SpellManager.R.Range && SpellManager.R.IsActive(true);
+            return GetComboDamage(target, q, w, false, r, true);
+        }
+
+        public static float GetGapcloseDamage(this Obj_AI_Base target, Vector3 position)
+        {
+            var q = SpellManager.Q.IsReady() && target.Distance(position) + 15 <= SpellManager.Q.Range &&
+                    SpellManager.Q.IsActive(true);
+            var w = SpellManager.W.IsReady() && target.Distance(position) + 15 <= SpellManager.W.Range &&
+                    SpellManager.W.IsActive(true);
+            var r = IsRReady() && target.Distance(position) + 15 <= SpellManager.R.Range &&
+                    SpellManager.R.IsActive(true);
+            return GetComboDamage(target, q, w, false, r, true);
+        }
+
+        public static float GetKSDamage(this Obj_AI_Base target, bool gapcloseE = false)
+        {
+            var q = SpellManager.Q.IsReady() && SpellManager.Q.IsActive(true);
+            var w = SpellManager.W.IsReady() && SpellManager.W.IsActive(true);
+            var e = !gapcloseE && SpellManager.E.IsReady() && SpellManager.E.IsActive(true);
+            var r = SpellManager.R.IsReady() && SpellManager.R.IsActive(true);
+            return target.GetComboDamage(q, w, e, r, true);
+        }
+
+        public static float GetComboDamage(this Obj_AI_Base target, params Spell[] spells)
+        {
+            return spells.Sum(spell => spell.GetDamage(target)) + (spells.Contains(SpellManager.Q) && spells.Length > 1 ? SpellManager.Q.GetDamage(target, 1) : 0);
         }
 
         public static float GetComboDamage(this Obj_AI_Base unit,

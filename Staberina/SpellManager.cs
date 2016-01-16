@@ -20,8 +20,8 @@ namespace Staberina
             E = new Spell(SpellSlot.E, 700);
             R = new Spell(SpellSlot.R, 550);
 
-            Q.SetTargetted(400, 1400);
-            E.SetTargetted(400, 1500);
+            //Q.SetTargetted(400, 1400);
+            //E.SetTargetted(400, 1500);
         }
 
         public static void Initialize(Menu menu, Orbwalking.Orbwalker orbwalker)
@@ -30,11 +30,18 @@ namespace Staberina
             _orbwalker = orbwalker;
         }
 
-        public static bool IsActive(this Spell spell)
+        public static bool IsActive(this Spell spell, bool ks = false)
         {
-            var name = spell.Slot + _orbwalker.ActiveMode.GetModeString();
+            var name = string.Format(
+                "{0}{1}{2}", ks ? "KS" : string.Empty, spell.Slot,
+                ks ? string.Empty : _orbwalker.ActiveMode.GetModeString());
             var item = _menu.Item(name);
             return item != null && item.IsActive();
+        }
+
+        public static bool IsCastable(this Spell spell, Obj_AI_Base target, bool ks = false, bool checkKillable = true)
+        {
+            return spell.CanCast(target) && spell.IsActive(ks) && (!checkKillable || spell.IsKillable(target));
         }
     }
 }
