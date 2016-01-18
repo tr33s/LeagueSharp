@@ -50,18 +50,20 @@ namespace Staberina
             var eMenu = spells.AddMenu("E", "E");
             eMenu.AddBool("ECombo", "Use in Combo");
             eMenu.AddBool("EHarass", "Use in Harass");
-            eMenu.AddBool("ETurret", "Block E Under Turret");
+            eMenu.AddBool("ETurret", "Block E Under Turret", false);
             eMenu.AddSlider("EEnemies", "Max Enemies", 5, 1, 5);
             eMenu.Item("EEnemies").SetTooltip("Maximum enemies to E into in Combo.");
 
             var rMenu = spells.AddMenu("R", "R");
 
+            rMenu.AddBool("RInCombo", "Always R in Combo", false);
+            rMenu.Item("RInCombo").SetTooltip("Overrides Smart R");
             rMenu.AddBool("RCombo", "Smart R");
             rMenu.Item("RCombo").SetTooltip("Use R in Combo when killable enemy is around");
             rMenu.AddSlider("RUltTicks", "Smart R Ticks", 7, 1, 10);
             rMenu.Item("RUltTicks").SetTooltip("For damage calculation. One tick is 250 ms of channeling.");
 
-            rMenu.AddSlider("RRangeDecrease", "Decrease Range", 30);
+            rMenu.AddSlider("RRangeDecrease", "Decrease Spell Range", 30);
             rMenu.Item("RRangeDecrease").ValueChanged += (sender, args) =>
             {
                 R.Range = RRange - args.GetNewValue<Slider>().Value;
@@ -75,7 +77,6 @@ namespace Staberina
             };
             R.Range = RRange - rMenu.Item("RRangeDecrease").GetValue<Slider>().Value;
 
-            rMenu.AddBool("RInCombo", "Always R in Combo", false);
             rMenu.AddBool("RMovement", "Disable Movement while casting R");
             rMenu.AddBool("REvade", "Disable Evade while casting R");
             rMenu.AddBool("RCancelNoEnemies", "Cancel R if no enemies", false);
@@ -181,6 +182,7 @@ namespace Staberina
             SpellManager.Initialize(Menu, Orbwalker);
 
             Obj_AI_Base.OnIssueOrder += Obj_AI_Base_OnIssueOrder;
+
             Menu.AddToMainMenu();
         }
 
@@ -385,6 +387,7 @@ namespace Staberina
                 return false;
             }
 
+            var minHealth = Menu.Item("KSHealth").GetValue<Slider>().Value;
             var channeling = Player.IsChannelingImportantSpell();
 
             if (channeling && !Menu.Item("KSRCancel").IsActive())
@@ -428,6 +431,11 @@ namespace Staberina
                     {
                         KSTarget = enemy;
                         return true;
+                    }
+
+                    if (Player.HealthPercent < minHealth)
+                    {
+                        continue;
                     }
 
                     if (E.IsCastable(enemy, true) && E.CastOnUnit(enemy))

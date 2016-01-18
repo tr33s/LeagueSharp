@@ -103,7 +103,8 @@ namespace Staberina
 
         public static float GetComboDamage(this Obj_AI_Base target, params Spell[] spells)
         {
-            return spells.Sum(spell => spell.GetDamage(target)) + (spells.Contains(SpellManager.Q) && spells.Length > 1 ? SpellManager.Q.GetDamage(target, 1) : 0);
+            return spells.Sum(spell => spell.GetDamage(target)) +
+                   (spells.Contains(SpellManager.Q) && spells.Length > 1 ? SpellManager.Q.GetDamage(target, 1) : 0);
         }
 
         public static float GetComboDamage(this Obj_AI_Base unit,
