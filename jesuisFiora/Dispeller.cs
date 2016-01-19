@@ -21,7 +21,7 @@ namespace jesuisFiora
             new Dispel("Leblanc", "leblancsoulshacklem", SpellSlot.R).Add();
             new Dispel("Morgana", "soulshackles", SpellSlot.R).Add();
             new Dispel("Zed", "zedultexecute", SpellSlot.R).Add();
-            new Dispel("Fizz", "fizzmarinerdoombomb", SpellSlot.R, 500).Add();
+            new Dispel("Fizz", "fizzmarinerdoombomb", SpellSlot.R).Add();
         }
 
         public static List<Dispel> Dispells
@@ -66,8 +66,8 @@ namespace jesuisFiora
                     continue;
                 }
 
-                var t = (buff.EndTime - Game.Time) * 1000f + dispel.Offset;
-                var wT = w.Delay * 1000f + Game.Ping / 2f + 250;
+                var t = (buff.EndTime - Game.Time) * 1000f + dispel.Offset + 250;
+                var wT = w.Delay * 1000f + Game.Ping / 2f;
                 Console.WriteLine("T: {0} WT: {1}", t, wT);
                 if (t < wT)
                 {

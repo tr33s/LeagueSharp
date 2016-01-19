@@ -273,6 +273,7 @@ namespace jesuisFiora
             BlockedSpells.Add(
                 "Viktor",
                 new List<BlockedSpell> { q, new BlockedSpell("viktorqbuff", "Empowered Q") { IsAutoAttack = true } });
+            BlockedSpells.Add("Vladimir", new List<BlockedSpell> { q });
             BlockedSpells.Add(
                 "Volibear", new List<BlockedSpell> { new BlockedSpell("VolibearQAttack", "Empowered Q", true), w });
             BlockedSpells.Add("Warwick", new List<BlockedSpell> { q });

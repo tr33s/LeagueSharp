@@ -907,10 +907,12 @@ namespace jesuisFiora
             dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.HotPink);
             dmg.AddBool("Killable", "Killable Text");
 
-            Menu.AddList("TargetSelector", "Target Selector: ", new[] { "Target Selector", "Locked Target Selector" });
-            Menu.Item("TargetSelector").SetTooltip("Locked TS attempts to stick to the same target.", ScriptColor);
+            var misc = Menu.AddMenu("Misc", "Misc");
+            misc.AddList("TargetSelector", "Target Selector: ", new[] { "Normal", "Locked" });
+            misc.Item("TargetSelector").SetTooltip("Locked TS attempts to stick to the same target.", ScriptColor);
+            misc.AddInfo("TSInfo", "Locked TS attempts to lock to the same target.", ScriptColor);
+            misc.AddBool("Sounds", "Sounds");
 
-            Menu.AddBool("Sounds", "Sounds");
             Menu.AddInfo("Info", "By Trees and Lilith!", ScriptColor);
             Menu.AddToMainMenu();
 
