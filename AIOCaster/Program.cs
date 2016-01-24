@@ -1,65 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using LeagueSharp;
-using LeagueSharp.Common;
-using LeagueSharp.SDK.Core.Enumerations;
-using LeagueSharp.SDK.Core.Events;
-using LeagueSharp.SDK.Core.Wrappers.Spells.Database;
+using LeagueSharp.SDK;
+using LeagueSharp.SDK.Core.UI.IMenu;
+using LeagueSharp.SDK.Core.UI.IMenu.Values;
 using LeagueSharp.SDK.MoreLinq;
+using SharpDX;
 
 namespace AIOCaster
 {
     internal class Program
     {
-        public static List<DatabaseEntry> Spells = new List<DatabaseEntry>();
+        public static List<SpellDatabaseEntry> Spells = new List<SpellDatabaseEntry>();
         public static Menu Menu;
-        public static Orbwalking.Orbwalker Orbwalker;
+        public static Menu SpellMenu;
 
         public static Obj_AI_Hero Player
         {
-            get { return ObjectManager.Player; }
-        }
-
-        public static bool SDKOrbwalker
-        {
-            get { return Menu.Item("SDKOrbwalker").IsActive(); }
+            get { return GameObjects.Player; }
         }
 
         private static void Main(string[] args)
         {
-            Load.OnLoad += Game_OnGameLoad;
+            Events.OnLoad += Game_OnGameLoad;
         }
 
         private static void Game_OnGameLoad(object sender, EventArgs e)
         {
-            if (!Database.Spells.Any(s => s.ChampionName.Equals(Player.ChampionName)))
+            if (!SpellDatabase.Spells.Any(s => s.ChampionName.Equals(Player.ChampionName)))
             {
                 return;
             }
 
             Menu = new Menu("AIOCaster", "AIOCaster", true);
 
-            //Menu.AddItem(new MenuItem("SDKOrbwalker", "Use SDK Orbwalker [RELOAD]").SetValue(false));
-
-            //if (!SDKOrbwalker)
-            {
-                var orbMenu = Menu.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
-                Orbwalker = new Orbwalking.Orbwalker(orbMenu);
-            }
-
-
-            var spellMenu = Menu.AddSubMenu(new Menu("Spells", "Spells"));
-            Menu.AddItem(new MenuItem("Dashes", "Load Dashes [RELOAD]").SetValue(false));
-            Menu.AddItem(new MenuItem("KS", "Killsteal").SetValue(true));
-            Menu.AddItem(new MenuItem("Drawings", "Disable Drawings").SetValue(false));
+            SpellMenu = Menu.Add(new Menu("Spells", "Spells"));
+            Menu.Add(new MenuBool("Dashes", "Load Dashes [RELOAD]"));
+            Menu.Add(new MenuBool("KS", "Killsteal", true));
+            Menu.Add(new MenuBool("DisableDraw", "Disable Drawings"));
 
             foreach (var spell in
-                Database.Spells.Where(
+                SpellDatabase.Spells.Where(
                     s =>
-                        s.ChampionName.Equals(Player.ChampionName) && s.SpellType.IsSkillShot() &&
-                        (Menu.Item("Dashes").IsActive() || !s.SpellTags.Contains(SpellTags.Dash))))
+                        s.ChampionName.Equals(Player.ChampionName) && s.CastType.IsSkillShot() &&
+                        (Menu.GetValue<MenuBool>("Dashes").Value || !s.SpellTags.Contains(SpellTags.Dash))))
             {
                 Spells.Add(spell);
             }
@@ -67,17 +52,17 @@ namespace AIOCaster
             foreach (var spell in Spells.DistinctBy(s => s.Slot))
             {
                 var s = spell.Slot.ToString();
-                var menu = spellMenu.AddSubMenu(new Menu(s, s));
-                menu.AddItem(new MenuItem(s + "Combo", "Use in Combo", true).SetValue(true));
-                menu.AddItem(new MenuItem(s + "Mixed", "Use in Harass", true).SetValue(true));
-
+                var menu = SpellMenu.Add(new Menu(s, s));
+                menu.Add(new MenuBool(s + "Combo" + Player.ChampionName, "Use in Combo", true));
+                menu.Add(new MenuBool(s + "Hybrid" + Player.ChampionName, "Use in Hybrid", true));
                 if (spell.Radius < 5000)
                 {
-                    menu.AddItem(
-                        new MenuItem(s + "Draw", "Draw Range", true).SetValue(new Circle(true, Color.Red, spell.Range)));
+                    menu.Add(new MenuBool(s + "Draw" + Player.ChampionName, "Draw Range"));
+                    menu.Add(new MenuColor(s + "Color" + Player.ChampionName, "Color", Color.Red));
                 }
             }
-            Menu.AddToMainMenu();
+
+            Menu.Attach();
 
             Game.OnUpdate += Game_OnUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -85,17 +70,21 @@ namespace AIOCaster
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            if (Menu.Item("Drawings").IsActive())
+            if (Menu.GetValue<MenuBool>("DisableDraw").Value)
             {
                 return;
             }
 
-            foreach (var spell in Spells)
+            foreach (var spell in Spells.Where(s => s.Range < 5000))
             {
-                var circle = Menu.Item(spell.Slot + "Draw", true).GetValue<Circle>();
-                if (circle.Active)
+                if (
+                    Menu["Spells"][spell.Slot.ToString()].GetValue<MenuBool>(spell.Slot + "Draw" + Player.ChampionName)
+                        .Value)
                 {
-                    Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
+                    var color =
+                        Menu["Spells"][spell.Slot.ToString()].GetValue<MenuColor>(
+                            spell.Slot + "Color" + Player.ChampionName).Color;
+                    Utility.RenderCircle(Player.Position, spell.Range, color);
                 }
             }
         }
@@ -107,46 +96,49 @@ namespace AIOCaster
                 return;
             }
 
-            if (Menu.Item("KS").IsActive() && CastSequence("KS"))
+            if (Menu.GetValue<MenuBool>("KS").Value && CastSequence("KS"))
             {
                 return;
             }
 
-            if (Orbwalker.ActiveMode.IsComboMode() && CastSequence()) {}
+            if (Variables.Orbwalker.ActiveMode.IsComboMode() && CastSequence()) {}
         }
 
         private static bool CastSequence(string mode = null)
         {
-            mode = string.IsNullOrEmpty(mode) ? Orbwalker.ActiveMode.ToString() : mode;
+            Console.WriteLine("Cast Sequence");
+            mode = string.IsNullOrEmpty(mode) ? Variables.Orbwalker.ActiveMode.ToString() : mode;
 
-            foreach (var spell in Spells.Where(s => Player.Spellbook.GetSpell(s.Slot).IsReady()))
+            foreach (var spell in Spells.Where(s => s.Slot.IsReady()))
             {
-                if (mode != "KS" && !Menu.Item(spell.Slot + mode, true).IsActive())
+                try
                 {
-                    continue;
+                    if (mode != "KS" &&
+                        !Menu["Spells"][spell.Slot.ToString()].GetValue<MenuBool>(
+                            spell.Slot + mode + Player.ChampionName).Value)
+                    {
+                        continue;
+                    }
+
+                    if (!spell.IsCurrentSpell())
+                    {
+                        continue;
+                    }
+
+                    var s = spell.CreateSpell();
+                    var targ = s.GetTarget();
+
+                    if (!targ.IsValidTarget())
+                    {
+                        continue;
+                    }
+
+                    if ((mode != "KS" || s.CanKill(targ)) && s.Cast(targ) == CastStates.SuccessfullyCasted)
+                    {
+                        return true;
+                    }
                 }
-
-                if (!Player.Spellbook.GetSpell(spell.Slot).Name.ToLower().Equals(spell.SpellName.ToLower()))
-                {
-                    continue;
-                }
-
-                var s = new Spell(spell.Slot, spell.Range);
-                var collision = spell.CollisionObjects.Length > 1;
-                var type = spell.SpellType.GetSkillshotType();
-
-                s.SetSkillshot(spell.Delay, spell.Width, spell.MissileSpeed, collision, type);
-                var targ = s.GetTarget();
-
-                if (!targ.IsValidTarget())
-                {
-                    continue;
-                }
-
-                if ((mode != "KS" || s.IsKillable(targ)) && s.Cast(targ).IsCasted())
-                {
-                    return true;
-                }
+                catch {}
             }
 
             return false;
