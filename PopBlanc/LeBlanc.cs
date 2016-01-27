@@ -13,8 +13,9 @@ namespace PopBlanc
 {
     internal class LeBlanc : Champion
     {
+        private const int ERange = 950;
         private static Obj_AI_Hero KSTarget;
-        private static readonly int ERange = 950;
+        private static readonly Random Random = new Random(Utils.TickCount);
 
         public LeBlanc()
         {
@@ -161,6 +162,11 @@ namespace PopBlanc
             Menu.AddToMainMenu();
         }
 
+        private static int Delay
+        {
+            get { return (int) (200 + Game.Ping / 2f + Random.Next(100)); }
+        }
+
         private static int WCastTime
         {
             get { return (int) (1000 * W.Delay + Game.Ping / 2f); }
@@ -249,14 +255,12 @@ namespace PopBlanc
 
         private static void Combo(Obj_AI_Hero targ = null, bool force = false)
         {
-            if (R.IsReady() && Player.LastCastedspell() != null && Player.LastCastedspell().Name.Equals(Q.Instance.Name) &&
-                (R.GetSpellSlot() != SpellSlot.Q || Utils.TickCount - Player.LastCastedSpellT() < 250 + Game.Ping / 2f))
+            if (Q.LastCastedDelay(Delay) || R.LastCastedDelay(Delay))
             {
-                Console.WriteLine("DELAY");
                 return;
             }
 
-            if (CastSecondW())
+            if (!force && CastSecondW())
             {
                 return;
             }
@@ -286,7 +290,7 @@ namespace PopBlanc
             SpellManager.UpdateUltimate();
             if (R.CanCast(target) && R.IsActive(force) && R.GetSpellSlot() == SpellSlot.Q && R.Cast(target).IsCasted())
             {
-                Console.WriteLine("Combo: Cast R([Q})");
+                Console.WriteLine("Combo: Cast R(Q)");
                 return;
             }
 
@@ -477,7 +481,7 @@ namespace PopBlanc
 
             if (Menu.Item("FleeW").IsActive() && W.IsReady() && W.IsFirstW())
             {
-                var pos = Player.ServerPosition.Extend(Game.CursorPos, W.Range + 10);
+                var pos = Player.ServerPosition.Extend(Game.CursorPos, W.Range);
                 if (W.Cast(pos))
                 {
                     return true;
@@ -487,7 +491,7 @@ namespace PopBlanc
             SpellManager.UpdateUltimate();
             if (Menu.Item("FleeRW").IsActive() && R.IsReady() && R.GetSpellSlot() == SpellSlot.W && R.IsFirstW())
             {
-                var pos = Player.ServerPosition.Extend(Game.CursorPos, W.Range + 10);
+                var pos = Player.ServerPosition.Extend(Game.CursorPos, W.Range);
                 if (R.Cast(pos))
                 {
                     return true;
@@ -524,11 +528,17 @@ namespace PopBlanc
 
             KSTarget = enemies.MinOrDefault(e => e.Health);
 
-            if (!E.IsInRange(KSTarget) && W.IsInRange(KSTarget))
+            if (KSTarget == null || !KSTarget.IsValid)
             {
-                var pos = Player.ServerPosition.Extend(KSTarget.ServerPosition, W.Range + 10);
+                return false;
+            }
 
-                if (!pos.IsValidWPoint() || !W.Cast(pos))
+            var pos = Player.ServerPosition.Extend(KSTarget.ServerPosition, W.Range);
+
+            if (!E.IsInRange(KSTarget) && KSTarget.IsValidTarget(E.Range + W.Range) && KSTarget.Health < GetKSDamage(KSTarget, false, pos))
+            {
+
+                if (!pos.IsValidWPoint() || !W.IsFirstW() || !W.Cast(pos))
                 {
                     return false;
                 }
@@ -537,8 +547,13 @@ namespace PopBlanc
                 return true;
             }
 
-            Combo(KSTarget, true);
-            return true;
+            if (KSTarget.Health < GetKSDamage(KSTarget))
+            {
+                Combo(KSTarget, true);
+                return true;
+            }
+
+            return false;
         }
 
         public override void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
@@ -548,19 +563,23 @@ namespace PopBlanc
                 return;
             }
 
-            if (gapcloser.Sender.IsValidTarget(E.Range) && E.Cast(gapcloser.Sender).IsCasted() &&
-                Menu.Item("AntiGapcloserR").IsActive())
-            {
-                LeagueSharp.Common.Utility.DelayAction.Add(
-                    (int) (200 + 1000 * (E.Delay + Game.Ping / 2f)), () =>
+            LeagueSharp.Common.Utility.DelayAction.Add(
+                150, () =>
+                {
+                    if (gapcloser.Sender.IsValidTarget(E.Range) && E.Cast(gapcloser.Sender).IsCasted() &&
+                        Menu.Item("AntiGapcloserR").IsActive())
                     {
-                        SpellManager.UpdateUltimate();
-                        if (R.GetSpellSlot() == SpellSlot.E)
-                        {
-                            R.Cast(gapcloser.Sender);
-                        }
-                    });
-            }
+                        LeagueSharp.Common.Utility.DelayAction.Add(
+                            (int) (200 + 1000 * E.Delay + Game.Ping / 2f), () =>
+                            {
+                                SpellManager.UpdateUltimate();
+                                if (R.GetSpellSlot() == SpellSlot.E)
+                                {
+                                    R.Cast(gapcloser.Sender);
+                                }
+                            });
+                    }
+                });
         }
 
         public override void Drawing_OnDraw(EventArgs args)
@@ -599,6 +618,56 @@ namespace PopBlanc
                         spell =>
                             Menu.Item(spell.Slot + "BackClick").IsActive() && spell.IsReady() && !spell.IsFirstW() &&
                             spell.Cast())) {}
+        }
+
+        private static float GetKSDamage(Obj_AI_Base enemy, bool includeW = true, Vector3 position = default(Vector3))
+        {
+            var damage = 0d;
+
+            if (Q.IsReady() && enemy.IsValidTarget(Q.Range, true, position))
+            {
+                var q = Q.GetDamage(enemy);
+                damage += q;
+
+                if (enemy.HasQBuff() || enemy.HasQRBuff())
+                {
+                    damage += q;
+                }
+            }
+
+            if (includeW && W.IsReady() && W.IsFirstW() &&
+                enemy.IsValidTarget(W.Range, true, position))
+            {
+                damage += W.GetDamage(enemy);
+            }
+
+            if (E.IsReady() && enemy.IsValidTarget(E.Range, true, position))
+            {
+                SpellManager.EPrediction.UpdateSourcePosition(position, position);
+                var pred = SpellManager.EPrediction.GetPrediction(enemy);
+                if (pred.Hitchance > HitChance.Medium)
+                {
+                    damage += E.GetDamage(enemy);
+                }
+            }
+
+            if (R.IsReady() && enemy.IsValidTarget(R.Range, true, position))
+            {
+                var d = GetUltimateDamage(enemy, SpellSlot.Unknown);
+                if (enemy.HasQBuff() || enemy.HasQRBuff())
+                {
+                    d += Q.GetDamage(enemy);
+                }
+
+                damage += d;
+            }
+
+            if (TreeLib.Managers.SpellManager.Ignite != null && TreeLib.Managers.SpellManager.Ignite.IsReady())
+            {
+                damage += Player.GetSummonerSpellDamage(enemy, Damage.SummonerSpell.Ignite);
+            }
+
+            return (float) damage;
         }
 
         private static float GetComboDamage(Obj_AI_Base enemy)

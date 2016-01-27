@@ -10,6 +10,7 @@ namespace PopBlanc
         public static Spell W;
         public static Spell E;
         public static Spell R;
+        public static Spell EPrediction;
 
         private static Orbwalking.Orbwalker _orbwalker;
         private static Menu _menu;
@@ -24,6 +25,9 @@ namespace PopBlanc
 
             E = new Spell(SpellSlot.E, 950);
             E.SetSkillshot(.25f, 70, 1750, true, SkillshotType.SkillshotLine);
+
+            EPrediction = new Spell(SpellSlot.E, 950);
+            EPrediction.SetSkillshot(.25f, 70, 1750, true, SkillshotType.SkillshotLine);
 
             R = new Spell(SpellSlot.R);
         }
