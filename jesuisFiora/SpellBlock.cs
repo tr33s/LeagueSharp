@@ -225,7 +225,6 @@ namespace jesuisFiora
             BlockedSpells.Add("Skarner", new List<BlockedSpell> { r });
             BlockedSpells.Add("Syndra", new List<BlockedSpell> { r });
             BlockedSpells.Add("Swain", new List<BlockedSpell> { q, e });
-            BlockedSpells.Add("TahmKench", new List<BlockedSpell> { w });
             BlockedSpells.Add(
                 "Talon",
                 new List<BlockedSpell>
