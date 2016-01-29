@@ -281,14 +281,14 @@ namespace PopBlanc
                 return;
             }
 
-            if (Q.CanCast(target) && Q.IsActive(force) && Q.Cast(target).IsCasted())
+            if (Q.CanCast(target) && Q.IsActive(force) && Q.CastOnUnit(target))
             {
                 Console.WriteLine("Combo: Cast Q");
                 return;
             }
 
             SpellManager.UpdateUltimate();
-            if (R.CanCast(target) && R.IsActive(force) && R.GetSpellSlot() == SpellSlot.Q && R.Cast(target).IsCasted())
+            if (R.CanCast(target) && R.IsActive(force) && R.GetSpellSlot() == SpellSlot.Q && R.CastOnUnit(target))
             {
                 Console.WriteLine("Combo: Cast R(Q)");
                 return;
@@ -428,7 +428,7 @@ namespace PopBlanc
                         .FirstOrDefault(m => Q.IsKillable(m));
 
                 if (killable.IsValidTarget() && killable.Health > Player.GetAutoAttackDamage(killable, true) &&
-                    Q.Cast(killable).IsCasted())
+                    Q.CastOnUnit(killable))
                 {
                     return;
                 }
@@ -556,7 +556,7 @@ namespace PopBlanc
             return false;
         }
 
-        public override void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
+        public override void AntiGapcloser_OnEnemyGapcloser(LeagueSharp.Common.ActiveGapcloser gapcloser)
         {
             if (!E.IsReady() || !Menu.Item("AntiGapcloser").IsActive())
             {
