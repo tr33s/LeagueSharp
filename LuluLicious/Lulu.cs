@@ -147,6 +147,7 @@ namespace LuluLicious
             superman.AddInfo("SupermanInfo2", "Set to 0 to never speedy up ally.", Color.Red);
             superman.AddKeyBind("Superman", "Use Speedy Up!", 'A');
 
+            misc.AddBool("Support", "Support Mode", false);
             misc.AddBool("Sounds", "Sounds");
 
             if (misc.Item("Sounds").IsActive())
@@ -164,6 +165,13 @@ namespace LuluLicious
                 { SpellSlot.E, new[] { 0, 60, 70, 80, 90, 100 } },
                 { SpellSlot.R, new[] { 0, 0, 0, 0, 0, 0 } }
             };
+
+            var dmg = draw.AddMenu("DamageIndicator", "Damage Indicator");
+            dmg.AddBool("DmgEnabled", "Draw Damage Indicator");
+            dmg.AddCircle("HPColor", "Predicted Health Color", System.Drawing.Color.White);
+            dmg.AddCircle("FillColor", "Damage Color", System.Drawing.Color.MediumPurple);
+            dmg.AddBool("Killable", "Killable Text");
+            DamageIndicator.Initialize(dmg, Utility.GetComboDamage);
 
             ManaBarIndicator.Initialize(draw, manaCost);
             Pix.Initialize(Menu.Item("DrawPix"));
@@ -229,7 +237,7 @@ namespace LuluLicious
 
         private static void PixCombo()
         {
-            if (!Q.IsReady() || Q.HasManaCondition())
+            if (!Q.IsReady() || Q.HasManaCondition() || !Pix.IsValid())
             {
                 return;
             }
@@ -257,7 +265,7 @@ namespace LuluLicious
                 }
                 return;
             }
-            Console.WriteLine("TRY QPIX");
+
             if (Menu.Item("QPix").IsActive() && SpellManager.PixQ.Cast(target).IsCasted())
             {
                 Console.WriteLine("[Pix] Cast Q");
@@ -289,7 +297,8 @@ namespace LuluLicious
             var pixMinions = Pix.GetMinions();
             killable = pixMinions.FirstOrDefault(o => o.Health < Q.GetDamage(o));
 
-            if (killable != null && !killable.CanAAKill() && Q.Cast(killable).IsCasted())
+            if (Pix.IsValid() && killable != null && !killable.CanAAKill() &&
+                SpellManager.PixQ.Cast(killable).IsCasted())
             {
                 return;
             }
@@ -304,7 +313,7 @@ namespace LuluLicious
 
             var pixPos = Pix.GetFarmLocation();
 
-            if (pixPos.MinionsHit > pos.MinionsHit)
+            if (Pix.IsValid() && pixPos.MinionsHit > pos.MinionsHit)
             {
                 pos = pixPos;
                 spell = SpellManager.PixQ;
@@ -379,10 +388,18 @@ namespace LuluLicious
 
                 var qDmg = Q.GetDamage(enemy);
 
-                /* if (useQ && Q.IsInRange(enemy) && qDmg > enemy.Health && Q.Cast(enemy).IsCasted())
+                if (useQ && qDmg > enemy.Health)
                 {
-                    return true;
-                }*/
+                    if (Q.IsInRange(enemy) && Q.Cast(enemy).IsCasted())
+                    {
+                        return true;
+                    }
+
+                    if (Pix.IsValid() && SpellManager.PixQ.IsInRange(enemy) && SpellManager.PixQ.Cast(enemy).IsCasted())
+                    {
+                        return true;
+                    }
+                }
 
                 if (useQ && useE && E.IsInRange(enemy) && qDmg + eDmg > enemy.Health && E.CastOnUnit(enemy))
                 {
@@ -603,6 +620,27 @@ namespace LuluLicious
                 {
                     Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
                 }
+            }
+        }
+
+        public override void Orbwalking_BeforeAttack(Orbwalking.BeforeAttackEventArgs args)
+        {
+            if (!Menu.Item("Support").GetValue<bool>() ||
+                !HeroManager.Allies.Any(x => x.IsValidTarget(1000, false) && !x.IsMe))
+            {
+                return;
+            }
+
+            if (Orbwalker.ActiveMode != Orbwalking.OrbwalkingMode.Mixed &&
+                Orbwalker.ActiveMode != Orbwalking.OrbwalkingMode.LastHit)
+            {
+                return;
+            }
+
+            var minion = args.Target as Obj_AI_Base;
+            if (minion != null && minion.IsMinion && minion.IsValidTarget())
+            {
+                args.Process = false;
             }
         }
 

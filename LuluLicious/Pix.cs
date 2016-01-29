@@ -14,6 +14,8 @@ namespace LuluLicious
         private static Obj_AI_Minion _instance;
         private static Render.Circle _circle;
         private static MenuItem _drawPix;
+        private static int _lastECast;
+        private const int EDuration = 6000;
 
         public static void Initialize(MenuItem drawPix)
         {
@@ -22,6 +24,14 @@ namespace LuluLicious
             _circle = new Render.Circle(Vector3.Zero, 50, Color.Purple);
             _circle.VisibleCondition += sender => _drawPix.IsActive();
             _circle.Add();
+
+            Obj_AI_Base.OnBuffRemove += (sender, args) =>
+            {
+                if (args.Buff.SourceName == ObjectManager.Player.ChampionName && (args.Buff.Name == "luluevision" || args.Buff.Name == "lulufaerieshield"))
+                {
+                    _lastECast = 0;
+                }
+            };
             Game.OnUpdate += Game_OnUpdate;
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
         }
@@ -30,6 +40,7 @@ namespace LuluLicious
         {
             if (sender.IsMe && args.Slot == SpellSlot.E)
             {
+                _lastECast = Utils.TickCount;
                 SpellManager.PixQ.UpdateSourcePosition(_instance.ServerPosition, _instance.ServerPosition);
             }
         }
@@ -65,6 +76,12 @@ namespace LuluLicious
                     .FirstOrDefault();
         }
 
+        public static bool IsValid()
+        {
+            var eTime = _lastECast.TimeSince();
+            return _instance != null && _instance.IsValid && _instance.DistanceToPlayer() < 1900 && (eTime > EDuration + Game.Ping || eTime < EDuration - Game.Ping / 2f + 100);
+        }
+
         private static void Game_OnUpdate(EventArgs args)
         {
             if (ObjectManager.Player.IsDead)
@@ -86,7 +103,7 @@ namespace LuluLicious
         {
             _instance =
                 ObjectManager.Get<Obj_AI_Minion>()
-                    .Where(m => m.Name == "RobotBuddy")
+                    .Where(m => m.IsValid && m.IsAlly && m.Name == "RobotBuddy")
                     .MinOrDefault(m => m.DistanceToPlayer());
         }
     }
