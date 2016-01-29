@@ -47,9 +47,9 @@
     <Reference Include="SharpDX, Version=2.5.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\SharpDX.dll</HintPath>
-    </Reference>    
-	<Reference Include="SharpDX.Direct3D9">
-      <HintPath>..\..\..\..\Downloads\LeagueSharp\System\SharpDX.Direct3D9.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D9">
+      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\SharpDX.Direct3D9.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -63,14 +63,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Bootstrap.cs" />
+    <Compile Include="Core\CustomAntiGapcloser.cs" />
+    <Compile Include="Core\CustomInterrupter.cs" />
     <Compile Include="Core\DamageIndicator.cs" />
     <Compile Include="Core\EvadeDisabler.cs" />
+    <Compile Include="Core\Extensions\UnitExtensions.cs" />
     <Compile Include="Core\ManaIndicator.cs" />
     <Compile Include="Core\Extensions\DrawingExtensions.cs" />
     <Compile Include="Core\Extensions\GameObjectExtensions.cs" />
     <Compile Include="Core\Extensions\GeneralExtensions.cs" />
     <Compile Include="Core\Extensions\MenuExtensions.cs" />
     <Compile Include="Core\Extensions\OrbwalkerExtensions.cs" />
+    <Compile Include="Managers\ManaManager.cs" />
     <Compile Include="Managers\IgniteManager.cs" />
     <Compile Include="Managers\SmiteManager.cs" />
     <Compile Include="Managers\SpellManager.cs" />
