@@ -488,7 +488,7 @@ namespace LuluLicious
 
         private static bool AutoR()
         {
-            if (!R.IsReady())
+            if (!R.IsReady() || Player.InFountain())
             {
                 return false;
             }
