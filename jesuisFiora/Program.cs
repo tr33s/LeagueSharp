@@ -8,7 +8,6 @@ using LeagueSharp.Common;
 using SharpDX;
 using TreeLib.Core;
 using TreeLib.Extensions;
-using TreeLib.Managers;
 using TreeLib.Objects;
 using TreeLib.SpellData;
 using Color = SharpDX.Color;
@@ -288,7 +287,7 @@ namespace jesuisFiora
                 return;
             }
 
-            var active = Menu.Item("QFarm").IsActive() && Q.IsReady() && !Q.HasManaCondition() &&
+            var active = Menu.Item("QFarm").IsActive() && Q.IsReady() /*&& !Q.HasManaCondition()*/&&
                          Player.ManaPercent >= Menu.Item("QFarmMana").GetValue<Slider>().Value;
             var onlyLastHit = Menu.Item("QLastHit").IsActive();
 
@@ -580,7 +579,7 @@ namespace jesuisFiora
                 return;
             }
 
-            if (E.IsReady() && !E.HasManaCondition() && E.Cast())
+            if (E.IsReady() && /*!E.HasManaCondition() &&*/ E.Cast())
             {
                 Console.WriteLine("AFRTE");
                 return;
@@ -601,7 +600,7 @@ namespace jesuisFiora
                 return;
             }
 
-            if (!E.IsActive() || E.HasManaCondition() || !E.IsReady() || !Orbwalker.ActiveMode.IsComboMode())
+            if (!E.IsActive() || /*E.HasManaCondition() ||*/ !E.IsReady() || !Orbwalker.ActiveMode.IsComboMode())
             {
                 return;
             }
@@ -910,7 +909,7 @@ namespace jesuisFiora
 
             var misc = Menu.AddMenu("Misc", "Misc");
 
-            ManaManager.Initialize(misc);
+            /*ManaManager.Initialize(misc);
             Q.SetManaCondition(ManaManager.ManaMode.Combo, 5);
             Q.SetManaCondition(ManaManager.ManaMode.Harass, 5);
             Q.SetManaCondition(ManaManager.ManaMode.Farm, 30);
@@ -918,6 +917,7 @@ namespace jesuisFiora
             E.SetManaCondition(ManaManager.ManaMode.Harass, 15);
             E.SetManaCondition(ManaManager.ManaMode.Farm, 40);
             R.SetManaCondition(ManaManager.ManaMode.Combo, 10);
+            */
 
             misc.AddList("TargetSelector", "Target Selector: ", new[] { "Normal", "Locked" });
             misc.Item("TargetSelector").SetTooltip("Locked TS attempts to stick to the same target.", ScriptColor);
@@ -1003,13 +1003,13 @@ namespace jesuisFiora
                 return;
             }
 
-            if (R.IsActive() && !R.HasManaCondition() &&
+            if (R.IsActive() /*&& !R.HasManaCondition()*/&&
                 Menu.Item("RMode").GetValue<StringList>().SelectedIndex.Equals(1) && ComboR(target))
             {
                 return;
             }
 
-            if (Q.IsActive() && !Q.HasManaCondition())
+            if (Q.IsActive()) // && !Q.HasManaCondition())
             {
                 if (target.IsValidTarget(FioraAutoAttackRange) && !Orbwalking.IsAutoAttack(Player.LastCastedSpellName()))
                 {
@@ -1157,7 +1157,7 @@ namespace jesuisFiora
             else if (type.Equals(SpellDataTargetType.SelfAoe) || type.Equals(SpellDataTargetType.Self))
             {
                 var d = args.End.Distance(Player.ServerPosition);
-                var p = args.SData.CastRadius;
+                var p = args.SData.CastRadius > 5000 ? args.SData.CastRange : args.SData.CastRadius;
                 Console.WriteLine(d + " " + " " + p);
                 if (d < p)
                 {

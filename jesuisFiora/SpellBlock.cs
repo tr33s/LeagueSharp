@@ -117,6 +117,7 @@ namespace jesuisFiora
                     new BlockedSpell("JayceToTheSkies", "Hammer Q"),
                     new BlockedSpell("JayceThunderingBlow", "Hammer E")
                 });
+            BlockedSpells.Add("Jhin", new List<BlockedSpell> { q, new BlockedSpell("JhinPassiveAttack", "4th", true) });
             BlockedSpells.Add(
                 "Kassadin", new List<BlockedSpell> { q, new BlockedSpell("KassadinBasicAttack3", "Empowered W", true) });
             BlockedSpells.Add("Katarina", new List<BlockedSpell> { e });
@@ -217,7 +218,12 @@ namespace jesuisFiora
                 });
             BlockedSpells.Add("Ryze", new List<BlockedSpell> { w, e });
             BlockedSpells.Add("Shaco", new List<BlockedSpell> { q, e });
-            BlockedSpells.Add("Shen", new List<BlockedSpell> { q });
+            BlockedSpells.Add(
+                "Shen",
+                new List<BlockedSpell>
+                {
+                    new BlockedSpell("ShenQAttack", "Empowered", true) { BuffName = "shenqbuff", IsSelfBuff = true }
+                });
             BlockedSpells.Add(
                 "Shyvana", new List<BlockedSpell> { new BlockedSpell("ShyvanaDoubleAttackHit", "Empowered Q", true) });
             BlockedSpells.Add("Singed", new List<BlockedSpell> { e });
