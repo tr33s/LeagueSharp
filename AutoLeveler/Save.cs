@@ -43,7 +43,7 @@ namespace AutoLeveler
                     {
                         Name = ObjectManager.Player.ChampionName,
                         Sequence =
-                            String.Join("", new List<int>(Sequence).ConvertAll(i => i.ToString() + ", ").ToArray())
+                            string.Join("", new List<int>(Sequence).ConvertAll(i => i.ToString() + ", ").ToArray())
                                 .TrimEnd(',', ' ')
                     };
                     Champion = List.Champion[List.Champion.Length];

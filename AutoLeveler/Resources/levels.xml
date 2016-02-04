@@ -180,7 +180,7 @@
     <Name>Heimerdinger</Name>
     <Sequence>0, 1, 1, 0, 0, 3, 2, 1, 1, 1, 3, 0, 0, 2, 2, 3, 0, 0</Sequence>
   </Champion>
-  
+
   <Champion>
     <Name>Illaoi</Name>
     <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
@@ -209,6 +209,11 @@
   <Champion>
     <Name>Jayce</Name>
     <Sequence>0, 2, 0, 1, 0, 3, 0, 2, 0, 2, 3, 2, 2, 1, 1, 3, 1, 1</Sequence>
+  </Champion>
+
+  <Champion>
+    <Name>Jhin</Name>
+    <Sequence>0, 1, 2, 0, 0, 3, 0, 1, 0, 1, 3, 1, 1, 2, 2, 3, 2, 2</Sequence>
   </Champion>
 
   <Champion>
