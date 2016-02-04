@@ -203,16 +203,23 @@ namespace VCursor
                     var count = path.Count;
                     if (count > 0 && count % 15 == 0)
                     {
-                        pause = 50 + (count ^ 3) / (count ^ 2);
+                        pause = 10;
+                    }
+                    else
+                    {
+                        pause = 1;
                     }
 
-                    var point = start.Extend(end, i).Randomize(10, 50);
-                    var time = t * path.Count;
+                    var point = start.Extend(end, i);
+                    if (count % 10 == 0)
+                    {
+                        point.Randomize(10, 50);
+                    }
+
                     path.Enqueue(new MousePoint(point, pause));
                 }
 
                 path.Enqueue(new MousePoint(end, 0));
-                Console.WriteLine("QUEUE: " + path.Count);
                 return path;
             }
         }
