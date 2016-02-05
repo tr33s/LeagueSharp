@@ -24,11 +24,6 @@ namespace VCursor
 
         public static void StartPath(Vector2 start, Vector2 end)
         {
-            if (Utils.TickCount - LastPath < 200)
-            {
-                return;
-            }
-
             if (FollowingPath)
             {
                 CancelPath();

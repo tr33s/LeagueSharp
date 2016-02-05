@@ -61,10 +61,25 @@ namespace VCursor
             SetPosition();
         }
 
+        public static void SetPosition(Vector2 position = new Vector2())
+        {
+            position = position.IsValid() ? position : Cursor.ScreenPosition;
+
+            if (position == Vector2.Zero)
+            {
+                return;
+            }
+
+            if (Position.Distance(position) < 100)
+            {
+                CursorSprite.Position = position.GetRelativePosition();
+            }
+
+            //MouseManager.StartPath(position);
+        }
+
         public static void UpdateIcon(Vector2 position = new Vector2())
         {
-            return;
-
             if (!Program.Menu.Item("Icon").IsActive())
             {
                 return;
@@ -176,31 +191,9 @@ namespace VCursor
             CursorSprite.UpdateTextureBitmap(data, Position);
         }
 
-        public static void SetPosition(Vector2 position = new Vector2())
-        {
-            position = position.IsValid() ? position.GetRelativePosition() : Cursor.ScreenPosition.GetRelativePosition();
-
-            if (Position.Distance(position) < 100)
-            {
-                CursorSprite.Position = position;
-            }
-
-            //MouseManager.StartPath(position);
-        }
-
         public static void Draw()
         {
             CursorSprite.Add();
-        }
-
-        public static void Hide()
-        {
-            CursorSprite.Hide();
-        }
-
-        public static void Show()
-        {
-            CursorSprite.Show();
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
