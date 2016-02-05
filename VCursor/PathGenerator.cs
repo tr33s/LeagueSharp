@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using SharpDX;
-
-namespace VCursor
+﻿namespace VCursor
 {
     internal static class PathGenerator
     {
-        private static readonly NormalDistribution TargetDistribution = new NormalDistribution();
+        /*private static readonly NormalDistribution TargetDistribution = new NormalDistribution();
         private static readonly NormalDistribution MidpointDistribution = new NormalDistribution();
 
         public static Queue<MouseManager.MousePoint> GeneratePath(Vector2 start, Vector2 end)
@@ -31,7 +28,8 @@ namespace VCursor
             {
                 if (count % 50 == 0)
                 {
-                    pause = 10 + (count ^ 2) / (count * 10);
+                    var c = count * 1.3;
+                    pause = (int) (10 + Math.Pow(c, 3) / (c * 10));
                 }
 
                 var point = new Vector2((float) output[count + 1], (float) output[count]);
@@ -39,6 +37,6 @@ namespace VCursor
             }
 
             return path;
-        }
+        }*/
     }
 }

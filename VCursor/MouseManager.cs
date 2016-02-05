@@ -19,52 +19,45 @@ namespace VCursor
 
         public static int LastPath { get; private set; }
 
-        public static bool FollowingPath
+        public static bool FollowingPath => _currentPath != null && !_currentPath.Finished;
+
+
+        public static void StartPath(Vector2 start, Vector2 end)
         {
-            get { return _currentPath != null && !_currentPath.Finished; }
+            if (Utils.TickCount - LastPath < 200)
+            {
+                return;
+            }
+
+            if (FollowingPath)
+            {
+                CancelPath();
+            }
+
+            LastPath = Utils.TickCount;
+            _currentPath = new MousePath(start, end);
         }
 
-        private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
+        public static void StartPath(Vector2 end)
         {
-            if (sender == null || !sender.HasSpellCaster || !sender.Owner.IsMe)
-            {
-                return;
-            }
-
-            var target = args.Target as Obj_AI_Base;
-
-            // target offscreen
-            if (target != null)
-            {
-                if (!target.IsHPBarRendered)
-                {
-                    return;
-                }
-
-                StartPathWorld(target.ServerPosition);
-                return;
-            }
-
-
-            StartPathWorld(args.StartPosition);
+            _currentPath = new MousePath(VirtualCursor.Position, end);
         }
 
-        private static void Obj_AI_Base_OnIssueOrder(Obj_AI_Base sender, GameObjectIssueOrderEventArgs args)
+        public static void StartPathWorld(Vector3 end)
         {
-            if (sender == null || !sender.IsValid || !sender.IsMe)
+            var screenEnd = end.ToScreenPoint();
+
+            if (!screenEnd.IsValid())
             {
                 return;
             }
 
-            var target = args.Target as Obj_AI_Base;
+            _currentPath = new MousePath(VirtualCursor.Position, screenEnd);
+        }
 
-            // target offscreen
-            if (target != null && !target.IsHPBarRendered)
-            {
-                return;
-            }
-
-            StartPathWorld(args.TargetPosition);
+        public static void CancelPath()
+        {
+            _currentPath = null;
         }
 
         private static void Game_OnUpdate(EventArgs args)
@@ -81,158 +74,110 @@ namespace VCursor
                 return;
             }
 
-            /*if (_currentPath.Finished)
+            if (_currentPath.Finished)
             {
-                VirtualCursor.SetIcon(_currentPath.FinalIcon);
-            }*/
-
-            if (point.HoverShop())
-            {
-                VirtualCursor.SetIcon(VirtualCursor.CursorIcon.HoverShop);
-            }
-            else if (point.HoverAllyTurret())
-            {
-                VirtualCursor.SetIcon(VirtualCursor.CursorIcon.HoverAllyTurret);
-            }
-            else if (point.HoverEnemy())
-            {
-                VirtualCursor.SetIcon(VirtualCursor.CursorIcon.HoverEnemy);
+                VirtualCursor.UpdateIcon(point);
             }
 
             VirtualCursor.SetPosition(point);
         }
 
-        public static void StartPath(Vector2 start, Vector2 end)
+        private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
         {
-            if (Utils.TickCount - LastPath < 200)
+            if (sender == null || !sender.HasSpellCaster || !sender.Owner.IsMe)
             {
                 return;
             }
 
+            var target = args.Target as Obj_AI_Base;
+            var castTime = sender.GetSpell(args.Slot).SData.CastFrame / 30f * 1000f + Game.Ping / 2f;
 
-            if (FollowingPath)
+            // target offscreen
+            if (target != null)
             {
-                CancelPath();
+                if (!target.IsHPBarRendered) {}
+
+                //StartPathWorld(target.ServerPosition);
             }
 
-            VirtualCursor.SetIcon(VirtualCursor.CursorIcon.Default);
-            LastPath = Utils.TickCount;
-            _currentPath = new MousePath(start, end);
+
+            //StartPathWorld(args.StartPosition);
         }
 
-        public static void StartPath(Vector2 end)
+        private static void Obj_AI_Base_OnIssueOrder(Obj_AI_Base sender, GameObjectIssueOrderEventArgs args)
         {
-            _currentPath = new MousePath(VirtualCursor.Position, end);
-        }
+            if (sender == null || !sender.IsValid || !sender.IsMe)
+            {
+                return;
+            }
 
-        public static void StartPathWorld(Vector3 end)
-        {
-            _currentPath = new MousePath(VirtualCursor.Position, end.ToScreenPoint());
-        }
+            if (args.Order == GameObjectOrder.Stop || args.Order == GameObjectOrder.HoldPosition)
+            {
+                return;
+            }
 
-        public static void CancelPath()
-        {
-            _currentPath = null;
+            var target = args.Target as Obj_AI_Base;
+
+            // target offscreen
+            if (target != null && !target.IsHPBarRendered) {}
+
+            //StartPathWorld(args.TargetPosition);
         }
 
         internal class MousePath
         {
-            private readonly Queue<MousePoint> _path;
-            private readonly int _startTime;
-            public VirtualCursor.CursorIcon FinalIcon;
+            private readonly Queue<Vector2> _path;
 
             public MousePath(Vector2 start, Vector2 end)
             {
                 _path = GeneratePath(start, end);
-                _startTime = Utils.TickCount;
-
-                if (end.HoverShop())
-                {
-                    FinalIcon = VirtualCursor.CursorIcon.HoverShop;
-                }
-                else if (end.HoverAllyTurret())
-                {
-                    FinalIcon = VirtualCursor.CursorIcon.HoverAllyTurret;
-                }
-                else if (end.HoverEnemy())
-                {
-                    FinalIcon = VirtualCursor.CursorIcon.HoverEnemy;
-                }
             }
 
-            private MousePoint NextPointPeek
-            {
-                get { return _path.Peek(); }
-            }
 
-            public Vector2 NextPoint
-            {
-                get { return _path.Dequeue().Point; }
-            }
+            public Vector2 NextPoint => _path.Dequeue();
 
-            public bool Finished
-            {
-                get { return _path.Count == 0; }
-            }
+            public bool Finished => _path.Count == 0;
 
-            public bool CanMove
-            {
-                get { return !Finished && Utils.TickCount - _startTime > NextPointPeek.Time; }
-            }
+            public bool CanMove => !Finished;
 
-            private static Queue<MousePoint> GeneratePath(Vector2 start, Vector2 end)
+            private static Queue<Vector2> GeneratePath(Vector2 start, Vector2 end)
             {
                 //return PathGenerator.GeneratePath(start.ToWorldPoint().To2D(), end.ToWorldPoint().To2D());
                 var d = start.Distance(end);
 
+                var path = new Queue<Vector2>();
+
                 if (d < 75)
                 {
-                    return new Queue<MousePoint>();
+                    path.Enqueue(end);
+                    return path;
                 }
 
-                const int t = 25;
-                var path = new Queue<MousePoint>();
-                var pause = 0;
-                for (var i = 0; i < d; i += (int) d / 20)
+                var increment = (int) d / 30; //(2 * d / FPS)
+                var count = 0;
+                for (var i = 0; i < d; i += increment)
                 {
                     if (i > d)
                     {
                         break;
                     }
 
-                    var count = path.Count;
-                    if (count > 0 && count % 15 == 0)
-                    {
-                        pause = 10;
-                    }
-                    else
-                    {
-                        pause = 1;
-                    }
-
                     var point = start.Extend(end, i);
-                    if (count % 10 == 0)
+                    if (count++ % 10 == 0)
                     {
                         point.Randomize(10, 50);
+
+                        if (count % 6 == 0)
+                        {
+                            point.Randomize(50, 100);
+                        }
                     }
 
-                    path.Enqueue(new MousePoint(point, pause));
+                    path.Enqueue(point);
                 }
 
-                path.Enqueue(new MousePoint(end, 0));
+                path.Enqueue(end);
                 return path;
-            }
-        }
-
-        internal class MousePoint
-        {
-            public Vector2 Point;
-            public int Time;
-
-            public MousePoint(Vector2 point, int time)
-            {
-                Point = point;
-                Time = time;
             }
         }
     }

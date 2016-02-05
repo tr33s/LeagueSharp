@@ -36,13 +36,11 @@ namespace VCursor
         static VirtualCursor()
         {
             CursorSprite = new Render.Sprite(Resources.Hand1, Vector2.Zero);
-            //CurrentPath.Count > 0 ? CurrentPath.Dequeue() : Vector2.Zero;
-            //FollowCursor ? Drawing.WorldToScreen(Game.CursorPos).GetRelativePosition() : Vector2.Zero
-
             _icon = CursorIcon.Default;
         }
 
         public static Vector2 Position => CursorSprite.Position;
+        public static Vector3 WorldPosition => Position.ToWorldPoint();
 
         public static void Initialize()
         {
@@ -54,34 +52,7 @@ namespace VCursor
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            //  CursorSprite.Position = Cursor.ScreenPosition;
-            var pos = Position;
-            var set = false;
-            if (pos.HoverShop())
-            {
-                SetIcon(CursorIcon.HoverShop);
-                set = true;
-            }
-
-            if (pos.HoverAllyTurret())
-            {
-                SetIcon(CursorIcon.HoverAllyTurret);
-                set = true;
-            }
-
-            if (pos.HoverEnemy())
-            {
-                Console.WriteLine("HOVWER ENEMY");
-                SetIcon(CursorIcon.HoverEnemy);
-                set = true;
-            }
-
-            if (!set)
-            {
-                Console.WriteLine("DEFAULT");
-                SetIcon(CursorIcon.Default);
-            }
-
+            UpdateIcon();
             if (MouseManager.FollowingPath || Utils.TickCount - MouseManager.LastPath < 1000)
             {
                 return;
@@ -90,6 +61,36 @@ namespace VCursor
             SetPosition();
         }
 
+        public static void UpdateIcon(Vector2 position = new Vector2())
+        {
+            return;
+
+            if (!Program.Menu.Item("Icon").IsActive())
+            {
+                return;
+            }
+
+            var pos = position.IsValid() ? position : Position;
+
+            if (pos.HoverShop())
+            {
+                SetIcon(CursorIcon.HoverShop);
+                return;
+            }
+
+            if (pos.HoverAllyTurret())
+            {
+                SetIcon(CursorIcon.HoverAllyTurret);
+                return;
+            }
+
+            if (pos.HoverEnemy())
+            {
+                SetIcon(CursorIcon.HoverEnemy);
+                return;
+            }
+            SetIcon(CursorIcon.Default);
+        }
 
         private static Vector2 GetRelativePosition(this Vector2 vector)
         {
@@ -111,9 +112,8 @@ namespace VCursor
             return vector + offset;
         }
 
-        public static void SetIcon(CursorIcon icon)
+        private static void SetIcon(CursorIcon icon)
         {
-            // Console.WriteLine("SET ICOn");
             Bitmap data;
 
             switch (icon)
@@ -172,8 +172,6 @@ namespace VCursor
             {
                 return;
             }
-
-            Console.WriteLine("{0} => {1}", _icon, icon);
             _icon = icon;
             CursorSprite.UpdateTextureBitmap(data, Position);
         }

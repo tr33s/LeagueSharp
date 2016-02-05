@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="BezierCurve.cs" />
     <Compile Include="Cursor.cs" />
+    <Compile Include="FakeClicks.cs" />
     <Compile Include="MouseManager.cs" />
     <Compile Include="NormalDistribution.cs" />
     <Compile Include="PathGenerator.cs" />

@@ -9,6 +9,11 @@ namespace VCursor
     {
         public static Vector3 ToWorldPoint(this Vector2 position)
         {
+            if (!position.IsValid())
+            {
+                return new Vector3();
+            }
+
             return Drawing.ScreenToWorld(position);
         }
 
@@ -41,8 +46,8 @@ namespace VCursor
         {
             var enemy =
                 ObjectManager.Get<Obj_AI_Base>()
-                    .FirstOrDefault(o => o.IsValidTarget(150, true, position.ToWorldPoint()));
-            return enemy.IsValidTarget();
+                    .FirstOrDefault(o => o.IsValidTarget(300, true, position.ToWorldPoint()));
+            return enemy != null;
         }
     }
 }

@@ -10,6 +10,5 @@ namespace VCursor
         public static Vector2 GameScreenPosition => GamePosition.ToScreenPoint();
         public static Vector2 ScreenPosition => Utils.GetCursorPos();
         public static Vector3 ScreenGamePosition => ScreenPosition.ToWorldPoint();
-        public static Vector3 VirtualGamePosition => VirtualCursor.Position.ToWorldPoint();
     }
 }
