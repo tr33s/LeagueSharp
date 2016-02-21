@@ -310,7 +310,7 @@ namespace jesuisFiora
 
         public Vector3 OrbwalkPosition
         {
-            get { return Polygon.CenterOfPolygone().To3D(); }
+            get { return Target.ServerPosition.Extend(Polygon.CenterOfPolygone().To3D(), 150); }
         }
 
         public Vector3 CastPosition
@@ -319,8 +319,8 @@ namespace jesuisFiora
             {
                 return
                     Polygon.Points.Where(
-                        p => SpellManager.Q.IsInRange(p) && p.DistanceToPlayer() > 100 && p.Distance(Target) > 100)
-                        .OrderBy(p => p.Distance(OrbwalkPosition))
+                        p => SpellManager.Q.IsInRange(p) && p.DistanceToPlayer() > 100 && p.Distance(Target) > 50)
+                        .OrderBy(p => p.Distance(Target))
                         .ThenByDescending(p => p.DistanceToPlayer())
                         .FirstOrDefault()
                         .To3D();
