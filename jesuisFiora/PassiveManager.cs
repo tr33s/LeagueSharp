@@ -16,17 +16,17 @@ namespace jesuisFiora
 
         private static readonly List<string> DirectionList = new List<string> { "NE", "NW", "SE", "SW" };
 
+        private static int _fioraCount;
+
         private static IEnumerable<Obj_GeneralParticleEmitter> VitalList
         {
-            get { return ObjectManager.Get<Obj_GeneralParticleEmitter>().Where(IsFioraPassive); }
+            get { return GameObjects.GetParticleEmitters().Where(IsFioraPassive); }
         }
 
         public static Menu Menu
         {
             get { return Program.Menu.SubMenu("Passive"); }
         }
-
-        private static int _fioraCount;
 
         public static void Initialize()
         {
@@ -150,7 +150,7 @@ namespace jesuisFiora
 
         public static bool IsFioraPassive(this Obj_GeneralParticleEmitter emitter)
         {
-            return emitter.IsValid &&
+            return emitter != null && emitter.IsValid &&
                    (emitter.Name.Contains("Fiora_Base_R_Mark") ||
                     (emitter.Name.Contains("Fiora_Base_R") && emitter.Name.Contains("Timeout")) ||
                     (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains)));
@@ -160,7 +160,7 @@ namespace jesuisFiora
         {
             var emitter = sender as Obj_GeneralParticleEmitter;
 
-            if (emitter == null || !emitter.IsValid || !IsFioraPassive(emitter))
+            if (!IsFioraPassive(emitter))
             {
                 return;
             }
