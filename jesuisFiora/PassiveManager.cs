@@ -120,15 +120,14 @@ namespace jesuisFiora
 
         public static double GetPassiveDamage(this Obj_AI_Hero target, int? passiveCount = null)
         {
-            return passiveCount ??
-                   target.CountPassive() *
-                   (.03f +
-                    Math.Min(
-                        Math.Max(
-                            .028f,
-                            .027 +
-                            .001f * ObjectManager.Player.Level * ObjectManager.Player.FlatPhysicalDamageMod / 100f),
-                        .45f)) * target.MaxHealth;
+            var modifier = (.03f +
+                            Math.Min(
+                                Math.Max(
+                                    .028f,
+                                    .027 +
+                                    .001f * ObjectManager.Player.Level * ObjectManager.Player.FlatPhysicalDamageMod /
+                                    100f), .45f)) * target.MaxHealth;
+            return passiveCount * modifier ?? target.CountPassive() * modifier;
         }
 
         public static void UpdatePassiveList()
