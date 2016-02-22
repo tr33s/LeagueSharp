@@ -26,12 +26,16 @@ namespace jesuisFiora
             get { return Program.Menu.SubMenu("Passive"); }
         }
 
+        private static int _fioraCount;
+
         public static void Initialize()
         {
             foreach (var enemy in HeroManager.Enemies)
             {
                 PassiveList.Add(enemy, new List<FioraPassive>());
             }
+
+            _fioraCount = HeroManager.AllHeroes.Count(h => h.ChampionName.Equals("Fiora"));
 
             Game.OnUpdate += Game_OnUpdate;
             GameObject.OnCreate += GameObject_OnCreate;
@@ -156,7 +160,7 @@ namespace jesuisFiora
         {
             var emitter = sender as Obj_GeneralParticleEmitter;
 
-            if (emitter == null || !emitter.IsValid)
+            if (emitter == null || !emitter.IsValid || !IsFioraPassive(emitter))
             {
                 return;
             }
@@ -164,16 +168,12 @@ namespace jesuisFiora
             var target = HeroManager.Enemies.MinOrDefault(enemy => enemy.Distance(emitter.Position));
 
             // 2 fioras?
-            if (HeroManager.AllHeroes.Count(h => h.ChampionName.Equals("Fiora")) > 1 &&
-                target.Distance(emitter.Position) > 30)
+            if (_fioraCount > 1 && target.Distance(emitter.Position) > 30)
             {
                 return;
             }
 
-            if (IsFioraPassive(emitter))
-            {
-                PassiveList[target].Add(new FioraPassive(emitter, target));
-            }
+            PassiveList[target].Add(new FioraPassive(emitter, target));
         }
 
         private static void GameObject_OnDelete(GameObject sender, EventArgs args)
