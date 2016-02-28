@@ -643,7 +643,7 @@ namespace jesuisFiora
             }
         }
 
-        private static void Game_OnGameLoad(object obj, EventArgs args)
+        private static void Game_OnGameLoad(object obj)
         {
             if (!Player.IsChampion("Fiora"))
             {
@@ -1042,8 +1042,8 @@ namespace jesuisFiora
 
         private static void Main(string[] args)
         {
-            //CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
-            LeagueSharp.SDK.Events.OnLoad += Game_OnGameLoad;
+            CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
+            //LeagueSharp.SDK.Events.OnLoad += Game_OnGameLoad;
         }
 
         private static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)

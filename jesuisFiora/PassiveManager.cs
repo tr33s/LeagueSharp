@@ -20,7 +20,7 @@ namespace jesuisFiora
 
         private static IEnumerable<Obj_GeneralParticleEmitter> VitalList
         {
-            get { return GameObjects.GetParticleEmitters().Where(IsFioraPassive); }
+            get { return ObjectManager.Get<Obj_GeneralParticleEmitter>().Where(IsFioraPassive); }
         }
 
         public static Menu Menu
@@ -35,7 +35,7 @@ namespace jesuisFiora
                 PassiveList.Add(enemy, new List<FioraPassive>());
             }
 
-            _fioraCount = HeroManager.AllHeroes.Count(h => h.ChampionName.Equals("Fiora"));
+            _fioraCount = HeroManager.AllHeroes.Count(h => h.ChampionName == "Fiora");
 
             Game.OnUpdate += Game_OnUpdate;
             GameObject.OnCreate += GameObject_OnCreate;
@@ -140,7 +140,9 @@ namespace jesuisFiora
                 VitalList.Where(
                     v => !PassiveList.Any(passiveList => passiveList.Value.Any(passive => passive.Equals(v)))))
             {
-                var hero = HeroManager.Enemies.Where(h => h.IsValidTarget()).MinOrDefault(h => h.DistanceToPlayer());
+                var vital1 = vital;
+                var hero =
+                    HeroManager.Enemies.Where(h => h.IsValidTarget()).MinOrDefault(h => h.Distance(vital1.Position));
                 if (hero != null)
                 {
                     PassiveList[hero].Add(new FioraPassive(vital, hero));
