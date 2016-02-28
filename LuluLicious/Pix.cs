@@ -11,11 +11,11 @@ namespace LuluLicious
 {
     internal static class Pix
     {
+        private const int EDuration = 6000;
         private static Obj_AI_Minion _instance;
         private static Render.Circle _circle;
         private static MenuItem _drawPix;
         private static int _lastECast;
-        private const int EDuration = 6000;
 
         public static void Initialize(MenuItem drawPix)
         {
@@ -27,7 +27,8 @@ namespace LuluLicious
 
             Obj_AI_Base.OnBuffRemove += (sender, args) =>
             {
-                if (args.Buff.SourceName == ObjectManager.Player.ChampionName && (args.Buff.Name == "luluevision" || args.Buff.Name == "lulufaerieshield"))
+                if (args.Buff.SourceName == ObjectManager.Player.ChampionName &&
+                    (args.Buff.Name == "luluevision" || args.Buff.Name == "lulufaerieshield"))
                 {
                     _lastECast = 0;
                 }
@@ -41,7 +42,7 @@ namespace LuluLicious
             if (sender.IsMe && args.Slot == SpellSlot.E)
             {
                 _lastECast = Utils.TickCount;
-                SpellManager.PixQ.UpdateSourcePosition(_instance.ServerPosition, _instance.ServerPosition);
+                SpellManager.PixQ.UpdateSourcePosition(args.Target.Position, args.Target.Position);
             }
         }
 
@@ -69,17 +70,16 @@ namespace LuluLicious
                 ObjectManager.Get<Obj_AI_Base>()
                     .Where(
                         o =>
-                            SpellManager.E.IsInRange(o) && o.Distance(target) + 10 < SpellManager.Q.Range &&
-                            (o.IsAlly || o.Health > SpellManager.E.GetDamage(o)))
-                    .OrderBy(o => o.Team != ObjectManager.Player.Team)
-                    .ThenBy(o => o.Distance(target))
+                            o.IsValidTarget(SpellManager.E.Range, false, _instance.ServerPosition) &&
+                            o.Distance(target) < 600)
+                    .OrderBy(o => o.Distance(target))
+                    .ThenBy(o => o.Team != ObjectManager.Player.Team)
                     .FirstOrDefault();
         }
 
         public static bool IsValid()
         {
-            var eTime = _lastECast.TimeSince();
-            return _instance != null && _instance.IsValid && _instance.DistanceToPlayer() < 1900 && (eTime > EDuration + Game.Ping || eTime < EDuration - Game.Ping / 2f + 100);
+            return _instance != null && _instance.IsValid && _instance.DistanceToPlayer() < 1900;
         }
 
         private static void Game_OnUpdate(EventArgs args)

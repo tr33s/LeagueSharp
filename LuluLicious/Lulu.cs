@@ -35,14 +35,22 @@ namespace LuluLicious
             var combo = Menu.AddMenu("Spells", "Spells");
             combo.SetFontStyle(FontStyle.Regular, System.Drawing.Color.DeepSkyBlue.ToSharpDXColor());
 
+            var pix = combo.AddMenu("Pix", "Pix");
+            pix.AddInfo("PixQ", "-- Pix Q --", Color.Purple);
+            pix.Item("PixQ").SetTooltip("Use Pix to Cast Q");
+            pix.AddBool("QPixCombo", "Use in Combo", false);
+            pix.AddBool("QPixHarass", "Use in Harass", false);
+
+            pix.AddInfo("PixEQ", "-- Pix E->Q --", Color.Purple);
+            pix.Item("PixEQ").SetTooltip("Use E into Pix Q");
+            pix.AddBool("EQPixCombo", "Use in Combo");
+            pix.AddBool("EQPixHarass", "Use in Harass");
+
             var q = combo.AddMenu("Q", "Q");
             q.AddBool("QCombo", "Use in Combo");
             q.AddBool("QHarass", "Use in Harass");
+
             q.AddInfo("QMisc2", "-- Misc --", Color.DeepSkyBlue);
-            q.AddBool("QPix", "Use Pix Q", false);
-            q.Item("QPix").SetTooltip("Use Pix to Cast Q");
-            q.AddBool("EQPix", "Use Extended Q (E->Q)");
-            q.Item("EQPix").SetTooltip("Use E to cast Pix Q");
             q.AddBool("QGapcloser", "Use Q on Gapcloser");
             q.AddBool("QImpaired", "Auto Q Movement Impaired", false);
             q.AddInfo("QMisc1", "-- Farm --", Color.Red);
@@ -193,11 +201,16 @@ namespace LuluLicious
                 }
             }
 
-            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical) ?? Pix.GetTarget();
 
-            if (!target.IsValidTarget())
+            if (!target.IsValidTarget() || !SpellManager.Q.IsInRange(target))
             {
                 PixCombo();
+                return;
+            }
+
+            if (PixCombo())
+            {
                 return;
             }
 
@@ -221,55 +234,64 @@ namespace LuluLicious
             if (Q.Cast(target).IsCasted())
             {
                 Console.WriteLine("[Combo] Cast Q");
-                return;
-            }
-
-            if (!Menu.Item("QPix").IsActive())
-            {
-                return;
-            }
-
-            if (SpellManager.PixQ.Cast(target).IsCasted())
-            {
-                Console.WriteLine("[Combo] Cast Pix Q");
             }
         }
 
-        private static void PixCombo()
+        private static bool PixCombo()
         {
-            if (!Q.IsReady() || Q.HasManaCondition() || !Pix.IsValid())
+            if (!Pix.IsValid())
             {
-                return;
+                return false;
+            }
+
+            var mode = Orbwalker.ActiveMode.GetModeString();
+            var useQ = Q.IsReady() && !Q.HasManaCondition() && Menu.Item("QPix" + mode).IsActive();
+            var useE = E.IsReady() && Menu.Item("EQPix" + mode).IsActive();
+
+            if (!useQ && !useE)
+            {
+                return false;
             }
 
             var target = Pix.GetTarget();
 
             if (!target.IsValidTarget())
             {
-                if (!E.IsReady() || !Menu.Item("EQPix").IsActive())
-                {
-                    return;
-                }
-
                 var eqTarget = Pix.GetTarget(Q.Range + E.Range);
+
                 if (!eqTarget.IsValidTarget())
                 {
-                    return;
+                    return false;
                 }
 
-                var eTarget = Pix.GetETarget(eqTarget);
-                if (eTarget != null && E.CastOnUnit(eTarget))
+                var eTarget = SpellManager.E.IsInRange(eqTarget) ? eqTarget : Pix.GetETarget(eqTarget);
+
+                if (eTarget == null || !E.CastOnUnit(eTarget))
                 {
-                    Console.WriteLine("[Pix] Cast E (->Q)");
-                    return;
+                    return false;
                 }
-                return;
+
+                Console.WriteLine("[Pix] Cast E");
+                return true;
             }
 
-            if (Menu.Item("QPix").IsActive() && SpellManager.PixQ.Cast(target).IsCasted())
+            if (!useQ)
             {
-                Console.WriteLine("[Pix] Cast Q");
+                return false;
             }
+
+            if (useE && E.IsInRange(target) && E.CastOnUnit(target))
+            {
+                return true;
+            }
+
+            if (!SpellManager.PixQ.Cast(target).IsCasted())
+            {
+                return false;
+            }
+
+            Console.WriteLine("[Pix] Cast Q");
+            return true;
         }
 
         public override void OnFarm(Orbwalking.OrbwalkingMode mode)
@@ -377,7 +399,8 @@ namespace LuluLicious
                 return false;
             }
 
-            foreach (var enemy in Enemies.Where(e => e.IsValidTarget(E.Range + Q.Range)).OrderBy(e => e.Health))
+            foreach (var enemy in
+                Enemies.Where(e => e.IsValidTarget(E.Range + Q.Range) && !e.IsZombie).OrderBy(e => e.Health))
             {
                 var eDmg = E.GetDamage(enemy);
 

@@ -68,7 +68,7 @@ namespace LuluLicious
             {
                 d *= 1.03f;
             }
-            
+
             var assassin = ObjectManager.Player.GetMastery((MasteryData.Cunning) 83);
             if (assassin != null && assassin.IsActive() && ObjectManager.Player.CountAlliesInRange(800) == 0)
             {
