@@ -246,7 +246,7 @@ namespace LuluLicious
 
             var mode = Orbwalker.ActiveMode.GetModeString();
             var useQ = Q.IsReady() && !Q.HasManaCondition() && Menu.Item("QPix" + mode).IsActive();
-            var useE = E.IsReady() && Menu.Item("EQPix" + mode).IsActive();
+            var useE = E.IsReady() && !E.HasManaCondition() && Menu.Item("EQPix" + mode).IsActive();
 
             if (!useQ && !useE)
             {

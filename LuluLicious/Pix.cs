@@ -71,7 +71,7 @@ namespace LuluLicious
                     .Where(
                         o =>
                             o.IsValidTarget(SpellManager.E.Range, false, _instance.ServerPosition) &&
-                            o.Distance(target) < 600)
+                            o.Distance(target) < 600 && (o.IsAlly || !SpellManager.Q.IsKillable(o)))
                     .OrderBy(o => o.Distance(target))
                     .ThenBy(o => o.Team != ObjectManager.Player.Team)
                     .FirstOrDefault();
