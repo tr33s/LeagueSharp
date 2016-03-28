@@ -74,9 +74,12 @@ namespace TreeLib.Core
                 var barPos = unit.HPBarPosition;
                 var damage = DamageToUnit(unit);
                 var percentHealthAfterDamage = Math.Max(0, unit.Health - damage) / unit.MaxHealth;
-                var yPos = barPos.Y + YOffset;
-                var xPosDamage = barPos.X + XOffset + Width * percentHealthAfterDamage;
-                var xPosCurrentHp = barPos.X + XOffset + Width * unit.Health / unit.MaxHealth;
+
+                var champOffset = unit.ChampionName == "Jhin" ? new Vector2(-8, -14) : Vector2.Zero;
+                var xPos = barPos.X + XOffset + champOffset.X;
+                var xPosDamage = xPos + Width * percentHealthAfterDamage;
+                var xPosCurrentHp = xPos + Width * unit.Health / unit.MaxHealth;
+                var yPos = barPos.Y + YOffset + champOffset.Y;
 
                 if (Killable && damage > unit.Health)
                 {
