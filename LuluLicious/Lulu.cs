@@ -21,6 +21,14 @@ namespace LuluLicious
         private static int LastWCast;
         private static Obj_AI_Base QAfterETarget;
 
+        private static readonly Dictionary<SpellSlot, int[]> ManaCostDictionary = new Dictionary<SpellSlot, int[]>
+        {
+            { SpellSlot.Q, new[] { 0, 60, 65, 70, 75, 80 } },
+            { SpellSlot.W, new[] { 0, 65, 65, 65, 65, 65 } },
+            { SpellSlot.E, new[] { 0, 60, 70, 80, 90, 100 } },
+            { SpellSlot.R, new[] { 0, 0, 0, 0, 0, 0 } }
+        };
+
         public Lulu()
         {
             Q = SpellManager.Q;
@@ -54,10 +62,9 @@ namespace LuluLicious
             q.AddBool("QGapcloser", "Use Q on Gapcloser");
             q.AddBool("QImpaired", "Auto Q Movement Impaired", false);
             q.AddInfo("QMisc1", "-- Farm --", Color.Red);
-            q.AddBool("QFarm", "Use Q to Farm");
+            q.AddKeyBind("QFarm", "Use Q to Farm", 'K', KeyBindType.Toggle, true);
             q.AddBool("QLC", "Use in LaneClear");
             q.AddBool("QLH", "Use in LastHit", false);
-
 
             var w = combo.AddMenu("W", "W");
 
@@ -137,6 +144,15 @@ namespace LuluLicious
             draw.AddCircle("DrawW", "Draw W/E", System.Drawing.Color.Purple, W.Range);
             draw.AddCircle("DrawR", "Draw R", System.Drawing.Color.Purple, R.Range);
             draw.AddBool("DrawPix", "Draw Pix");
+            draw.AddBool("FarmPermashow", "Permashow Farm Enabled");
+
+            if (draw.Item("FarmPermashow").IsActive())
+            {
+                q.Item("QFarm").Permashow();
+            }
+
+            draw.Item("FarmPermashow").ValueChanged +=
+                (sender, eventArgs) => { q.Item("QFarm").Permashow(eventArgs.GetNewValue<bool>()); };
 
             var misc = Menu.AddMenu("Misc", "Misc");
             misc.SetFontStyle(FontStyle.Regular, Color.MediumPurple);
@@ -166,14 +182,6 @@ namespace LuluLicious
             Menu.AddInfo("Info", "By Trees and Lilith!", Color.MediumPurple);
             Menu.AddToMainMenu();
 
-            var manaCost = new Dictionary<SpellSlot, int[]>
-            {
-                { SpellSlot.Q, new[] { 0, 60, 65, 70, 75, 80 } },
-                { SpellSlot.W, new[] { 0, 65, 65, 65, 65, 65 } },
-                { SpellSlot.E, new[] { 0, 60, 70, 80, 90, 100 } },
-                { SpellSlot.R, new[] { 0, 0, 0, 0, 0, 0 } }
-            };
-
             var dmg = draw.AddMenu("DamageIndicator", "Damage Indicator");
             dmg.AddBool("DmgEnabled", "Draw Damage Indicator");
             dmg.AddCircle("HPColor", "Predicted Health Color", System.Drawing.Color.White);
@@ -181,7 +189,7 @@ namespace LuluLicious
             dmg.AddBool("Killable", "Killable Text");
             DamageIndicator.Initialize(dmg, Utility.GetComboDamage);
 
-            ManaBarIndicator.Initialize(draw, manaCost);
+            ManaBarIndicator.Initialize(draw, ManaCostDictionary);
             Pix.Initialize(Menu.Item("DrawPix"));
             SpellManager.Initialize(combo, Orbwalker);
 
@@ -237,61 +245,43 @@ namespace LuluLicious
             }
         }
 
+        private static bool PixCombo(Obj_AI_Hero target, bool useQ, bool useE, bool killSteal = false)
+        {
+            if (!target.IsValidTarget() || !Pix.IsValid())
+            {
+                return false;
+            }
+
+            useQ &= Q.IsReady() && (killSteal || !Q.HasManaCondition());
+            useE &= useQ && E.IsReady() && (killSteal || !E.HasManaCondition()) &&
+                    Player.Mana > ManaCostDictionary[Q.Slot][Q.Level] + ManaCostDictionary[E.Slot][E.Level];
+
+            if (useQ && SpellManager.PixQ.IsInRange(target) && SpellManager.PixQ.Cast(target).IsCasted())
+            {
+                Console.WriteLine("[Pix] Cast Q");
+                return true;
+            }
+
+            if (!useE)
+            {
+                return false;
+            }
+
+            var eqTarget = Pix.GetETarget(target);
+            if (eqTarget == null || !E.CastOnUnit(eqTarget))
+            {
+                return false;
+            }
+
+            Console.WriteLine("[Pix] Cast E");
+            return true;
+        }
+
         private static bool PixCombo()
         {
-            if (!Pix.IsValid())
-            {
-                return false;
-            }
-
             var mode = Orbwalker.ActiveMode.GetModeString();
-            var useQ = Q.IsReady() && !Q.HasManaCondition() && Menu.Item("QPix" + mode).IsActive();
-            var useE = E.IsReady() && !E.HasManaCondition() && Menu.Item("EQPix" + mode).IsActive();
-
-            if (!useQ && !useE)
-            {
-                return false;
-            }
-
-            var target = Pix.GetTarget();
-
-            if (!target.IsValidTarget())
-            {
-                var eqTarget = Pix.GetTarget(Q.Range + E.Range);
-
-                if (!eqTarget.IsValidTarget())
-                {
-                    return false;
-                }
-
-                var eTarget = SpellManager.E.IsInRange(eqTarget) ? eqTarget : Pix.GetETarget(eqTarget);
-
-                if (eTarget == null || !E.CastOnUnit(eTarget))
-                {
-                    return false;
-                }
-
-                Console.WriteLine("[Pix] Cast E");
-                return true;
-            }
-
-            if (!useQ)
-            {
-                return false;
-            }
-
-            if (useE && E.IsInRange(target) && E.CastOnUnit(target))
-            {
-                return true;
-            }
-
-            if (!SpellManager.PixQ.Cast(target).IsCasted())
-            {
-                return false;
-            }
-
-            Console.WriteLine("[Pix] Cast Q");
-            return true;
+            var target = Pix.GetTarget(Q.Range + E.Range);
+            return PixCombo(target, Menu.Item("QPix" + mode).IsActive(), Menu.Item("EQPix" + mode).IsActive());
         }
 
         public override void OnFarm(Orbwalking.OrbwalkingMode mode)
@@ -391,8 +381,10 @@ namespace LuluLicious
                 return false;
             }
 
+            var mana = Player.Mana;
             var useQ = Menu.Item("KSQ").IsActive() && Q.IsReady();
             var useE = Menu.Item("KSE").IsActive() && E.IsReady();
+            var useEQ = Menu.Item("KSEQ").IsActive() && Player.Mana > Q.ManaCost + E.ManaCost;
 
             if (!useQ && !useE)
             {
@@ -402,46 +394,32 @@ namespace LuluLicious
             foreach (var enemy in
                 Enemies.Where(e => e.IsValidTarget(E.Range + Q.Range) && !e.IsZombie).OrderBy(e => e.Health))
             {
+                var qDmg = Q.GetDamage(enemy);
                 var eDmg = E.GetDamage(enemy);
 
-                if (useE && E.IsInRange(enemy) && eDmg > enemy.Health && E.CastOnUnit(enemy))
+                if (useE && E.IsInRange(enemy))
+                {
+                    if (eDmg > enemy.Health && E.CastOnUnit(enemy))
+                    {
+                        return true;
+                    }
+
+                    if (useQ && qDmg + eDmg > enemy.Health && useEQ && E.CastOnUnit(enemy))
+                    {
+                        QAfterETarget = enemy;
+                        return true;
+                    }
+                }
+
+
+                if (useQ && qDmg > enemy.Health && Q.IsInRange(enemy) && Q.Cast(enemy).IsCasted())
                 {
                     return true;
                 }
 
-                var qDmg = Q.GetDamage(enemy);
-
-                if (useQ && qDmg > enemy.Health)
+                if (useQ && useE && useEQ && qDmg > enemy.Health && PixCombo(enemy, true, true, true))
                 {
-                    if (Q.IsInRange(enemy) && Q.Cast(enemy).IsCasted())
-                    {
-                        return true;
-                    }
-
-                    if (Pix.IsValid() && SpellManager.PixQ.IsInRange(enemy) && SpellManager.PixQ.Cast(enemy).IsCasted())
-                    {
-                        return true;
-                    }
-                }
-
-                if (useQ && useE && E.IsInRange(enemy) && qDmg + eDmg > enemy.Health && E.CastOnUnit(enemy))
-                {
-                    QAfterETarget = enemy;
                     return true;
-                }
-
-                if (Menu.Item("KSEQ").IsActive() && useQ && useE && qDmg > enemy.Health)
-                {
-                    var eTarget = Pix.GetETarget(enemy);
-                    if (eTarget == null)
-                    {
-                        continue;
-                    }
-
-                    if (E.CastOnUnit(eTarget))
-                    {
-                        return true;
-                    }
                 }
             }
 
