@@ -144,14 +144,14 @@ namespace jesuisFiora
 
             if (!Q.IsInRange(qPos.Position) || qPos.Position.DistanceToPlayer() < 75)
             {
-                Console.WriteLine("NOT IN RANGE");
+                //Console.WriteLine("NOT IN RANGE");
                 return false;
             }
 
             // cast q because we don't care
             if (!Menu.Item("QPassive").IsActive() || force)
             {
-                Console.WriteLine("FORCE Q");
+                //Console.WriteLine("FORCE Q");
                 return Q.Cast(qPos.Position);
             }
 
@@ -192,7 +192,7 @@ namespace jesuisFiora
                     select point).Any() && Q.Cast(qPos.Position);
             }
 
-            Console.WriteLine("DEFAULT CAST");
+            //Console.WriteLine("DEFAULT CAST");
             return !forcePassive && Q.Cast(qPos.Position);
         }
 
@@ -205,14 +205,14 @@ namespace jesuisFiora
         {
             if (target == null || !target.IsValidTarget(W.Range))
             {
-                Console.WriteLine("CAST W");
+                //Console.WriteLine("CAST W");
                 return W.Cast(Game.CursorPos);
             }
 
             var cast = W.GetPrediction(target);
             var castPos = W.IsInRange(cast.CastPosition) ? cast.CastPosition : target.ServerPosition;
 
-            Console.WriteLine("CAST W");
+            //Console.WriteLine("CAST W");
             return W.Cast(castPos);
         }
 
@@ -492,7 +492,7 @@ namespace jesuisFiora
             if (Menu.Item("OrbwalkAA").IsActive() && Orbwalking.CanAttack() &&
                 target.IsValidTarget(FioraAutoAttackRange))
             {
-                Console.WriteLine("RETURN");
+                //Console.WriteLine("RETURN");
                 return;
             }
 
@@ -521,7 +521,7 @@ namespace jesuisFiora
             var path = Player.GetPath(pos);
             var point = path.Length < 3 ? pos : path.Skip(path.Length / 2).FirstOrDefault();
             //  Console.WriteLine(path.Length);
-            Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
+            //Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
             Orbwalker.SetOrbwalkingPoint(target.IsMoving ? point : pos);
         }
 
@@ -581,7 +581,7 @@ namespace jesuisFiora
 
             if (E.IsReady() && /*!E.HasManaCondition() &&*/ E.Cast())
             {
-                Console.WriteLine("AFRTE");
+                //Console.WriteLine("AFRTE");
                 return;
             }
 
@@ -607,7 +607,7 @@ namespace jesuisFiora
 
             if (!targ.IsFacing(Player) && targ.Distance(Player) >= FioraAutoAttackRange - 10)
             {
-                Console.WriteLine("BEFORE");
+                //Console.WriteLine("BEFORE");
                 E.Cast();
             }
         }
@@ -1069,11 +1069,11 @@ namespace jesuisFiora
             // spell handled by evade
             if (SpellDatabase.GetByName(args.SData.Name) != null)
             {
-                Console.WriteLine("EVADE PROCESS SPELL RETURN");
+                //Console.WriteLine("EVADE PROCESS SPELL RETURN");
                 return;
             }
 
-            Console.WriteLine("({0}) {1}", args.Slot, args.SData.Name);
+            //Console.WriteLine("({0}) {1}", args.Slot, args.SData.Name);
             if (!SpellBlock.Contains(unit, args))
             {
                 return;
@@ -1082,8 +1082,8 @@ namespace jesuisFiora
             var castUnit = unit;
             var type = args.SData.TargettingType;
 
-            Console.WriteLine("Type: {0} Range: {1} Radius: {2}", type, args.SData.CastRange, args.SData.CastRadius);
-            Console.WriteLine("Distance: " + args.End.DistanceToPlayer());
+            //Console.WriteLine("Type: {0} Range: {1} Radius: {2}", type, args.SData.CastRange, args.SData.CastRadius);
+            //Console.WriteLine("Distance: " + args.End.DistanceToPlayer());
 
             if (!unit.IsValidTarget() || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
             {
@@ -1107,7 +1107,7 @@ namespace jesuisFiora
                 }
                 else if (unit.ChampionName.Equals("Riven") && args.End.DistanceToPlayer() < 260)
                 {
-                    Console.WriteLine("RIVEN");
+                    //Console.WriteLine("RIVEN");
                     CastW(castUnit);
                 }
                 else if (args.End.DistanceToPlayer() < 60)
@@ -1135,7 +1135,7 @@ namespace jesuisFiora
                     var d = unit.DistanceToPlayer();
                     var travelTime = d / args.SData.MissileSpeed;
                     var delay = travelTime * 1000 - W.Delay + 150;
-                    Console.WriteLine("TT: " + travelTime + " " + delay);
+                    //Console.WriteLine("TT: " + travelTime + " " + delay);
                     Utility.DelayAction.Add((int) delay, () => CastW(castUnit));
                     return;
                 }
@@ -1159,10 +1159,10 @@ namespace jesuisFiora
             {
                 var d = args.End.Distance(Player.ServerPosition);
                 var p = args.SData.CastRadius > 5000 ? args.SData.CastRange : args.SData.CastRadius;
-                Console.WriteLine(d + " " + " " + p);
+                //Console.WriteLine(d + " " + " " + p);
                 if (d < p)
                 {
-                    Console.WriteLine("CAST");
+                    //Console.WriteLine("CAST");
                     CastW(castUnit);
                 }
             }
