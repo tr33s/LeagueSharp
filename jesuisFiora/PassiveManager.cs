@@ -20,7 +20,7 @@ namespace jesuisFiora
 
         private static IEnumerable<Obj_GeneralParticleEmitter> VitalList
         {
-            get { return ObjectManager.Get<Obj_GeneralParticleEmitter>().Where(IsFioraPassive); }
+            get { return GameObjects.GetParticleEmitters().Where(IsFioraPassive); }
         }
 
         public static Menu Menu
@@ -52,7 +52,7 @@ namespace jesuisFiora
             }
         }
 
-        private static void AttackableUnit_OnEnterVisiblityClient(AttackableUnit sender, EventArgs args)
+        private static void AttackableUnit_OnEnterVisiblityClient(GameObject sender, EventArgs args)
         {
             if (sender != null && sender.IsValid<Obj_AI_Hero>() && sender.IsEnemy && sender.DistanceToPlayer() < 1000)
             {
