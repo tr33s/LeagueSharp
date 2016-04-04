@@ -188,15 +188,14 @@ namespace jesuisFiora
                 return false;
             }
 
-            if (GameObjectExtensions.DistanceToPlayer(qPos.Position) < 730)
+            /*if (GameObjectExtensions.DistanceToPlayer(qPos.Position) < 730)
             {
                 return (from point in GetQPolygon(qPos.Position).Points
                     from vitalPoint in
-                        qPos.Polygon.Points.OrderBy(p => GameObjectExtensions.DistanceToPlayer(p))
-                            .ThenByDescending(p => p.Distance(target))
+                        qPos.Polygon.Points.OrderBy(p => p.DistanceToPlayer()).ThenByDescending(p => p.Distance(target))
                     where Geometry.Distance(point, vitalPoint) < 20
                     select point).Any() && Q.Cast(qPos.Position);
-            }
+            }*/
 
             Console.WriteLine("DEFAULT CAST");
             return !forcePassive && Q.Cast(qPos.Position);
@@ -665,7 +664,7 @@ namespace jesuisFiora
             }
         }
 
-        private static void Game_OnGameLoad(object obj, EventArgs args)
+        private static void Game_OnGameLoad(object obj)
         {
             if (!Player.IsChampion("Fiora"))
             {
@@ -1077,8 +1076,8 @@ namespace jesuisFiora
 
         private static void Main(string[] args)
         {
-            //CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
-            Events.OnLoad += Game_OnGameLoad;
+            CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
+            //Events.OnLoad += Game_OnGameLoad;
         }
 
         private static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)

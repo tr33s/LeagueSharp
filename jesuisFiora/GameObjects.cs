@@ -7,7 +7,7 @@ namespace jesuisFiora
     {
         public static IEnumerable<Obj_GeneralParticleEmitter> GetParticleEmitters()
         {
-            return LeagueSharp.SDK.GameObjects.ParticleEmitters;
+            return ObjectManager.Get<Obj_GeneralParticleEmitter>();
         }
     }
 }

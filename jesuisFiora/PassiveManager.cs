@@ -227,6 +227,7 @@ namespace jesuisFiora
         private readonly int PassiveDistance;
         public readonly Obj_AI_Hero Target;
         private Geometry.Polygon _polygon;
+        private Vector3 _polygonCenter;
         private Geometry.Polygon.Sector _simplePolygon;
         private Vector3 LastPolygonPosition;
         private Vector3 LastSimplePolygonPosition;
@@ -298,6 +299,7 @@ namespace jesuisFiora
                 LastPolygonPosition = Target.ServerPosition;
                 LastPolygonAngle = PolygonAngle;
                 LastPolygonRadius = PolygonRadius;
+                _polygonCenter = _polygon.CenterOfPolygone().To3D();
                 return _polygon;
             }
         }
@@ -333,7 +335,7 @@ namespace jesuisFiora
 
         public Vector3 OrbwalkPosition
         {
-            get { return Target.ServerPosition.Extend(Polygon.CenterOfPolygone().To3D(), 150); }
+            get { return Target.ServerPosition.Extend(_polygonCenter, 150); }
         }
 
         public Vector3 CastPosition
@@ -375,7 +377,7 @@ namespace jesuisFiora
                 }
 
                 var calcRads = PolygonAngle;
-                var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(calcRads), i, 30);
+                var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(calcRads), i);
                 sector.UpdatePolygon();
                 list.AddRange(sector.Points);
                 //polygons.Add(sector);
