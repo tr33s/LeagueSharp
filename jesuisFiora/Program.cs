@@ -170,7 +170,7 @@ namespace jesuisFiora
             var passiveType = qPos.PassiveType.ToString();
 
             // passive type is none, no special checks needed
-            if (passiveType.Equals("None"))
+            if (passiveType == "None")
             {
                 //  Console.WriteLine("NO PASSIVE");
                 return !forcePassive && Q.Cast(qPos.Position);

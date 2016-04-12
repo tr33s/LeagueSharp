@@ -11,16 +11,14 @@ namespace jesuisFiora
 {
     internal static class PassiveManager
     {
-        public static Dictionary<Obj_AI_Hero, List<FioraPassive>> PassiveList =
-            new Dictionary<Obj_AI_Hero, List<FioraPassive>>();
-
+        private static readonly List<FioraPassive> PassiveList = new List<FioraPassive>();
         private static readonly List<string> DirectionList = new List<string> { "NE", "NW", "SE", "SW" };
 
         private static int _fioraCount;
 
         private static IEnumerable<Obj_GeneralParticleEmitter> VitalList
         {
-            get { return GameObjects.GetParticleEmitters().Where(IsFioraPassive); }
+            get { return ObjectManager.Get<Obj_GeneralParticleEmitter>().Where(IsFioraPassive); }
         }
 
         public static Menu Menu
@@ -30,34 +28,15 @@ namespace jesuisFiora
 
         public static void Initialize()
         {
-            foreach (var enemy in HeroManager.Enemies)
-            {
-                PassiveList.Add(enemy, new List<FioraPassive>());
-            }
-
             _fioraCount = HeroManager.AllHeroes.Count(h => h.ChampionName == "Fiora");
 
             Game.OnUpdate += Game_OnUpdate;
-            GameObject.OnCreate += GameObject_OnCreate;
-            GameObject.OnDelete += GameObject_OnDelete;
-            AttackableUnit.OnEnterVisiblityClient += AttackableUnit_OnEnterVisiblityClient;
             Drawing.OnDraw += Drawing_OnDraw;
         }
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            /*foreach (var enemyPassiveList in PassiveList.Values)
-            {
-                enemyPassiveList.RemoveAll(p => !p.IsValid);
-            }*/
-        }
-
-        private static void AttackableUnit_OnEnterVisiblityClient(GameObject sender, EventArgs args)
-        {
-            if (sender != null && sender.IsValid<Obj_AI_Hero>() && sender.IsEnemy && sender.DistanceToPlayer() < 1000)
-            {
-                UpdatePassiveList();
-            }
+            if (ObjectManager.Player.IsDead) {}
         }
 
         private static void Drawing_OnDraw(EventArgs args)
@@ -70,8 +49,10 @@ namespace jesuisFiora
             try
             {
                 foreach (var passive in
-                    PassiveList.Where(kvp => kvp.Key.IsValid && kvp.Key.IsVisible && kvp.Key.IsHPBarRendered)
-                        .SelectMany(keyValue => keyValue.Value.Where(p => p.IsValid && p.IsVisible)))
+                    PassiveList.Where(
+                        p =>
+                            p.IsValid && p.IsVisible && p.Target.IsValid && p.Target.IsVisible &&
+                            p.Target.IsHPBarRendered))
                 {
                     if (Menu.Item("DrawPolygon").IsActive() && passive.SimplePolygon != null)
                     {
@@ -92,57 +73,46 @@ namespace jesuisFiora
 
         public static int CountPassive(this Obj_AI_Hero target)
         {
-            List<FioraPassive> list;
-            PassiveList.TryGetValue(target, out list);
-            return list == null || !target.IsValidTarget() ? 0 : list.Count(obj => obj.IsValid && obj.IsVisible);
+            return PassiveList.Count(p => p.Target.NetworkId == target.NetworkId);
         }
 
         public static FioraPassive GetNearestPassive(this Obj_AI_Hero target)
         {
-            List<FioraPassive> list;
-            PassiveList.TryGetValue(target, out list);
-
-            if (list == null || list.Count == 0)
-            {
-                //UpdatePassiveList();
-                return null;
-            }
-
-            return list.Where(p => p.IsValid && p.IsVisible).MinOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
+            var list = PassiveList.Where(p => p.Target.NetworkId == target.NetworkId);
+            var fioraPassives = list as FioraPassive[] ?? list.ToArray();
+            return !fioraPassives.Any()
+                ? null
+                : fioraPassives.Where(p => p.IsValid && p.IsVisible)
+                    .MinOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
         }
 
         public static FioraPassive GetFurthestPassive(this Obj_AI_Hero target)
         {
-            List<FioraPassive> list;
-            PassiveList.TryGetValue(target, out list);
-
-            if (list == null || list.Count == 0)
-            {
-                //UpdatePassiveList();
-                return null;
-            }
-
-            return list.Where(p => p.IsValid && p.IsVisible).MaxOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
+            var list = PassiveList.Where(p => p.Target.NetworkId == target.NetworkId);
+            var fioraPassives = list as FioraPassive[] ?? list.ToArray();
+            return !fioraPassives.Any()
+                ? null
+                : fioraPassives.Where(p => p.IsValid && p.IsVisible)
+                    .MaxOrDefault(obj => obj.OrbwalkPosition.DistanceToPlayer());
         }
 
         public static bool HasUltPassive(this Obj_AI_Hero target)
         {
-            List<FioraPassive> list;
-            return PassiveList.TryGetValue(target, out list) && list != null && list.Count > 0 &&
-                   list.Any(
-                       passive =>
-                           passive.IsValid && passive.IsVisible &&
-                           passive.Passive == FioraPassive.PassiveType.UltPassive);
+            return target.GetUltPassiveCount() > 0;
         }
 
         public static int GetUltPassiveCount(this Obj_AI_Hero target)
         {
-            List<FioraPassive> list;
-            return PassiveList.TryGetValue(target, out list) && list != null && list.Count > 0
-                ? list.Count(
-                    passive =>
-                        passive.IsValid && passive.IsVisible && passive.Passive == FioraPassive.PassiveType.UltPassive)
-                : 0;
+            var passive = PassiveList.Where(p => p.Target.NetworkId == target.NetworkId);
+            var fioraPassives = passive as FioraPassive[] ?? passive.ToArray();
+
+            if (!fioraPassives.Any())
+            {
+                return 0;
+            }
+
+            return fioraPassives.Count(
+                p => p.IsValid && p.IsVisible && p.Passive == FioraPassive.PassiveType.UltPassive);
         }
 
         public static double GetPassiveDamage(this Obj_AI_Hero target, int? passiveCount = null)
@@ -160,14 +130,14 @@ namespace jesuisFiora
         public static void UpdatePassiveList()
         {
             foreach (var vital in
-                VitalList.Where(v => !PassiveList.Any(passiveList => passiveList.Value.Any(passive => passive == v))))
+                VitalList.Where(v => PassiveList.All(p => p.NetworkId != v.NetworkId)))
             {
                 var vital1 = vital;
                 var hero =
                     HeroManager.Enemies.Where(h => h.IsValidTarget()).MinOrDefault(h => h.Distance(vital1.Position));
                 if (hero != null)
                 {
-                    PassiveList[hero].Add(new FioraPassive(vital, hero));
+                    PassiveList.Add(new FioraPassive(vital, hero));
                 }
             }
         }
@@ -178,34 +148,6 @@ namespace jesuisFiora
                    (emitter.Name.Contains("Fiora_Base_R_Mark") ||
                     (emitter.Name.Contains("Fiora_Base_R") && emitter.Name.Contains("Timeout")) ||
                     (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains)));
-        }
-
-        private static void GameObject_OnCreate(GameObject sender, EventArgs args)
-        {
-            var emitter = sender as Obj_GeneralParticleEmitter;
-
-            if (!IsFioraPassive(emitter))
-            {
-                return;
-            }
-
-            var target = HeroManager.Enemies.MinOrDefault(enemy => enemy.Distance(emitter.Position));
-
-            // 2 fioras?
-            if (_fioraCount > 1 && target.Distance(emitter.Position) > 30)
-            {
-                return;
-            }
-
-            PassiveList[target].Add(new FioraPassive(emitter, target));
-        }
-
-        private static void GameObject_OnDelete(GameObject sender, EventArgs args)
-        {
-            foreach (var enemy in PassiveList.Values)
-            {
-                enemy.RemoveAll(passive => passive.NetworkId == sender.NetworkId);
-            }
         }
     }
 
