@@ -36,7 +36,12 @@ namespace jesuisFiora
 
         private static void Game_OnUpdate(EventArgs args)
         {
-            if (ObjectManager.Player.IsDead) {}
+            if (ObjectManager.Player.IsDead)
+            {
+                return;
+            }
+
+            UpdatePassiveList();
         }
 
         private static void Drawing_OnDraw(EventArgs args)
@@ -129,8 +134,9 @@ namespace jesuisFiora
 
         public static void UpdatePassiveList()
         {
+            PassiveList.Clear();
             foreach (var vital in
-                VitalList.Where(v => PassiveList.All(p => p.NetworkId != v.NetworkId)))
+                VitalList)
             {
                 var vital1 = vital;
                 var hero =
@@ -277,7 +283,7 @@ namespace jesuisFiora
 
         public Vector3 OrbwalkPosition
         {
-            get { return Target.ServerPosition.Extend(_polygonCenter, 150); }
+            get { return Target.ServerPosition.Extend(_polygon.CenterOfPolygone().To3D(), 150); }
         }
 
         public Vector3 CastPosition
