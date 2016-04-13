@@ -508,6 +508,12 @@ namespace jesuisFiora
             }
 
             var pos = passive.OrbwalkPosition; //PassivePosition;
+
+            if (pos == Vector3.Zero)
+            {
+                return;
+            }
+
             var underTurret = Menu.Item("OrbwalkTurret").IsActive() && pos.UnderTurret(true);
             var outsideAARange = Menu.Item("OrbwalkAARange").IsActive() &&
                                  Player.Distance(pos) >

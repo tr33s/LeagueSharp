@@ -237,8 +237,8 @@ namespace jesuisFiora
                     LastPolygonAngle = PolygonAngle;
                 }
 
-                if (Target.ServerPosition == LastPolygonPosition && PolygonRadius == LastPolygonRadius &&
-                    PolygonAngle == LastPolygonAngle && _polygon != null)
+                if (LastPolygonPosition != Vector3.Zero && Target.ServerPosition == LastPolygonPosition &&
+                    PolygonRadius == LastPolygonRadius && PolygonAngle == LastPolygonAngle && _polygon != null)
                 {
                     return _polygon;
                 }
@@ -266,8 +266,8 @@ namespace jesuisFiora
                     LastPolygonAngle = PolygonAngle;
                 }
 
-                if (Target.ServerPosition == LastSimplePolygonPosition && PolygonRadius == LastPolygonRadius &&
-                    PolygonAngle == LastPolygonAngle && _simplePolygon != null)
+                if (LastSimplePolygonPosition != Vector3.Zero && Target.ServerPosition == LastSimplePolygonPosition &&
+                    PolygonRadius == LastPolygonRadius && PolygonAngle == LastPolygonAngle && _simplePolygon != null)
                 {
                     return _simplePolygon;
                 }
@@ -283,7 +283,10 @@ namespace jesuisFiora
 
         public Vector3 OrbwalkPosition
         {
-            get { return Target.ServerPosition.Extend(_polygon.CenterOfPolygone().To3D(), 150); }
+            get
+            {
+                return _polygonCenter == Vector3.Zero ? Vector3.Zero : Target.ServerPosition.Extend(_polygonCenter, 150);
+            }
         }
 
         public Vector3 CastPosition
