@@ -43,9 +43,6 @@
     <Reference Include="LeagueSharp.Common">
       <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\LeagueSharp.Common.dll</HintPath>
     </Reference>
-    <Reference Include="LeagueSharp.SDK">
-      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\LeagueSharp.SDK.dll</HintPath>
-    </Reference>
     <Reference Include="SharpDX, Version=2.5.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\SharpDX.dll</HintPath>

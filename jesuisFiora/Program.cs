@@ -5,18 +5,13 @@ using System.Linq;
 using jesuisFiora.Properties;
 using LeagueSharp;
 using LeagueSharp.Common;
-using LeagueSharp.SDK;
 using SharpDX;
+using TreeLib.Core;
 using TreeLib.Extensions;
 using TreeLib.Objects;
-using Bootstrap = TreeLib.Core.Bootstrap;
+using TreeLib.SpellData;
 using Color = SharpDX.Color;
 using Geometry = LeagueSharp.Common.Geometry;
-using KeyBindType = LeagueSharp.Common.KeyBindType;
-using MinionTypes = LeagueSharp.Common.MinionTypes;
-using Spell = LeagueSharp.Common.Spell;
-using SpellDatabase = TreeLib.SpellData.SpellDatabase;
-using TargetSelector = LeagueSharp.Common.TargetSelector;
 
 namespace jesuisFiora
 {
@@ -94,7 +89,7 @@ namespace jesuisFiora
 
         public static bool CastItems(Obj_AI_Base target)
         {
-            if (Dash.IsDashing(Player) || Player.IsWindingUp)
+            if (Player.IsDashing() || Player.IsWindingUp)
             {
                 return false;
             }
@@ -140,14 +135,14 @@ namespace jesuisFiora
 
         public static bool CastQ(Obj_AI_Hero target, FioraPassive passive, bool force = false)
         {
-            if (!Q.IsReady() || !Utility.IsValidTarget(target, Q.Range))
+            if (!Q.IsReady() || !target.IsValidTarget(Q.Range))
             {
                 return false;
             }
 
             var qPos = GetBestCastPosition(target, passive);
 
-            if (!Q.IsInRange(qPos.Position) || GameObjectExtensions.DistanceToPlayer(qPos.Position) < 75)
+            if (!Q.IsInRange(qPos.Position) || qPos.Position.DistanceToPlayer() < 75)
             {
                 Console.WriteLine("NOT IN RANGE");
                 return false;
@@ -188,14 +183,14 @@ namespace jesuisFiora
                 return false;
             }
 
-            /*if (GameObjectExtensions.DistanceToPlayer(qPos.Position) < 730)
+            if (qPos.Position.DistanceToPlayer() < 730)
             {
                 return (from point in GetQPolygon(qPos.Position).Points
                     from vitalPoint in
                         qPos.Polygon.Points.OrderBy(p => p.DistanceToPlayer()).ThenByDescending(p => p.Distance(target))
-                    where Geometry.Distance(point, vitalPoint) < 20
+                    where point.Distance(vitalPoint) < 20
                     select point).Any() && Q.Cast(qPos.Position);
-            }*/
+            }
 
             Console.WriteLine("DEFAULT CAST");
             return !forcePassive && Q.Cast(qPos.Position);
@@ -203,12 +198,12 @@ namespace jesuisFiora
 
         public static bool CastR(Obj_AI_Base target)
         {
-            return R.IsReady() && Utility.IsValidTarget(target, R.Range) && R.Cast(target).IsCasted();
+            return R.IsReady() && target.IsValidTarget(R.Range) && R.Cast(target).IsCasted();
         }
 
         public static bool CastW(Obj_AI_Base target)
         {
-            if (target == null || !Utility.IsValidTarget(target, W.Range))
+            if (target == null || !target.IsValidTarget(W.Range))
             {
                 Console.WriteLine("CAST W");
                 return W.Cast(Game.CursorPos);
@@ -256,7 +251,7 @@ namespace jesuisFiora
             foreach (var obj in
                 Enemies.Where(
                     enemy =>
-                        Menu.Item("Duelist" + enemy.ChampionName).IsActive() && Utility.IsValidTarget(enemy, R.Range) &&
+                        Menu.Item("Duelist" + enemy.ChampionName).IsActive() && enemy.IsValidTarget(R.Range) &&
                         GetComboDamage(enemy, vitalCalc) >= enemy.Health &&
                         enemy.Health > Player.GetSpellDamage(enemy, SpellSlot.Q) + enemy.GetPassiveDamage(1)))
             {
@@ -311,7 +306,7 @@ namespace jesuisFiora
                 return;
             }
 
-            var jungle = EnumerableExtensions.MinOrDefault(jungleMinions, obj => obj.Health);
+            var jungle = jungleMinions.MinOrDefault(obj => obj.Health);
             if (!onlyLastHit && jungle != null && Q.Cast(jungle).IsCasted())
             {
                 return;
@@ -319,8 +314,8 @@ namespace jesuisFiora
 
             var killable = laneMinions.FirstOrDefault(obj => obj.Health < Player.GetSpellDamage(obj, SpellSlot.Q));
 
-            if (Menu.Item("QFarmAA").IsActive() && killable != null &&
-                Utility.IsValidTarget(killable, FioraAutoAttackRange) && !Player.UnderTurret(false))
+            if (Menu.Item("QFarmAA").IsActive() && killable != null && killable.IsValidTarget(FioraAutoAttackRange) &&
+                !Player.UnderTurret(false))
             {
                 return;
             }
@@ -330,7 +325,7 @@ namespace jesuisFiora
                 return;
             }
 
-            var lane = EnumerableExtensions.MinOrDefault(laneMinions, obj => obj.Health);
+            var lane = laneMinions.MinOrDefault(obj => obj.Health);
             if (!onlyLastHit && lane != null && Q.Cast(lane).IsCasted()) {}
         }
 
@@ -343,14 +338,14 @@ namespace jesuisFiora
 
             Orbwalker.ActiveMode = Orbwalking.OrbwalkingMode.None;
 
-            if (!Dash.IsDashing(Player) && Geometry.Distance(Player.GetWaypoints().Last(), Game.CursorPos) > 100)
+            if (!Player.IsDashing() && Player.GetWaypoints().Last().Distance(Game.CursorPos) > 100)
             {
                 Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
             }
 
             if (Q.IsReady())
             {
-                Q.Cast(Geometry.Extend(Player.ServerPosition, Game.CursorPos, Q.Range + 10));
+                Q.Cast(Player.ServerPosition.Extend(Game.CursorPos, Q.Range + 10));
             }
 
             return true;
@@ -444,7 +439,7 @@ namespace jesuisFiora
                     break;
                 }
 
-                polygon.Add(Geometry.Extend(Player.ServerPosition, destination, i));
+                polygon.Add(Player.ServerPosition.Extend(destination, i));
             }
 
             return polygon;
@@ -459,7 +454,7 @@ namespace jesuisFiora
 
             var unit =
                 Enemies.FirstOrDefault(
-                    o => Utility.IsValidTarget(o, Q.Range) && o.Health < Q.GetDamage(o) + o.GetPassiveDamage());
+                    o => o.IsValidTarget(Q.Range) && o.Health < Q.GetDamage(o) + o.GetPassiveDamage());
             if (unit != null)
             {
                 CastQ(unit, unit.GetNearestPassive(), true);
@@ -480,9 +475,7 @@ namespace jesuisFiora
 
             var unit =
                 Enemies.FirstOrDefault(
-                    o =>
-                        Utility.IsValidTarget(o, W.Range) && o.Health < W.GetDamage(o) &&
-                        !Utility.IsValidTarget(o, FioraAutoAttackRange));
+                    o => o.IsValidTarget(W.Range) && o.Health < W.GetDamage(o) && !o.IsValidTarget(FioraAutoAttackRange));
             if (unit != null)
             {
                 W.Cast(unit);
@@ -497,7 +490,7 @@ namespace jesuisFiora
             }
 
             if (Menu.Item("OrbwalkAA").IsActive() && Orbwalking.CanAttack() &&
-                Utility.IsValidTarget(target, FioraAutoAttackRange))
+                target.IsValidTarget(FioraAutoAttackRange))
             {
                 Console.WriteLine("RETURN");
                 return;
@@ -517,7 +510,7 @@ namespace jesuisFiora
             var pos = passive.OrbwalkPosition; //PassivePosition;
             var underTurret = Menu.Item("OrbwalkTurret").IsActive() && pos.UnderTurret(true);
             var outsideAARange = Menu.Item("OrbwalkAARange").IsActive() &&
-                                 Geometry.Distance(Player, pos) >
+                                 Player.Distance(pos) >
                                  FioraAutoAttackRange + 250 +
                                  (passive.Type.Equals(FioraPassive.PassiveType.UltPassive) ? 50 : 0);
             if (underTurret || outsideAARange)
@@ -528,7 +521,7 @@ namespace jesuisFiora
             var path = Player.GetPath(pos);
             var point = path.Length < 3 ? pos : path.Skip(path.Length / 2).FirstOrDefault();
             //  Console.WriteLine(path.Length);
-            Console.WriteLine("ORBWALK TO PASSIVE: " + Geometry.Distance(Player, pos));
+            Console.WriteLine("ORBWALK TO PASSIVE: " + Player.Distance(pos));
             Orbwalker.SetOrbwalkingPoint(target.IsMoving ? point : pos);
         }
 
@@ -538,7 +531,7 @@ namespace jesuisFiora
 
             if (aaTarget)
             {
-                if (Utility.IsValidTarget(UltTarget.Target, 1000))
+                if (UltTarget.Target.IsValidTarget(1000))
                 {
                     return UltTarget.Target;
                 }
@@ -548,7 +541,7 @@ namespace jesuisFiora
                     : LockedTargetSelector.GetTarget(FioraAutoAttackRange, TargetSelector.DamageType.Physical);
             }
 
-            if (Utility.IsValidTarget(UltTarget.Target, Q.Range))
+            if (UltTarget.Target.IsValidTarget(Q.Range))
             {
                 return UltTarget.Target;
             }
@@ -593,9 +586,8 @@ namespace jesuisFiora
                 return;
             }
 
-            var lastCast = Player.GetLastCastedSpell();
-            if (lastCast != null && lastCast.IsValid && lastCast.Name == R.Instance.Name &&
-                Environment.TickCount - lastCast.StartTime < 200)
+            var lastCast = Player.LastCastedspell();
+            if (lastCast != null && lastCast.Name == R.Instance.Name && Environment.TickCount - lastCast.Tick < 200)
             {
                 return;
             }
@@ -626,7 +618,7 @@ namespace jesuisFiora
                 return;
             }
 
-            if (!Utility.IsFacing(targ, Player) && Geometry.Distance(targ, Player) >= FioraAutoAttackRange - 10)
+            if (!targ.IsFacing(Player) && targ.Distance(Player) >= FioraAutoAttackRange - 10)
             {
                 Console.WriteLine("BEFORE");
                 E.Cast();
@@ -657,7 +649,7 @@ namespace jesuisFiora
 
             foreach (var circle in from spell in new[] { 1, 3 }
                 let circle = Menu.Item(spell + "Draw").GetValue<Circle>()
-                where circle.Active && Utility.IsReady(Player.Spellbook.GetSpell((SpellSlot) spell))
+                where circle.Active && Player.Spellbook.GetSpell((SpellSlot) spell).IsReady()
                 select circle)
             {
                 Render.Circle.DrawCircle(Player.Position, circle.Radius, circle.Color);
@@ -979,7 +971,7 @@ namespace jesuisFiora
             DuelistMode();
             Farm();
 
-            if (Dash.IsDashing(Player) || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
+            if (Player.IsDashing() || Player.IsWindingUp || Player.Spellbook.IsCastingSpell)
             {
                 return;
             }
@@ -991,7 +983,7 @@ namespace jesuisFiora
 
             var aaTarget = GetTarget(true);
             var passive = new FioraPassive();
-            if (Utility.IsValidTarget(aaTarget))
+            if (aaTarget.IsValidTarget())
             {
                 passive = aaTarget.GetNearestPassive();
                 if (Menu.Item("OrbwalkPassive").IsActive() &&
@@ -1009,7 +1001,7 @@ namespace jesuisFiora
             }
 
             var target = GetTarget();
-            if (!Utility.IsValidTarget(target, W.Range))
+            if (!target.IsValidTarget(W.Range))
             {
                 return;
             }
@@ -1032,8 +1024,7 @@ namespace jesuisFiora
 
             if (Q.IsActive()) // && !Q.HasManaCondition())
             {
-                if (Utility.IsValidTarget(target, FioraAutoAttackRange) &&
-                    !Orbwalking.IsAutoAttack(Player.LastCastedSpellName()))
+                if (target.IsValidTarget(FioraAutoAttackRange) && !Orbwalking.IsAutoAttack(Player.LastCastedSpellName()))
                 {
                     return;
                 }
@@ -1112,17 +1103,17 @@ namespace jesuisFiora
 
             Console.WriteLine(
                 "PassiveType: {0} Range: {1} Radius: {2}", type, args.SData.CastRange, args.SData.CastRadius);
-            Console.WriteLine("Distance: " + GameObjectExtensions.DistanceToPlayer(args.End));
+            Console.WriteLine("Distance: " + args.End.DistanceToPlayer());
 
-            if (!Utility.IsValidTarget(unit) || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
+            if (!unit.IsValidTarget() || Menu.Item("WMode").GetValue<StringList>().SelectedIndex == 1)
             {
                 var target = TargetSelector.GetSelectedTarget();
-                if (target == null || !Utility.IsValidTarget(target, W.Range))
+                if (target == null || !target.IsValidTarget(W.Range))
                 {
                     target = TargetSelector.GetTargetNoCollision(W);
                 }
 
-                if (target != null && Utility.IsValidTarget(target, W.Range))
+                if (target != null && target.IsValidTarget(W.Range))
                 {
                     castUnit = target;
                 }
@@ -1130,16 +1121,16 @@ namespace jesuisFiora
 
             if (type.IsSkillShot())
             {
-                if (unit.ChampionName.Equals("Bard") && GameObjectExtensions.DistanceToPlayer(args.End) < 300)
+                if (unit.ChampionName.Equals("Bard") && args.End.DistanceToPlayer() < 300)
                 {
-                    Utility.DelayAction.Add(400 + (int) (Geometry.Distance(unit, Player) / 7f), () => CastW(castUnit));
+                    Utility.DelayAction.Add(400 + (int) (unit.Distance(Player) / 7f), () => CastW(castUnit));
                 }
-                else if (unit.ChampionName.Equals("Riven") && GameObjectExtensions.DistanceToPlayer(args.End) < 260)
+                else if (unit.ChampionName.Equals("Riven") && args.End.DistanceToPlayer() < 260)
                 {
                     Console.WriteLine("RIVEN");
                     CastW(castUnit);
                 }
-                else if (GameObjectExtensions.DistanceToPlayer(args.End) < 60)
+                else if (args.End.DistanceToPlayer() < 60)
                 {
                     CastW(castUnit);
                 }
@@ -1161,7 +1152,7 @@ namespace jesuisFiora
                 if (unit.ChampionName.Equals("Nautilus") ||
                     (unit.ChampionName.Equals("Caitlyn") && args.Slot.Equals(SpellSlot.R)))
                 {
-                    var d = GameObjectExtensions.DistanceToPlayer(unit);
+                    var d = unit.DistanceToPlayer();
                     var travelTime = d / args.SData.MissileSpeed;
                     var delay = travelTime * 1000 - W.Delay + 150;
                     Console.WriteLine("TT: " + travelTime + " " + delay);
@@ -1171,8 +1162,7 @@ namespace jesuisFiora
 
                 CastW(castUnit);
             }
-            else if (type.Equals(SpellDataTargetType.LocationAoe) &&
-                     GameObjectExtensions.DistanceToPlayer(args.End) < args.SData.CastRadius)
+            else if (type.Equals(SpellDataTargetType.LocationAoe) && args.End.DistanceToPlayer() < args.SData.CastRadius)
             {
                 // annie moving tibbers
                 if (unit.ChampionName.Equals("Annie") && args.Slot.Equals(SpellSlot.R))
@@ -1181,14 +1171,13 @@ namespace jesuisFiora
                 }
                 CastW(castUnit);
             }
-            else if (type.Equals(SpellDataTargetType.Cone) &&
-                     GameObjectExtensions.DistanceToPlayer(args.End) < args.SData.CastRadius)
+            else if (type.Equals(SpellDataTargetType.Cone) && args.End.DistanceToPlayer() < args.SData.CastRadius)
             {
                 CastW(castUnit);
             }
             else if (type.Equals(SpellDataTargetType.SelfAoe) || type.Equals(SpellDataTargetType.Self))
             {
-                var d = Geometry.Distance(args.End, Player.ServerPosition);
+                var d = args.End.Distance(Player.ServerPosition);
                 var p = args.SData.CastRadius > 5000 ? args.SData.CastRange : args.SData.CastRadius;
                 Console.WriteLine(d + " " + " " + p);
                 if (d < p)
