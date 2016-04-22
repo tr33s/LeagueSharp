@@ -320,6 +320,8 @@ namespace jesuisFiora
             //var polygons = new List<Geometry.Polygon>();
             var list = new List<Vector2>();
             var r = Passive == PassiveType.UltPassive ? 400 : PolygonRadius;
+            var angle = Geometry.DegreeToRadian(PolygonAngle);
+
             for (var i = 100; i < r; i += 10)
             {
                 if (i > r)
@@ -327,8 +329,7 @@ namespace jesuisFiora
                     break;
                 }
 
-                var calcRads = PolygonAngle;
-                var sector = new Geometry.Polygon.Sector(basePos, pos, Geometry.DegreeToRadian(calcRads), i);
+                var sector = new Geometry.Polygon.Sector(basePos, pos, angle, i);
                 sector.UpdatePolygon();
                 list.AddRange(sector.Points);
                 //polygons.Add(sector);

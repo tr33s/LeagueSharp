@@ -587,7 +587,6 @@ namespace jesuisFiora
 
             var hero = targ as Obj_AI_Hero;
             if (hero != null && hero.GetUltPassiveCount() > 1)
-
             {
                 return;
             }
@@ -833,6 +832,7 @@ namespace jesuisFiora
             rMenu.AddBool("RComboSelected", "Use R Selected on Selected Unit Only");
             rMenu.Item("RComboSelected")
                 .SetTooltip("Only cast R when enemy has been left clicked or selected.", ScriptColor);
+            rMenu.AddBool("RSmartQ", "Use Smart Q in Ult");
 
             var items = spells.AddMenu("Items", "Items");
             items.AddBool("ItemsCombo", "Use in Combo");
@@ -1042,11 +1042,12 @@ namespace jesuisFiora
 
                 var count = target.GetUltPassiveCount();
 
-                if (count == 0)
+                if (!Menu.Item("RSmartQ").IsActive() || count == 0)
                 {
                     CastQ(target, vital);
+                    return;
                 }
-                else if (count > 2)
+                if (count > 2)
                 {
                     return;
                 }
