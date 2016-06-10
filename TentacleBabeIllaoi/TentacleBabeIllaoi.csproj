@@ -38,10 +38,7 @@
     <Reference Include="LeagueSharp.Common">
       <HintPath>..\..\TreeLib\TreeLib\bin\Release\LeagueSharp.Common.dll</HintPath>
     </Reference>
-    <Reference Include="SharpDX, Version=2.5.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\TreeLib\TreeLib\bin\Release\SharpDX.dll</HintPath>
-    </Reference>
+    <Reference Include="SharpDX">
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
