@@ -150,10 +150,14 @@ namespace jesuisFiora
 
         public static bool IsFioraPassive(this Obj_GeneralParticleEmitter emitter)
         {
-            return emitter != null && emitter.IsValid &&
-                   (emitter.Name.Contains("Fiora_Base_R_Mark") ||
-                    (emitter.Name.Contains("Fiora_Base_R") && emitter.Name.Contains("Timeout")) ||
-                    (emitter.Name.Contains("Fiora_Base_Passive") && DirectionList.Any(emitter.Name.Contains)));
+            if (emitter == null || !emitter.IsValid)
+            {
+                return false;
+            }
+
+            var name = emitter.Name;
+            return name.Contains("Fiora_Base_R_Mark") || (name.Contains("Fiora_Base_R") && name.Contains("Timeout")) ||
+                   (name.Contains("Fiora_Base_Passive") && DirectionList.Any(name.Contains));
         }
     }
 
@@ -175,7 +179,6 @@ namespace jesuisFiora
         private readonly int PassiveDistance;
         public readonly Obj_AI_Hero Target;
         private Geometry.Polygon _polygon;
-        private Vector3 _polygonCenter;
         private Geometry.Polygon.Sector _simplePolygon;
         private Vector3 LastPolygonPosition;
         private Vector3 LastSimplePolygonPosition;
@@ -237,8 +240,9 @@ namespace jesuisFiora
                     LastPolygonAngle = PolygonAngle;
                 }
 
-                if (LastPolygonPosition != Vector3.Zero && Target.ServerPosition == LastPolygonPosition &&
-                    PolygonRadius == LastPolygonRadius && PolygonAngle == LastPolygonAngle && _polygon != null)
+                if (_polygon != null && LastPolygonPosition != Vector3.Zero &&
+                    Target.ServerPosition == LastPolygonPosition && PolygonRadius == LastPolygonRadius &&
+                    PolygonAngle == LastPolygonAngle)
                 {
                     return _polygon;
                 }
@@ -247,7 +251,6 @@ namespace jesuisFiora
                 LastPolygonPosition = Target.ServerPosition;
                 LastPolygonAngle = PolygonAngle;
                 LastPolygonRadius = PolygonRadius;
-                _polygonCenter = _polygon.CenterOfPolygone().To3D();
                 return _polygon;
             }
         }
@@ -285,7 +288,8 @@ namespace jesuisFiora
         {
             get
             {
-                return _polygonCenter == Vector3.Zero ? Vector3.Zero : Target.ServerPosition.Extend(_polygonCenter, 150);
+                var point = Polygon.CenterOfPolygone().To3D();
+                return point == Vector3.Zero ? Vector3.Zero : Target.ServerPosition.Extend(point, 150);
             }
         }
 

@@ -13,6 +13,9 @@ namespace jesuisFiora
         private static readonly Dictionary<string, List<BlockedSpell>> BlockedSpells =
             new Dictionary<string, List<BlockedSpell>>();
 
+        private static readonly Dictionary<string, List<BlockedSpell>> CurrentBlockedSpells =
+            new Dictionary<string, List<BlockedSpell>>();
+
         private static Menu Menu;
 
         static SpellBlock()
@@ -318,13 +321,16 @@ namespace jesuisFiora
                     continue;
                 }
 
+                var spells = BlockedSpells[unit.ChampionName];
                 var name = unit.ChampionName.Equals("MonkeyKing") ? "Wukong" : unit.ChampionName;
                 var blockedMenu = menu.AddMenu(unit.ChampionName, name);
-                foreach (var spell in BlockedSpells[unit.ChampionName])
+                foreach (var spell in spells)
                 {
                     var slot = spell.Slot.Equals(48) ? SpellSlot.R : spell.Slot;
                     blockedMenu.AddBool(unit.ChampionName + spell.MenuName, spell.DisplayName);
                 }
+
+                CurrentBlockedSpells.Add(unit.ChampionName, spells);
             }
 
             Game.OnUpdate += Game_OnUpdate;
@@ -354,7 +360,7 @@ namespace jesuisFiora
                 }
 
                 List<BlockedSpell> spells;
-                BlockedSpells.TryGetValue(enemy.ChampionName, out spells);
+                CurrentBlockedSpells.TryGetValue(enemy.ChampionName, out spells);
 
                 if (spells == null || spells.Count == 0)
                 {
@@ -384,7 +390,10 @@ namespace jesuisFiora
                         continue;
                     }
 
-                    Program.CastW(skillshot.Unit);
+                    if (Program.CastW(skillshot.Unit))
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -546,7 +555,7 @@ namespace jesuisFiora
 
             if (!string.IsNullOrWhiteSpace(Name))
             {
-                display += " " + Name;
+                display += Name;
             }
             else if (!Slot.Equals(SpellSlot.Unknown))
             {
