@@ -409,7 +409,7 @@ namespace jesuisFiora
             }
 
             var spells = new List<BlockedSpell>();
-            BlockedSpells.TryGetValue(name, out spells);
+            CurrentBlockedSpells.TryGetValue(name, out spells);
 
             if (spells == null || spells.Count == 0)
             {
