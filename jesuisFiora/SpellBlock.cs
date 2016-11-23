@@ -130,6 +130,7 @@ namespace jesuisFiora
             BlockedSpells.Add("Khazix", new List<BlockedSpell> { q });
             BlockedSpells.Add("Kindred", new List<BlockedSpell> { e });
             //new BlockedSpell((SpellSlot) 48) { SpellName = "kindredbasicattackoverridelightbombfinal", Name = "Empowered E" } });
+            BlockedSpells.Add("Kled", new List<BlockedSpell> { r });
             BlockedSpells.Add("Leblanc", new List<BlockedSpell> { q, new BlockedSpell("LeblancChaosOrbM", "Block RQ") });
             BlockedSpells.Add(
                 "LeeSin",
@@ -328,6 +329,7 @@ namespace jesuisFiora
                 {
                     var slot = spell.Slot.Equals(48) ? SpellSlot.R : spell.Slot;
                     blockedMenu.AddBool(unit.ChampionName + spell.MenuName, spell.DisplayName);
+                    blockedMenu.AddSlider(unit.ChampionName + spell.MenuName + "HP", "Minimum HP", 100);
                 }
 
                 CurrentBlockedSpells.Add(unit.ChampionName, spells);
@@ -344,6 +346,7 @@ namespace jesuisFiora
                 return;
             }
 
+            var hp = ObjectManager.Player.HealthPercent;
             foreach (var skillshot in
                 Evade.GetSkillshotsAboutToHit(
                     ObjectManager.Player, (int) (SpellManager.W.Delay * 1000f + Game.Ping / 2f)))
@@ -390,6 +393,11 @@ namespace jesuisFiora
                         continue;
                     }
 
+                    if (hp > Menu.Item(enemy.ChampionName + spell.MenuName + "HP").GetValue<Slider>().Value)
+                    {
+                        continue;
+                    }
+
                     if (Program.CastW(skillshot.Unit))
                     {
                         return;
@@ -408,6 +416,7 @@ namespace jesuisFiora
                 return true;
             }
 
+            var hp = ObjectManager.Player.HealthPercent;
             var spells = new List<BlockedSpell>();
             CurrentBlockedSpells.TryGetValue(name, out spells);
 
@@ -445,6 +454,10 @@ namespace jesuisFiora
                     continue;
                 }
 
+                if (hp > Menu.Item(unit.ChampionName + spell.MenuName + "HP").GetValue<Slider>().Value)
+                {
+                    continue;
+                }
                 if (spell.IsAutoAttack)
                 {
                     if (!args.SData.IsAutoAttack())
