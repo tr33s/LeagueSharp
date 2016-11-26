@@ -24,7 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <LangVersion>5</LangVersion>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,21 +35,23 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="clipper_library">
-      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\clipper_library.dll</HintPath>
-    </Reference>
-    <Reference Include="LeagueSharp">
-      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\LeagueSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="LeagueSharp.Common">
-      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\LeagueSharp.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="SharpDX, Version=2.5.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="clipper_library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=07aeca4266f4b547, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\SharpDX.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\YSTMKJv81\References\clipper_library.dll</HintPath>
+    </Reference>
+    <Reference Include="LeagueSharp, Version=1.0.0.25, Culture=neutral, PublicKeyToken=a41ba14f653257a6, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\YSTMKJv81\References\LeagueSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="LeagueSharp.Common, Version=1.0.0.52, Culture=neutral, PublicKeyToken=57a5292ddd39b703, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\YSTMKJv81\References\LeagueSharp.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\YSTMKJv81\References\SharpDX.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX.Direct3D9">
-      <HintPath>C:\Users\Administrator\Downloads\LeagueSharp\System\SharpDX.Direct3D9.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\YSTMKJv81\References\SharpDX.Direct3D9.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -66,6 +68,9 @@
     <Compile Include="Core\CustomAntiGapcloser.cs" />
     <Compile Include="Core\CustomInterrupter.cs" />
     <Compile Include="Core\DamageIndicator.cs" />
+    <Compile Include="Core\Damage\DamageToUnit.cs" />
+    <Compile Include="Core\Damage\ItemDamage.cs" />
+    <Compile Include="Core\Damage\UnitStatistics.cs" />
     <Compile Include="Core\EvadeDisabler.cs" />
     <Compile Include="Core\Extensions\UnitExtensions.cs" />
     <Compile Include="Core\ManaIndicator.cs" />
@@ -74,6 +79,8 @@
     <Compile Include="Core\Extensions\GeneralExtensions.cs" />
     <Compile Include="Core\Extensions\MenuExtensions.cs" />
     <Compile Include="Core\Extensions\OrbwalkerExtensions.cs" />
+    <Compile Include="Core\Damage\MasteryDamage.cs" />
+    <Compile Include="Managers\ItemManager.cs" />
     <Compile Include="Managers\ManaManager.cs" />
     <Compile Include="Managers\IgniteManager.cs" />
     <Compile Include="Managers\SmiteManager.cs" />
@@ -84,6 +91,7 @@
     <Compile Include="Core\Extensions\SpellExtensions.cs" />
     <Compile Include="SpellData\Collision.cs" />
     <Compile Include="SpellData\Config.cs" />
+    <Compile Include="SpellData\EarlyEvade.cs" />
     <Compile Include="SpellData\Evade.cs" />
     <Compile Include="SpellData\Geometry.cs" />
     <Compile Include="SpellData\Skillshot.cs" />

@@ -75,7 +75,7 @@ namespace TreeLib.Core
                 var damage = DamageToUnit(unit);
                 var percentHealthAfterDamage = Math.Max(0, unit.Health - damage) / unit.MaxHealth;
 
-                var champOffset = unit.ChampionName == "Jhin" ? new Vector2(-8, -14) : Vector2.Zero;
+                var champOffset = unit.ChampionName == "Jhin" ? new Vector2(-9, -16) : Vector2.Zero;
                 var xPos = barPos.X + XOffset + champOffset.X;
                 var xPosDamage = xPos + Width * percentHealthAfterDamage;
                 var xPosCurrentHp = xPos + Width * unit.Health / unit.MaxHealth;
@@ -83,7 +83,7 @@ namespace TreeLib.Core
 
                 if (Killable && damage > unit.Health)
                 {
-                    Text.X = (int) barPos.X + XOffset;
+                    Text.X = (int) (barPos.X + XOffset + champOffset.X);
                     Text.Y = (int) barPos.Y + YOffset + 20;
                     Text.text = "KILLABLE";
                     Text.OnEndScene();
@@ -93,7 +93,7 @@ namespace TreeLib.Core
                 {
                     var differenceInHp = xPosCurrentHp - xPosDamage;
                     DamageBar.Color = DamageColor.ToSharpDXColor();
-                    DamageBar.X = (int) (barPos.X + 9 + 107 * percentHealthAfterDamage);
+                    DamageBar.X = (int) (barPos.X + 9 + 107 * percentHealthAfterDamage + champOffset.X);
                     DamageBar.Y = (int) yPos - 1;
                     DamageBar.Width = (int) Math.Round(differenceInHp);
                     DamageBar.Height = Height + 3;

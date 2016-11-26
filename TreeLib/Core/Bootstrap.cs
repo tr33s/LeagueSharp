@@ -1,4 +1,5 @@
 ﻿using LeagueSharp.Common;
+using TreeLib.Core.Damage;
 using TreeLib.Managers;
 using TreeLib.SpellData;
 
@@ -23,6 +24,7 @@ namespace TreeLib.Core
                 Menu = new Menu("TreeLib", "TreeLib", true);
                 Menu.AddToMainMenu();
                 SpellManager.Initialize();
+                MasteryDamage.Initialize();
                 Evade.Init();
             };
         }

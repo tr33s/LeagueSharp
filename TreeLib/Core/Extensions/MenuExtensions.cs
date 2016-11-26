@@ -41,7 +41,7 @@ namespace TreeLib.Extensions
 
         public static Orbwalking.Orbwalker AddOrbwalker(this Menu menu)
         {
-            var orbwalk = menu.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
+            var orbwalk = menu.AddSubMenu(new Menu("► Orbwalker", "Orbwalker"));
             return new Orbwalking.Orbwalker(orbwalk);
         }
 

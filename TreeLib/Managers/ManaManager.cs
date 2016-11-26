@@ -95,6 +95,7 @@ namespace TreeLib.Managers
                 return false;
             }
 
+            //Console.WriteLine("MANA: {0} CONDITION: {1}", ObjectManager.Player.ManaPercent, currentMode[spell.Slot]);
             return ObjectManager.Player.ManaPercent < currentMode[spell.Slot];
         }
     }

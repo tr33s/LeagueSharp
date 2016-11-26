@@ -21,13 +21,14 @@ namespace TreeLib.SpellData
         public bool DontCheckForDuplicates = false;
         public bool DontCross = false;
         public bool DontRemove = false;
+        public EarlyObjects[] EarlyEvade;
         public int ExtraDuration;
         public string[] ExtraMissileNames = { };
         public int ExtraRange = -1;
         public string[] ExtraSpellNames = { };
         public bool FixedRange;
-        public bool ForceRemove = false;
         public bool FollowCaster = false;
+        public bool ForceRemove = false;
         public string FromObject = "";
         public string[] FromObjects = { };
         public int Id = -1;
@@ -40,20 +41,17 @@ namespace TreeLib.SpellData
         public int MissileMinSpeed;
         public int MissileSpeed;
         public string MissileSpellName = "";
-        public EarlyObjects[] EarlyEvade;
         public float MultipleAngle;
         public int MultipleNumber = -1;
         public int RingRadius;
-        public string SourceObjectName = "";
         public SpellSlot Slot;
+        public string SourceObjectName = "";
         public string SpellName;
         public bool TakeClosestPath = false;
         public string ToggleParticleName = "";
         public SkillShotType Type;
-        private int _radius;
-        private int _range;
-        
-        public SpellData() { }
+
+        public SpellData() {}
 
         public SpellData(string championName,
             string spellName,
@@ -73,7 +71,7 @@ namespace TreeLib.SpellData
             Type = type;
             Delay = delay;
             Range = range;
-            _radius = radius;
+            RawRadius = radius;
             MissileSpeed = missileSpeed;
             AddHitbox = addHitbox;
             FixedRange = fixedRange;
@@ -89,33 +87,27 @@ namespace TreeLib.SpellData
         {
             get
             {
-                return (!AddHitbox)
-                    ? _radius + Config.SkillShotsExtraRadius
-                    : Config.SkillShotsExtraRadius + _radius + (int) ObjectManager.Player.BoundingRadius;
+                return !AddHitbox
+                    ? RawRadius + Config.SkillShotsExtraRadius
+                    : Config.SkillShotsExtraRadius + RawRadius + (int) ObjectManager.Player.BoundingRadius;
             }
-            set { _radius = value; }
+            set { RawRadius = value; }
         }
 
-        public int RawRadius
-        {
-            get { return _radius; }
-        }
+        public int RawRadius { get; private set; }
 
-        public int RawRange
-        {
-            get { return _range; }
-        }
+        public int RawRange { get; private set; }
 
         public int Range
         {
             get
             {
-                return _range +
-                       ((Type == SkillShotType.SkillshotLine || Type == SkillShotType.SkillshotMissileLine)
+                return RawRange +
+                       (Type == SkillShotType.SkillshotLine || Type == SkillShotType.SkillshotMissileLine
                            ? Config.SkillShotsExtraRange
                            : 0);
             }
-            set { _range = value; }
+            set { RawRange = value; }
         }
     }
 }

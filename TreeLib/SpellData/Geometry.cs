@@ -1,338 +1,48 @@
-﻿using System;
+﻿#region
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using ClipperLib;
-using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
 using Color = System.Drawing.Color;
+using Path = System.Collections.Generic.List<ClipperLib.IntPoint>;
+using Paths = System.Collections.Generic.List<System.Collections.Generic.List<ClipperLib.IntPoint>>;
+using GamePath = System.Collections.Generic.List<SharpDX.Vector2>;
+
+#endregion
 
 namespace TreeLib.SpellData
 {
+    /// <summary>
+    ///     Class that contains the geometry related methods.
+    /// </summary>
     public static class Geometry
     {
-        #region Constants
-
         private const int CircleLineSegmentN = 22;
 
-        #endregion
-
-        public class Arc
+        public static Vector3 SwitchYZ(this Vector3 v)
         {
-            #region Constructors and Destructors
-
-            public Arc(Vector2 start, Vector2 end, int hitbox)
-            {
-                Start = start;
-                End = end;
-                HitBox = hitbox;
-                Distance = Start.Distance(End);
-            }
-
-            #endregion
-
-            #region Public Methods and Operators
-
-            public Polygon ToPolygon(int offset = 0)
-            {
-                offset += HitBox;
-                var result = new Polygon();
-                var innerRadius = -0.1562f * Distance + 687.31f;
-                var outerRadius = 0.35256f * Distance + 133f;
-                outerRadius = outerRadius / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
-                var innerCenters = LeagueSharp.Common.Geometry.CircleCircleIntersection(
-                    Start, End, innerRadius, innerRadius);
-                var outerCenters = LeagueSharp.Common.Geometry.CircleCircleIntersection(
-                    Start, End, outerRadius, outerRadius);
-                var innerCenter = innerCenters[0];
-                var outerCenter = outerCenters[0];
-                var direction = (End - outerCenter).Normalized();
-                var end = (Start - outerCenter).Normalized();
-                var maxAngle = (float) (direction.AngleBetween(end) * Math.PI / 180);
-                var step = -maxAngle / CircleLineSegmentN;
-                for (var i = 0; i < CircleLineSegmentN; i++)
-                {
-                    var angle = step * i;
-                    var point = outerCenter + (outerRadius + 15 + offset) * direction.Rotated(angle);
-                    result.Add(point);
-                }
-                direction = (Start - innerCenter).Normalized();
-                end = (End - innerCenter).Normalized();
-                maxAngle = (float) (direction.AngleBetween(end) * Math.PI / 180);
-                step = maxAngle / CircleLineSegmentN;
-                for (var i = 0; i < CircleLineSegmentN; i++)
-                {
-                    var angle = step * i;
-                    var point = innerCenter + Math.Max(0, innerRadius - offset - 100) * direction.Rotated(angle);
-                    result.Add(point);
-                }
-                return result;
-            }
-
-            #endregion
-
-            #region Fields
-
-            public float Distance;
-
-            public Vector2 End;
-
-            public int HitBox;
-
-            public Vector2 Start;
-
-            #endregion
+            return new Vector3(v.X, v.Z, v.Y);
         }
 
-        public class Circle
+        //Clipper
+        public static List<Polygon> ToPolygons(this Paths v)
         {
-            #region Constructors and Destructors
+            var result = new List<Polygon>();
 
-            public Circle(Vector2 center, float radius)
+            foreach (var path in v)
             {
-                Center = center;
-                Radius = radius;
+                result.Add(path.ToPolygon());
             }
 
-            #endregion
-
-            #region Public Methods and Operators
-
-            public Polygon ToPolygon(int offset = 0, float overrideWidth = -1)
-            {
-                var result = new Polygon();
-                var outRadius = overrideWidth > 0
-                    ? overrideWidth
-                    : (offset + Radius) / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
-                const double Step = 2 * Math.PI / CircleLineSegmentN;
-                var angle = (double) Radius;
-                for (var i = 0; i <= CircleLineSegmentN; i++)
-                {
-                    angle += Step;
-                    var point = new Vector2(
-                        Center.X + outRadius * (float) Math.Cos(angle), Center.Y + outRadius * (float) Math.Sin(angle));
-                    result.Add(point);
-                }
-                return result;
-            }
-
-            #endregion
-
-            #region Fields
-
-            public Vector2 Center;
-
-            public float Radius;
-
-            #endregion
+            return result;
         }
 
-        public class Polygon
-        {
-            #region Fields
-
-            public List<Vector2> Points = new List<Vector2>();
-
-            #endregion
-
-            #region Public Methods and Operators
-
-            public void Add(Vector2 point)
-            {
-                Points.Add(point);
-            }
-
-            public void Draw(Color color, int width = 1)
-            {
-                for (var i = 0; i <= Points.Count - 1; i++)
-                {
-                    var nextIndex = Points.Count - 1 == i ? 0 : i + 1;
-                    var from = Drawing.WorldToScreen(Points[i].To3D());
-                    var to = Drawing.WorldToScreen(Points[nextIndex].To3D());
-                    Drawing.DrawLine(from[0], from[1], to[0], to[1], width, color);
-                }
-            }
-
-            public bool IsOutside(Vector2 point)
-            {
-                var p = new IntPoint(point.X, point.Y);
-                return Clipper.PointInPolygon(p, ToClipperPath()) != 1;
-            }
-
-            public List<IntPoint> ToClipperPath()
-            {
-                var result = new List<IntPoint>(Points.Count);
-                result.AddRange(Points.Select(i => new IntPoint(i.X, i.Y)));
-                return result;
-            }
-
-            #endregion
-        }
-
-        public class Rectangle
-        {
-            #region Constructors and Destructors
-
-            public Rectangle(Vector2 start, Vector2 end, float width)
-            {
-                RStart = start;
-                REnd = end;
-                Width = width;
-                Direction = (end - start).Normalized();
-                Perpendicular = Direction.Perpendicular();
-            }
-
-            #endregion
-
-            #region Public Methods and Operators
-
-            public Polygon ToPolygon(int offset = 0, float overrideWidth = -1)
-            {
-                var result = new Polygon();
-                result.Add(
-                    RStart + (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular - offset * Direction);
-                result.Add(
-                    RStart - (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular - offset * Direction);
-                result.Add(
-                    REnd - (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular + offset * Direction);
-                result.Add(
-                    REnd + (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular + offset * Direction);
-                return result;
-            }
-
-            #endregion
-
-            #region Fields
-
-            public Vector2 Direction;
-
-            public Vector2 Perpendicular;
-
-            public Vector2 REnd;
-
-            public Vector2 RStart;
-
-            public float Width;
-
-            #endregion
-        }
-
-        public class Ring
-        {
-            #region Constructors and Destructors
-
-            public Ring(Vector2 center, float radius, float ringRadius)
-            {
-                Center = center;
-                Radius = radius;
-                RingRadius = ringRadius;
-            }
-
-            #endregion
-
-            #region Public Methods and Operators
-
-            public Polygon ToPolygon(int offset = 0)
-            {
-                var result = new Polygon();
-                var outRadius = (offset + Radius + RingRadius) / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
-                var innerRadius = Radius - RingRadius - offset;
-                for (var i = 0; i <= CircleLineSegmentN; i++)
-                {
-                    var angle = i * 2 * Math.PI / CircleLineSegmentN;
-                    var point = new Vector2(
-                        Center.X - outRadius * (float) Math.Cos(angle), Center.Y - outRadius * (float) Math.Sin(angle));
-                    result.Add(point);
-                }
-                for (var i = 0; i <= CircleLineSegmentN; i++)
-                {
-                    var angle = i * 2 * Math.PI / CircleLineSegmentN;
-                    var point = new Vector2(
-                        Center.X + innerRadius * (float) Math.Cos(angle),
-                        Center.Y - innerRadius * (float) Math.Sin(angle));
-                    result.Add(point);
-                }
-                return result;
-            }
-
-            #endregion
-
-            #region Fields
-
-            public Vector2 Center;
-
-            public float Radius;
-
-            public float RingRadius;
-
-            #endregion
-        }
-
-        public class Sector
-        {
-            #region Constructors and Destructors
-
-            public Sector(Vector2 center, Vector2 direction, float angle, float radius)
-            {
-                Center = center;
-                Direction = direction;
-                Angle = angle;
-                Radius = radius;
-            }
-
-            #endregion
-
-            #region Public Methods and Operators
-
-            public Polygon ToPolygon(int offset = 0)
-            {
-                var result = new Polygon();
-                var outRadius = (Radius + offset) / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
-                result.Add(Center);
-                var side1 = Direction.Rotated(-Angle * 0.5f);
-                for (var i = 0; i <= CircleLineSegmentN; i++)
-                {
-                    var cDirection = side1.Rotated(i * Angle / CircleLineSegmentN).Normalized();
-                    result.Add(new Vector2(Center.X + outRadius * cDirection.X, Center.Y + outRadius * cDirection.Y));
-                }
-                return result;
-            }
-
-            #endregion
-
-            #region Fields
-
-            public float Angle;
-
-            public Vector2 Center;
-
-            public Vector2 Direction;
-
-            public float Radius;
-
-            #endregion
-        }
-
-        #region Public Methods and Operators
-
-        public static List<List<IntPoint>> ClipPolygons(List<Polygon> polygons)
-        {
-            var subj = new List<List<IntPoint>>(polygons.Count);
-            var clip = new List<List<IntPoint>>(polygons.Count);
-            foreach (var polygon in polygons)
-            {
-                subj.Add(polygon.ToClipperPath());
-                clip.Add(polygon.ToClipperPath());
-            }
-            var solution = new List<List<IntPoint>>();
-            var c = new Clipper();
-            c.AddPaths(subj, PolyType.ptSubject, true);
-            c.AddPaths(clip, PolyType.ptClip, true);
-            c.Execute(ClipType.ctUnion, solution, PolyFillType.pftPositive, PolyFillType.pftEvenOdd);
-            return solution;
-        }
-
-        public static Vector2 PositionAfter(this List<Vector2> self, int t, int speed, int delay = 0)
+        /// <summary>
+        ///     Returns the position on the path after t milliseconds at speed speed.
+        /// </summary>
+        public static Vector2 PositionAfter(this GamePath self, int t, int speed, int delay = 0)
         {
             var distance = Math.Max(0, t - delay) * speed / 1000;
             for (var i = 0; i <= self.Count - 2; i++)
@@ -349,7 +59,7 @@ namespace TreeLib.SpellData
             return self[self.Count - 1];
         }
 
-        public static Polygon ToPolygon(this List<IntPoint> v)
+        public static Polygon ToPolygon(this Path v)
         {
             var polygon = new Polygon();
             foreach (var point in v)
@@ -359,11 +69,278 @@ namespace TreeLib.SpellData
             return polygon;
         }
 
-        public static List<Polygon> ToPolygons(this List<List<IntPoint>> v)
+
+        public static Paths ClipPolygons(List<Polygon> polygons)
         {
-            return v.Select(i => i.ToPolygon()).ToList();
+            var subj = new Paths(polygons.Count);
+            var clip = new Paths(polygons.Count);
+
+            foreach (var polygon in polygons)
+            {
+                subj.Add(polygon.ToClipperPath());
+                clip.Add(polygon.ToClipperPath());
+            }
+
+            var solution = new Paths();
+            var c = new Clipper();
+            c.AddPaths(subj, PolyType.ptSubject, true);
+            c.AddPaths(clip, PolyType.ptClip, true);
+            c.Execute(ClipType.ctUnion, solution, PolyFillType.pftPositive, PolyFillType.pftEvenOdd);
+
+            return solution;
         }
 
-        #endregion
+
+        public class Circle
+        {
+            public Vector2 Center;
+            public float Radius;
+
+            public Circle(Vector2 center, float radius)
+            {
+                Center = center;
+                Radius = radius;
+            }
+
+            public Polygon ToPolygon(int offset = 0, float overrideWidth = -1)
+            {
+                var result = new Polygon();
+                var outRadius = overrideWidth > 0
+                    ? overrideWidth
+                    : (offset + Radius) / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
+
+                var step = 2 * Math.PI / CircleLineSegmentN;
+                var angle = (double) Radius;
+                for (var i = 0; i <= CircleLineSegmentN; i++)
+                {
+                    angle += step;
+                    var point = new Vector2(
+                        Center.X + outRadius * (float) Math.Cos(angle), Center.Y + outRadius * (float) Math.Sin(angle));
+                    result.Add(point);
+                }
+
+                return result;
+            }
+        }
+
+        public class Polygon
+        {
+            public List<Vector2> Points = new List<Vector2>();
+
+            public void Add(Vector2 point)
+            {
+                Points.Add(point);
+            }
+
+            public Path ToClipperPath()
+            {
+                var result = new Path(Points.Count);
+
+                foreach (var point in Points)
+                {
+                    result.Add(new IntPoint(point.X, point.Y));
+                }
+
+                return result;
+            }
+
+            public bool IsOutside(Vector2 point)
+            {
+                var p = new IntPoint(point.X, point.Y);
+                return Clipper.PointInPolygon(p, ToClipperPath()) != 1;
+            }
+
+            public int PointInPolygon(Vector2 point)
+            {
+                var p = new IntPoint(point.X, point.Y);
+                return Clipper.PointInPolygon(p, ToClipperPath());
+            }
+
+            public void Draw(Color color, int width = 1)
+            {
+                for (var i = 0; i <= Points.Count - 1; i++)
+                {
+                    var nextIndex = Points.Count - 1 == i ? 0 : i + 1;
+                    // Utils.DrawLineInWorld(Points[i].To3D(), Points[nextIndex].To3D(), width, color);
+                }
+            }
+        }
+
+        public class Rectangle
+        {
+            public Vector2 Direction;
+            public Vector2 Perpendicular;
+            public Vector2 REnd;
+            public Vector2 RStart;
+            public float Width;
+
+            public Rectangle(Vector2 start, Vector2 end, float width)
+            {
+                RStart = start;
+                REnd = end;
+                Width = width;
+                Direction = (end - start).Normalized();
+                Perpendicular = Direction.Perpendicular();
+            }
+
+            public Polygon ToPolygon(int offset = 0, float overrideWidth = -1)
+            {
+                var result = new Polygon();
+
+                result.Add(
+                    RStart + (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular - offset * Direction);
+                result.Add(
+                    RStart - (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular - offset * Direction);
+                result.Add(
+                    REnd - (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular + offset * Direction);
+                result.Add(
+                    REnd + (overrideWidth > 0 ? overrideWidth : Width + offset) * Perpendicular + offset * Direction);
+
+                return result;
+            }
+        }
+
+        public class Ring
+        {
+            public Vector2 Center;
+            public float Radius;
+            public float RingRadius; //actually radius width.
+
+            public Ring(Vector2 center, float radius, float ringRadius)
+            {
+                Center = center;
+                Radius = radius;
+                RingRadius = ringRadius;
+            }
+
+            public Polygon ToPolygon(int offset = 0)
+            {
+                var result = new Polygon();
+
+                var outRadius = (offset + Radius + RingRadius) / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
+                var innerRadius = Radius - RingRadius - offset;
+
+                for (var i = 0; i <= CircleLineSegmentN; i++)
+                {
+                    var angle = i * 2 * Math.PI / CircleLineSegmentN;
+                    var point = new Vector2(
+                        Center.X - outRadius * (float) Math.Cos(angle), Center.Y - outRadius * (float) Math.Sin(angle));
+                    result.Add(point);
+                }
+
+                for (var i = 0; i <= CircleLineSegmentN; i++)
+                {
+                    var angle = i * 2 * Math.PI / CircleLineSegmentN;
+                    var point = new Vector2(
+                        Center.X + innerRadius * (float) Math.Cos(angle),
+                        Center.Y - innerRadius * (float) Math.Sin(angle));
+                    result.Add(point);
+                }
+
+
+                return result;
+            }
+        }
+
+        /// <summary>
+        ///     Probably only valid for diana
+        /// </summary>
+        public class Arc
+        {
+            public Arc(Vector2 start, Vector2 end, int hitbox)
+            {
+                Start = start;
+                End = end;
+                HitBox = hitbox;
+                Distance = Start.Distance(End);
+            }
+
+            public Vector2 Start { get; }
+            public Vector2 End { get; }
+
+            public int HitBox { get; }
+            private float Distance { get; }
+
+            public Polygon ToPolygon(int offset = 0)
+            {
+                offset += HitBox;
+                var result = new Polygon();
+
+                var innerRadius = -0.1562f * Distance + 687.31f;
+                var outerRadius = 0.35256f * Distance + 133f;
+
+                outerRadius = outerRadius / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
+
+                var innerCenters = LeagueSharp.Common.Geometry.CircleCircleIntersection(
+                    Start, End, innerRadius, innerRadius);
+                var outerCenters = LeagueSharp.Common.Geometry.CircleCircleIntersection(
+                    Start, End, outerRadius, outerRadius);
+
+                var innerCenter = innerCenters[0];
+                var outerCenter = outerCenters[0];
+
+                Render.Circle.DrawCircle(innerCenter.To3D(), 100, Color.White);
+
+                var direction = (End - outerCenter).Normalized();
+                var end = (Start - outerCenter).Normalized();
+                var maxAngle = (float) (direction.AngleBetween(end) * Math.PI / 180);
+
+                var step = -maxAngle / CircleLineSegmentN;
+                //outercircle
+                for (var i = 0; i < CircleLineSegmentN; i++)
+                {
+                    var angle = step * i;
+                    var point = outerCenter + (outerRadius + 15 + offset) * direction.Rotated(angle);
+                    result.Add(point);
+                }
+
+                direction = (Start - innerCenter).Normalized();
+                end = (End - innerCenter).Normalized();
+                maxAngle = (float) (direction.AngleBetween(end) * Math.PI / 180);
+                step = maxAngle / CircleLineSegmentN;
+                //outercircle
+                for (var i = 0; i < CircleLineSegmentN; i++)
+                {
+                    var angle = step * i;
+                    var point = innerCenter + Math.Max(0, innerRadius - offset - 100) * direction.Rotated(angle);
+                    result.Add(point);
+                }
+
+                return result;
+            }
+        }
+
+        public class Sector
+        {
+            public float Angle;
+            public Vector2 Center;
+            public Vector2 Direction;
+            public float Radius;
+
+            public Sector(Vector2 center, Vector2 direction, float angle, float radius)
+            {
+                Center = center;
+                Direction = direction;
+                Angle = angle;
+                Radius = radius;
+            }
+
+            public Polygon ToPolygon(int offset = 0)
+            {
+                var result = new Polygon();
+                var outRadius = (Radius + offset) / (float) Math.Cos(2 * Math.PI / CircleLineSegmentN);
+
+                result.Add(Center);
+                var Side1 = Direction.Rotated(-Angle * 0.5f);
+
+                for (var i = 0; i <= CircleLineSegmentN; i++)
+                {
+                    var cDirection = Side1.Rotated(i * Angle / CircleLineSegmentN).Normalized();
+                    result.Add(new Vector2(Center.X + outRadius * cDirection.X, Center.Y + outRadius * cDirection.Y));
+                }
+
+                return result;
+            }
+        }
     }
 }

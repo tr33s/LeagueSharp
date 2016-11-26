@@ -307,7 +307,7 @@ namespace TreeLib.Core
             /// <value>
             ///     <c>true</c> if movement interrupts the channel; otherwise, <c>false</c>.
             /// </value>
-            public bool MovementInterrupts { get; private set; }
+            public bool MovementInterrupts { get; }
         }
 
         /// <summary>
@@ -336,7 +336,7 @@ namespace TreeLib.Core
             /// <value>
             ///     The slot.
             /// </value>
-            public SpellSlot Slot { get; private set; }
+            public SpellSlot Slot { get; }
 
             /// <summary>
             ///     Gets or sets the danger level.
@@ -344,7 +344,7 @@ namespace TreeLib.Core
             /// <value>
             ///     The danger level.
             /// </value>
-            public DangerLevel DangerLevel { get; private set; }
+            public DangerLevel DangerLevel { get; }
 
             /// <summary>
             ///     Gets or sets a value indicating whether movement interrupts the channel.
@@ -352,7 +352,7 @@ namespace TreeLib.Core
             /// <value>
             ///     <c>true</c> if movement interrupts the channel; otherwise, <c>false</c>.
             /// </value>
-            public bool MovementInterrupts { get; private set; }
+            public bool MovementInterrupts { get; }
         }
     }
 }
