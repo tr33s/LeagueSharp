@@ -13,52 +13,6 @@ namespace TreeLib.SpellData
         static SpellDatabase()
         {
             //Add spells to the database 
-
-            #region Test
-
-            if (Config.TestOnAllies)
-            {
-                Spells.Add(
-                    new SpellData
-                    {
-                        ChampionName = ObjectManager.Player.ChampionName,
-                        SpellName = "TestCircleSkillShot",
-                        Slot = SpellSlot.R,
-                        Type = SkillShotType.SkillshotCircle,
-                        Delay = 6000,
-                        Range = 650,
-                        Radius = 50,
-                        MissileSpeed = int.MaxValue,
-                        FixedRange = false,
-                        AddHitbox = true,
-                        DangerValue = 5,
-                        IsDangerous = true,
-                        MissileSpellName = "TestSkillShot",
-                        DontCross = true
-                    });
-
-                Spells.Add(
-                    new SpellData
-                    {
-                        ChampionName = ObjectManager.Player.ChampionName,
-                        SpellName = "TestLineSkillShot",
-                        Slot = SpellSlot.R,
-                        Type = SkillShotType.SkillshotMissileLine,
-                        Delay = 1000,
-                        Range = 1200,
-                        Radius = 100,
-                        MissileSpeed = 100,
-                        FixedRange = true,
-                        AddHitbox = true,
-                        DangerValue = 5,
-                        IsDangerous = true,
-                        MissileSpellName = "TestLineSkillShot",
-                        DontCross = true
-                    });
-            }
-
-            #endregion Test
-
             #region Aatrox
 
             Spells.Add(
